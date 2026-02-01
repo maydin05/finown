@@ -1,0 +1,2925 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Tailwind CDN (UI aynı kalsın diye) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React 18 UMD -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+    <!-- Babel (JSX için) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Lucide (ikonlar) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <title>FinOwn</title>
+</head>
+
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useEffect, useMemo, useRef, useState } = React;
+
+        // -------------------------
+        // Helpers
+        // -------------------------
+        const DEV_TODAY = null;
+        // test için: "2026-01-04" yaz, işin bitince tekrar null yap
+
+        const today = () => (DEV_TODAY ? new Date(DEV_TODAY + "T00:00:00") : new Date());
+        const oneDayMs = 24 * 60 * 60 * 1000;
+
+        const getDaysDifference = (date1, date2) => {
+            const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+            const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+            return Math.round((d1 - d2) / oneDayMs);
+        };
+
+        const formatDate = (dateObj) => {
+            return dateObj.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+        };
+
+        const formatMoneyTR = (value) => {
+            const n = Number(value || 0);
+            return new Intl.NumberFormat("tr-TR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }).format(n);
+        };
+
+        const isoDateOnly = (d) => {
+            const x = new Date(d);
+            return x.toISOString().split("T")[0];
+        };
+
+        const addDays = (dateStrOrDate, days) => {
+            const d = new Date(dateStrOrDate);
+            d.setDate(d.getDate() + days);
+            return d;
+        };
+
+        const monthKey = (id, date) => {
+            const d = new Date(date);
+            return `${id}_${d.getMonth()}_${d.getFullYear()}`;
+        };
+
+        // -------------------------
+        // Lucide icon wrapper
+        // -------------------------
+        function Icon({ name, size = 20, className = "" }) {
+            const ref = React.useRef(null);
+
+            React.useEffect(() => {
+                const el = ref.current;
+                if (!el) return;
+
+                const luc = window.lucide;
+                if (!luc) {
+                    el.innerHTML = "";
+                    return;
+                }
+
+                // 1) Önce "toSvg" yolu varsa onu kullan
+                const iconObj = luc.icons && luc.icons[name];
+                if (iconObj && typeof iconObj.toSvg === "function") {
+                    el.innerHTML = iconObj.toSvg({
+                        width: size,
+                        height: size,
+                        class: className || "",
+                    });
+                    return;
+                }
+
+                // 2) Fallback: data-lucide ile createIcons yolu
+                el.innerHTML = `<i data-lucide="${name}"></i>`;
+
+                if (typeof luc.createIcons === "function") {
+                    luc.createIcons({
+                        attrs: {
+                            width: String(size),
+                            height: String(size),
+                            class: className || "",
+                        },
+                    });
+                }
+            }, [name, size, className]);
+
+            return <span ref={ref} aria-hidden="true" className="inline-flex" />;
+        }
+
+        // -------------------------
+        // Client <-> Apps Script API
+        // -------------------------
+        const api = {
+            getAll: () =>
+                new Promise((resolve, reject) => {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        .getAllData();
+                }),
+            saveAll: (payload) =>
+                new Promise((resolve, reject) => {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        .saveAllData(payload);
+                }),
+        };
+
+        // -------------------------
+        // Login Screen (PIN: 5555)
+        // -------------------------
+        const LoginScreen = ({ onLogin }) => {
+            const [pin, setPin] = useState("");
+            const [error, setError] = useState(false);
+
+            const handlePin = (value) => {
+                if (pin.length < 4) {
+                    const newPin = pin + value;
+                    setPin(newPin);
+                    if (newPin.length === 4) {
+                        if (newPin === "5555") {
+                            onLogin();
+                        } else {
+                            setError(true);
+                            setTimeout(() => {
+                                setPin("");
+                                setError(false);
+                            }, 500);
+                        }
+                    }
+                }
+            };
+
+            const handleBackspace = () => {
+                setPin(pin.slice(0, -1));
+                setError(false);
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white p-6">
+                    <div className="mb-8 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-900/50">
+                            <Icon name="wallet" size={32} className="text-white" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight">FinOwn</h1>
+                        <p className="text-gray-400 text-sm mt-1">Hoş Geldiniz</p>
+                    </div>
+
+                    <div className="flex gap-4 mb-8">
+                        {[0, 1, 2, 3].map((i) => (
+                            <div
+                                key={i}
+                                className={`w-4 h-4 rounded-full transition-all duration-300 ${pin.length > i ? "bg-blue-500 scale-110" : "bg-gray-700"
+                                    } ${error ? "bg-red-500 animate-pulse" : ""}`}
+                            ></div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-6 w-full max-w-xs">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                            <button
+                                key={num}
+                                onClick={() => handlePin(num.toString())}
+                                className="w-16 h-16 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-xl font-bold transition-colors active:scale-95"
+                            >
+                                {num}
+                            </button>
+                        ))}
+                        <div className="w-16 h-16"></div>
+                        <button
+                            onClick={() => handlePin("0")}
+                            className="w-16 h-16 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-xl font-bold transition-colors active:scale-95"
+                        >
+                            0
+                        </button>
+                        <button
+                            onClick={handleBackspace}
+                            className="w-16 h-16 rounded-full hover:bg-gray-800/50 flex items-center justify-center text-gray-400 transition-colors active:scale-95"
+                        >
+                            <Icon name="x" size={24} className="text-gray-300" />
+                        </button>
+                    </div>
+
+                    <p className="mt-8 text-xs text-gray-500">Varsayılan PIN: 5555</p>
+                </div>
+            );
+        };
+
+        // -------------------------
+        // Item components
+        // -------------------------
+        const PaymentItem = ({ item, onToggle, onEdit, onDelete, onCardNeedAmount }) => {
+            const today = new Date();
+            const itemDate = new Date(item.dueDate);
+            const daysDiff = getDaysDifference(itemDate, today);
+
+            const isOverdue = !item.isPaid && daysDiff < 0;
+            const isApproaching = !item.isPaid && daysDiff >= 0 && daysDiff <= 3;
+
+            let containerStyle = "border-gray-100 bg-white";
+            let iconStyle = "bg-gray-100 text-gray-600";
+            let titleColor = "text-gray-800";
+            let dateColor = "text-blue-600";
+            let statusBadge = null;
+
+            if (isOverdue) {
+                containerStyle = "border-red-200 bg-red-50/40";
+                iconStyle = "bg-red-100 text-red-600";
+                titleColor = "text-red-700";
+                dateColor = "text-red-600";
+                statusBadge = (
+                    <span className="text-[10px] font-bold text-red-600 flex items-center gap-1">
+                        <Icon name="alert-triangle" size={10} className="text-red-600" /> Gecikmiş
+                    </span>
+                );
+            } else if (isApproaching) {
+                containerStyle = "border-orange-200 bg-orange-50/40";
+                iconStyle = "bg-orange-100 text-orange-600";
+                titleColor = "text-gray-900";
+                dateColor = "text-orange-600";
+                statusBadge = (
+                    <span className="text-[10px] font-bold text-orange-600 flex items-center gap-1">
+                        <Icon name="clock" size={10} className="text-orange-600" />
+                        {daysDiff === 0 ? "Bugün" : `${daysDiff} Gün Kaldı`}
+                    </span>
+                );
+            } else if (item.isPaid) {
+                containerStyle = "border-green-100 bg-green-50/20 opacity-75";
+                iconStyle = "bg-green-100 text-green-600";
+                titleColor = "text-gray-600";
+                dateColor = "text-green-600";
+            }
+
+            const renderIcon = () => {
+                if (item.type === "card") return <Icon name="credit-card" size={20} className="text-current" />;
+                if (item.type === "loan") return <Icon name="pie-chart" size={20} className="text-current" />;
+                if (item.category === "rent") return <Icon name="home" size={20} className="text-current" />;
+                if (item.category === "bills") return <Icon name="zap" size={20} className="text-current" />;
+                if (item.category === "market") return <Icon name="shopping-cart" size={20} className="text-current" />;
+                return <Icon name="banknote" size={20} className="text-current" />;
+            };
+
+            return (
+                <div className={`group relative p-4 rounded-xl shadow-sm border mb-3 transition-all ${containerStyle}`}>
+                    {item.isManual && (
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm border border-gray-100 z-10">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEdit(item);
+                                }}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                            >
+                                <Icon name="edit-2" size={12} className="text-blue-600" />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete(item);
+                                }}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            >
+                                <Icon name="trash-2" size={12} className="text-red-600" />
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-3 rounded-xl ${iconStyle}`}>{renderIcon()}</div>
+
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h4 className={`font-bold text-sm ${titleColor}`}>{item.title}</h4>
+                                    {item.isRecurring && <Icon name="repeat" size={10} className="text-gray-400" />}
+                                    {item.needsCardAmount && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onCardNeedAmount(item);
+                                            }}
+                                            className="ml-1 inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full hover:bg-amber-100"
+                                            title="Bu ayın kredi kartı ödeme miktarını girin!"
+                                        >
+                                            <Icon name="info" size={12} className="text-amber-700" />
+                                            Kart Tutarı Gir
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <p className="text-xs text-gray-500">{item.subtitle}</p>
+                                    {statusBadge && <div className="mt-1">{statusBadge}</div>}
+                                    {item.note && (
+                                        <p className="text-[10px] text-gray-400 italic flex items-center gap-1 mt-1">
+                                            <Icon name="file-text" size={10} className="text-gray-400" /> {item.note}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-1 mt-1">
+                                    <Icon name="calendar" size={10} className={dateColor} />
+                                    <span className={`text-xs font-medium ${dateColor}`}>{formatDate(itemDate)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                            <span className={`font-bold ${item.isPaid ? "text-gray-400 line-through" : "text-gray-900"}`}>
+                                ₺{formatMoneyTR(item.amount)}
+                            </span>
+                            <button
+                                onClick={() => onToggle(item)}
+                                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${item.isPaid
+                                        ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                        : "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-200"
+                                    }`}
+                            >
+                                {item.isPaid ? (
+                                    <>
+                                        <Icon name="arrow-up-right" size={12} className="text-current" /> Geri Al
+                                    </>
+                                ) : (
+                                    <>
+                                        <Icon name="check-circle" size={12} className="text-current" /> Öde
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SubscriptionItem = ({ item, onOpenNote, onEdit, onDelete, banks, products }) => {
+            let paymentDisplay = item.paymentMethod?.value || "Diğer";
+            let bankObj = null;
+
+            if (item.paymentMethod?.type === "bank") {
+                bankObj = banks.find((b) => String(b.id) === String(item.paymentMethod?.value));
+                const bankName = bankObj ? bankObj.name : "Bilinmeyen Banka";
+
+                let cardDisplay = "";
+                if (item.relatedCardId) {
+                    const card = products.find((p) => String(p.id) === String(item.relatedCardId));
+                    if (card && card.last4Digits) cardDisplay = ` - **** ${card.last4Digits}`;
+                }
+                paymentDisplay = `${bankName}${cardDisplay}`;
+            }
+
+            return (
+                <div className="group relative p-4 rounded-xl shadow-sm border border-gray-100 bg-white mb-3 transition-all hover:border-purple-200">
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm border border-gray-100 z-10">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(item);
+                            }}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        >
+                            <Icon name="edit-2" size={12} className="text-blue-600" />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(item);
+                            }}
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        >
+                            <Icon name="trash-2" size={12} className="text-red-600" />
+                        </button>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-xl bg-purple-50 text-purple-600">
+                                <Icon name="monitor" size={20} className="text-purple-600" />
+                            </div>
+
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-sm text-gray-800">{item.title}</h4>
+                                    {item.isRecurring && <Icon name="repeat" size={10} className="text-gray-400" />}
+                                </div>
+
+                                <div className="flex flex-col gap-1 mt-1">
+                                    <span
+                                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-1 w-fit ${item.paymentMethod?.type === "bank" && bankObj
+                                                ? `bg-gradient-to-r ${bankObj.color} text-white`
+                                                : "bg-gray-100 text-gray-500"
+                                            }`}
+                                    >
+                                        {item.paymentMethod?.type === "bank" ? (
+                                            <Icon name="landmark" size={10} className="text-current" />
+                                        ) : (
+                                            <Icon name="shopping-cart" size={10} className="text-current" />
+                                        )}
+                                        {paymentDisplay}
+                                    </span>
+
+                                    {item.note && (
+                                        <p className="text-[10px] text-gray-400 italic flex items-center gap-1 line-clamp-1">
+                                            <Icon name="file-text" size={10} className="text-gray-400" /> {item.note}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-1 mt-1">
+                                    <Icon name="calendar" size={10} className="text-purple-600" />
+                                    <span className="text-xs font-medium text-purple-600">{formatDate(new Date(item.dueDate))}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                            <span className="font-bold text-gray-900">₺{formatMoneyTR(item.amount)}</span>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenNote(item);
+                                }}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-100"
+                            >
+                                <Icon name="sticky-note" size={12} className="text-purple-600" /> Notlarım
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const IncomeItem = ({ item, onToggle, onEdit, onDelete, onOpenNote }) => {
+            const isReceived = item.isReceived;
+
+            return (
+                <div
+                    className={`group relative p-4 rounded-xl shadow-sm border mb-3 transition-all ${isReceived ? "border-teal-100 bg-teal-50/30" : "border-gray-100 bg-white"
+                        }`}
+                >
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm border border-gray-100 z-10">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(item);
+                            }}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        >
+                            <Icon name="edit-2" size={12} className="text-blue-600" />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(item);
+                            }}
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        >
+                            <Icon name="trash-2" size={12} className="text-red-600" />
+                        </button>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-3 rounded-xl ${isReceived ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600"}`}>
+                                {item.category === "salary" && <Icon name="briefcase" size={20} className="text-current" />}
+                                {item.category === "freelance" && <Icon name="globe" size={20} className="text-current" />}
+                                {!item.category && <Icon name="banknote" size={20} className="text-current" />}
+                            </div>
+
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-sm text-gray-800">{item.title}</h4>
+                                    {item.isRecurring && <Icon name="repeat" size={10} className="text-gray-400" />}
+                                </div>
+
+                                {item.note && (
+                                    <p className="text-[10px] text-gray-400 italic flex items-center gap-1 mt-1">
+                                        <Icon name="file-text" size={10} className="text-gray-400" /> {item.note}
+                                    </p>
+                                )}
+
+                                <div className="flex items-center gap-1 mt-1">
+                                    <Icon name="calendar" size={10} className="text-teal-600" />
+                                    <span className="text-xs font-medium text-teal-600">{formatDate(new Date(item.date))}</span>
+                                </div>
+
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onOpenNote(item);
+                                    }}
+                                    className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full hover:bg-teal-100"
+                                >
+                                    <Icon name="sticky-note" size={12} className="text-teal-700" />
+                                    Notlarım
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                            <span className={`font-bold ${isReceived ? "text-teal-700" : "text-gray-900"}`}>+₺{formatMoneyTR(item.amount)}</span>
+                            <button
+                                onClick={() => onToggle(item)}
+                                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isReceived ? "bg-teal-100 text-teal-700 hover:bg-teal-200" : "bg-gray-900 text-white hover:bg-black shadow-md"
+                                    }`}
+                            >
+                                {isReceived ? (
+                                    <>
+                                        <Icon name="check-circle" size={12} className="text-current" /> Alındı
+                                    </>
+                                ) : (
+                                    <>
+                                        <Icon name="arrow-down-left" size={12} className="text-current" /> Tahsil Et
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // -------------------------
+        // Main App
+        // -------------------------
+        function ModalShell({ children, onClose }) {
+            // ESC ile kapatma (opsiyonel ama faydalı)
+            React.useEffect(() => {
+                const onKeyDown = (e) => {
+                    if (e.key === "Escape") onClose && onClose();
+                };
+                window.addEventListener("keydown", onKeyDown);
+                return () => window.removeEventListener("keydown", onKeyDown);
+            }, [onClose]);
+
+            return (
+                // Backdrop: buraya tıklanınca kapat
+                <div
+                    className="absolute inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm"
+                    onClick={() => onClose && onClose()}
+                >
+                    {/* Modal kutusu: buraya tıklanınca kapatma, tıklamayı yukarıya göndermeyi kes */}
+                    <div
+                        className="bg-white w-full rounded-2xl p-6 animate-slide-up max-w-md"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {children}
+                    </div>
+                </div>
+            );
+        }
+
+        function SourceModal({
+            type,
+            editingItem,
+            form,
+            setForm,
+            banks,
+            products,
+            updateScope,
+            setUpdateScope,
+            effectiveDate,
+            setEffectiveDate,
+            onClose,
+            onSave,
+        }) {
+            const isIncome = type === "income";
+            const isExpense = type === "expense";
+            const isSubscription = type === "subscription";
+
+            const title = isIncome ? "Gelir" : isExpense ? "Gider" : "Abonelik";
+            const canFutureEdit = editingItem && form.type === "recurring";
+
+            return (
+                <ModalShell onClose={onClose}>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold">{editingItem ? `${title} Düzenle` : `${title} Ekle`}</h3>
+                        <button onClick={onClose}>
+                            <Icon name="x" size={24} className="text-gray-400" />
+                        </button>
+                    </div>
+
+                    {canFutureEdit && (
+                        <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4">
+                            <p className="text-xs text-gray-600 font-medium mb-2">Güncelleme kapsamı</p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setUpdateScope("all")}
+                                    className={`flex-1 py-2 rounded-xl font-bold text-sm border ${updateScope === "all" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200"
+                                        }`}
+                                >
+                                    Tümü
+                                </button>
+                                <button
+                                    onClick={() => setUpdateScope("future")}
+                                    className={`flex-1 py-2 rounded-xl font-bold text-sm border ${updateScope === "future" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"
+                                        }`}
+                                >
+                                    Future
+                                </button>
+                            </div>
+
+                            {updateScope === "future" && (
+                                <div className="mt-3">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
+                                    <input
+                                        type="date"
+                                        className="w-full p-3 rounded-xl border border-gray-200"
+                                        value={effectiveDate}
+                                        onChange={(e) => setEffectiveDate(e.target.value)}
+                                    />
+                                    <p className="text-[11px] text-gray-500 mt-1">
+                                        Eski kaydın endDate’i <b>effectiveDate - 1 gün</b> olacak.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Başlık</label>
+                            <input
+                                type="text"
+                                className="w-full p-3 rounded-xl border border-gray-200"
+                                value={form.title}
+                                onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tutar (₺)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                className="w-full p-3 rounded-xl border border-gray-200"
+                                value={form.amount}
+                                onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
+                            />
+                        </div>
+
+                        {!isSubscription && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                                <select
+                                    className="w-full p-3 rounded-xl border border-gray-200"
+                                    value={form.category}
+                                    onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                                >
+                                    {isIncome ? (
+                                        <>
+                                            <option value="salary">Maaş</option>
+                                            <option value="freelance">Freelance</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="bills">Faturalar</option>
+                                            <option value="rent">Kira</option>
+                                            <option value="market">Market</option>
+                                            <option value="other">Diğer</option>
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+                        )}
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setForm((p) => ({ ...p, type: "recurring" }))}
+                                className={`flex-1 py-2 rounded-xl font-bold border ${form.type === "recurring" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200"
+                                    }`}
+                            >
+                                Tekrarlanan
+                            </button>
+                            <button
+                                onClick={() => setForm((p) => ({ ...p, type: "one-time" }))}
+                                className={`flex-1 py-2 rounded-xl font-bold border ${form.type === "one-time" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200"
+                                    }`}
+                            >
+                                Tek Seferlik
+                            </button>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                {form.type === "recurring" ? "Başlangıç Tarihi" : "Tarih"}
+                            </label>
+                            <input
+                                type="date"
+                                className="w-full p-3 rounded-xl border border-gray-200"
+                                value={form.date}
+                                onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">End Date (opsiyonel)</label>
+                            <input
+                                type="date"
+                                className="w-full p-3 rounded-xl border border-gray-200"
+                                value={form.endDate}
+                                onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))}
+                            />
+                        </div>
+
+                        {isSubscription && (
+                            <>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Ödeme Tipi</label>
+                                        <select
+                                            className="w-full p-3 rounded-xl border border-gray-200"
+                                            value={form.paymentMethodType}
+                                            onChange={(e) => setForm((p) => ({ ...p, paymentMethodType: e.target.value }))}
+                                        >
+                                            <option value="bank">Banka</option>
+                                            <option value="manual">Manuel</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Ödeme Değeri</label>
+                                        {form.paymentMethodType === "bank" ? (
+                                            <select
+                                                className="w-full p-3 rounded-xl border border-gray-200"
+                                                value={form.paymentMethodValue}
+                                                onChange={(e) => setForm((p) => ({ ...p, paymentMethodValue: e.target.value }))}
+                                            >
+                                                <option value="">Banka Seç</option>
+                                                {banks.map((b) => (
+                                                    <option key={b.id} value={b.id}>
+                                                        {b.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                className="w-full p-3 rounded-xl border border-gray-200"
+                                                value={form.paymentMethodValue}
+                                                placeholder="Google Play vb."
+                                                onChange={(e) => setForm((p) => ({ ...p, paymentMethodValue: e.target.value }))}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Bağlı Kart (opsiyonel)</label>
+                                    <select
+                                        className="w-full p-3 rounded-xl border border-gray-200"
+                                        value={form.relatedCardId}
+                                        onChange={(e) => setForm((p) => ({ ...p, relatedCardId: e.target.value }))}
+                                    >
+                                        <option value="">Seçme</option>
+                                        {products
+                                            .filter((p) => p.type === "card")
+                                            .map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name} (**** {c.last4Digits})
+                                                </option>
+                                            ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Kısa Not</label>
+                            <input
+                                type="text"
+                                className="w-full p-3 rounded-xl border border-gray-200"
+                                value={form.note}
+                                onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
+                            />
+                        </div>
+
+                        <button
+                            onClick={onSave}
+                            className={`w-full py-3 rounded-xl font-bold text-white ${isIncome ? "bg-teal-600 hover:bg-teal-700" : isExpense ? "bg-red-600 hover:bg-red-700" : "bg-purple-600 hover:bg-purple-700"
+                                }`}
+                        >
+                            Kaydet
+                        </button>
+                    </div>
+                </ModalShell>
+            );
+        }
+        function ProductModal({
+            editingItem,
+            newProduct,
+            setNewProduct,
+            banks,
+            products,
+            onClose,
+            onSave,
+        }) {
+            return (
+                <ModalShell onClose={onClose}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-bold">{editingItem ? "Ürün Düzenle" : "Kart/Kredi Ekle"}</h3>
+                        <button onClick={onClose}>
+                            <Icon name="x" size={24} className="text-gray-400" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Banka</label>
+                            <select
+                                className="w-full p-3 rounded-xl border border-gray-200"
+                                value={newProduct.bankId}
+                                onChange={(e) => setNewProduct((p) => ({ ...p, bankId: e.target.value }))}
+                            >
+                                <option value="">Seçiniz</option>
+                                {banks.map((b) => (
+                                    <option key={b.id} value={b.id}>
+                                        {b.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setNewProduct((p) => ({ ...p, type: "card" }))}
+                                className={`flex-1 py-2 rounded-xl font-bold border ${newProduct.type === "card" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"
+                                    }`}
+                            >
+                                Kart
+                            </button>
+                            <button
+                                onClick={() => setNewProduct((p) => ({ ...p, type: "loan" }))}
+                                className={`flex-1 py-2 rounded-xl font-bold border ${newProduct.type === "loan" ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                                    }`}
+                            >
+                                Kredi
+                            </button>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Ürün Adı</label>
+                            <input
+                                type="text"
+                                className="w-full p-3 rounded-xl border border-gray-200"
+                                value={newProduct.name}
+                                onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))}
+                            />
+                        </div>
+
+                        {newProduct.type === "card" ? (
+                            <>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setNewProduct((p) => ({ ...p, cardType: "physical" }))}
+                                        className={`flex-1 py-2 rounded-xl font-bold border ${newProduct.cardType === "physical" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200"
+                                            }`}
+                                    >
+                                        Fiziki
+                                    </button>
+                                    <button
+                                        onClick={() => setNewProduct((p) => ({ ...p, cardType: "virtual" }))}
+                                        className={`flex-1 py-2 rounded-xl font-bold border ${newProduct.cardType === "virtual" ? "bg-purple-600 text-white border-purple-600" : "bg-white text-gray-600 border-gray-200"
+                                            }`}
+                                    >
+                                        Sanal
+                                    </button>
+                                </div>
+                                {/* ✅ Sanal seçilince: bağlı olduğu fiziki kartı seçtir */}
+                                {newProduct.type === "card" && newProduct.cardType === "virtual" && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Bağlı Olduğu Fiziki Kart
+                                        </label>
+
+                                        <select
+                                            className="w-full p-3 rounded-xl border border-gray-200"
+                                            value={newProduct.parentCardId || ""}
+                                            onChange={(e) => setNewProduct((p) => ({ ...p, parentCardId: e.target.value }))}
+                                        >
+                                            <option value="">Fiziki Kart Seçiniz</option>
+
+                                            {(products || [])
+                                                .filter(
+                                                    (p) =>
+                                                        p.type === "card" &&
+                                                        p.cardType === "physical" &&
+                                                        String(p.bankId) === String(newProduct.bankId)
+                                                )
+                                                .map((c) => (
+                                                    <option key={c.id} value={c.id}>
+                                                        {c.name} (**** {c.last4Digits})
+                                                    </option>
+                                                ))}
+                                        </select>
+
+                                        <p className="text-[11px] text-gray-500 mt-1">
+                                            Sanal kart, seçtiğiniz fiziki karta bağlı olarak sadece bilgilendirme amaçlı tutulur.
+                                        </p>
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Son 4 Hane</label>
+                                        <input
+                                            type="text"
+                                            maxLength="4"
+                                            className="w-full p-3 rounded-xl border border-gray-200"
+                                            value={newProduct.last4Digits}
+                                            onChange={(e) => setNewProduct((p) => ({ ...p, last4Digits: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    {newProduct.cardType === "physical" && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Limit</label>
+                                            <input
+                                                type="number"
+                                                className="w-full p-3 rounded-xl border border-gray-200"
+                                                value={newProduct.limit}
+                                                onChange={(e) => setNewProduct((p) => ({ ...p, limit: e.target.value }))}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {newProduct.cardType === "physical" && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Kesim Günü</label>
+                                            <input
+                                                type="number"
+                                                className="w-full p-3 rounded-xl border border-gray-200"
+                                                value={newProduct.cutoffDay}
+                                                onChange={(e) => setNewProduct((p) => ({ ...p, cutoffDay: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Son Ödeme Günü</label>
+                                            <input
+                                                type="number"
+                                                className="w-full p-3 rounded-xl border border-gray-200"
+                                                value={newProduct.paymentDueDay}
+                                                onChange={(e) => setNewProduct((p) => ({ ...p, paymentDueDay: e.target.value }))}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Aylık Taksit (₺)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            className="w-full p-3 rounded-xl border border-gray-200"
+                                            value={newProduct.installmentAmount}
+                                            onChange={(e) => setNewProduct((p) => ({ ...p, installmentAmount: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kaç Taksit</label>
+                                        <input
+                                            type="number"
+                                            className="w-full p-3 rounded-xl border border-gray-200"
+                                            value={newProduct.totalInstallments}
+                                            onChange={(e) => setNewProduct((p) => ({ ...p, totalInstallments: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">İlk Taksit Ödeme Tarihi</label>
+                                    <input
+                                        type="date"
+                                        className="w-full p-3 rounded-xl border border-gray-200"
+                                        value={newProduct.firstPaymentDate}
+                                        onChange={(e) => setNewProduct((p) => ({ ...p, firstPaymentDate: e.target.value }))}
+                                    />
+                                </div>
+
+                                <div className="text-[11px] text-gray-500 bg-gray-50 border border-gray-100 rounded-xl p-3">
+                                    Toplam kredi otomatik hesaplanır: <b>(aylık taksit × taksit sayısı)</b>.
+                                    Geçmiş taksitler otomatik “ödendi” işaretlenecek.
+                                </div>
+                            </>
+                        )}
+
+                        <button
+                            onClick={onSave}
+                            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors mt-2"
+                        >
+                            Kaydet
+                        </button>
+                    </div>
+                </ModalShell>
+            );
+        }
+
+        function BankModal({
+            editingItem,
+            newBankName,
+            setNewBankName,
+            newBankColor,
+            setNewBankColor,
+            onClose,
+            onSave,
+        }) {
+            return (
+                <ModalShell onClose={onClose}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-bold">{editingItem ? "Banka Düzenle" : "Yeni Banka Ekle"}</h3>
+                        <button onClick={onClose}>
+                            <Icon name="x" size={24} className="text-gray-400" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Banka Adı</label>
+                            <input
+                                type="text"
+                                className="w-full p-3 rounded-xl border border-gray-200"
+                                value={newBankName}
+                                onChange={(e) => setNewBankName(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Tema Rengi</label>
+                            <div className="flex gap-2 flex-wrap">
+                                {[
+                                    "from-blue-600 to-blue-800",
+                                    "from-green-600 to-green-800",
+                                    "from-red-600 to-red-800",
+                                    "from-purple-600 to-purple-800",
+                                    "from-orange-500 to-orange-700",
+                                    "from-gray-700 to-gray-900",
+                                ].map((color) => (
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        onClick={() => setNewBankColor(color)}
+                                        className={`w-8 h-8 rounded-full bg-gradient-to-br ${color} ${newBankColor === color ? "ring-2 ring-offset-2 ring-gray-400" : ""
+                                            }`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={onSave}
+                            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors mt-2"
+                        >
+                            Kaydet
+                        </button>
+                    </div>
+                </ModalShell>
+            );
+        }
+
+        function App() {
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [activeTab, setActiveTab] = useState("gider");
+            const [paymentTab, setPaymentTab] = useState("pending");
+            const [incomeTab, setIncomeTab] = useState("expected");
+            const [viewDate, setViewDate] = useState(new Date());
+
+            const [activeModal, setActiveModal] = useState("none");
+            const [editingItem, setEditingItem] = useState(null);
+            const [deletingItem, setDeletingItem] = useState(null);
+
+            // Not modalları (abonelik + gelir + gider)
+            const [noteModalItem, setNoteModalItem] = useState(null);
+            const [noteText, setNoteText] = useState("");
+            const [noteTargetType, setNoteTargetType] = useState(null); // "subscription" | "income" | "expense"
+            const [cardAmountTarget, setCardAmountTarget] = useState(null); // card payment row
+
+            // Forms
+            const [newBankName, setNewBankName] = useState("");
+            const [newBankColor, setNewBankColor] = useState("from-blue-600 to-blue-800");
+
+            const [newProduct, setNewProduct] = useState({
+                bankId: "",
+                type: "card",
+                name: "",
+                cardType: "physical",
+                parentCardId: "",   // <-- SANAL kartın bağlı olduğu fizikî kart id'si
+                last4Digits: "",
+                limit: "",
+                cutoffDay: "",
+                paymentDueDay: "",
+
+                // LOAN (yeni)
+                installmentAmount: "",
+                totalInstallments: "",
+                firstPaymentDate: "",
+
+                // (eski alanlar dursun, ama loan’da artık kullanmayacağız)
+                total: "",
+                remaining: "",
+                installment: "",
+                startDate: "",
+            });
+
+            const [newIncome, setNewIncome] = useState({
+                title: "",
+                amount: "",
+                type: "recurring",
+                date: "",
+                category: "salary",
+                endDate: "",
+                note: "",
+            });
+
+            const [newExpense, setNewExpense] = useState({
+                title: "",
+                amount: "",
+                type: "recurring",
+                date: "",
+                category: "bills",
+                endDate: "",
+                note: "",
+            });
+
+            const [newSubscription, setNewSubscription] = useState({
+                title: "",
+                amount: "",
+                type: "recurring",
+                date: "",
+                endDate: "",
+                paymentMethodType: "bank",
+                paymentMethodValue: "",
+                relatedCardId: "",
+                note: "",
+            });
+
+            const [updateScope, setUpdateScope] = useState("all");
+            const [effectiveDate, setEffectiveDate] = useState("");
+
+            // Data
+            const [banks, setBanks] = useState([]);
+            const [products, setProducts] = useState([]);
+            const [payments, setPayments] = useState([]);
+            const [bestCards, setBestCards] = useState([]);
+            const [expenseSources, setExpenseSources] = useState([]);
+            const [subscriptionSources, setSubscriptionSources] = useState([]);
+            const [incomeSources, setIncomeSources] = useState([]);
+            const [statusTracker, setStatusTracker] = useState({});
+            const [subscriptionTracker, setSubscriptionTracker] = useState({});
+
+            const [selectedBank, setSelectedBank] = useState(null);
+
+            // Save debounce
+            const saveTimerRef = useRef(null);
+            const lastLoadedRef = useRef(false);
+
+            // Initial load after login
+            useEffect(() => {
+                if (!isAuthenticated) return;
+
+                api.getAll()
+                    .then((data) => {
+                        setBanks(data.banks || []);
+                        setProducts(data.products || []);
+                        setPayments(data.payments || []);
+                        setExpenseSources(data.expenseSources || []);
+                        setSubscriptionSources(data.subscriptionSources || []);
+                        setIncomeSources(data.incomeSources || []);
+                        setStatusTracker(data.statusTracker || {});
+                        setSubscriptionTracker(data.subscriptionTracker || {});
+                        lastLoadedRef.current = true;
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                        alert("Sheets verileri yüklenemedi. Konsolu kontrol et.");
+                    });
+            }, [isAuthenticated]);
+
+            // Auto save on changes (debounced)
+            useEffect(() => {
+                if (!isAuthenticated) return;
+                if (!lastLoadedRef.current) return;
+
+                if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+                saveTimerRef.current = setTimeout(() => {
+                    const payload = {
+                        banks,
+                        products,
+                        payments,
+                        expenseSources,
+                        subscriptionSources,
+                        incomeSources,
+                        statusTracker,
+                        subscriptionTracker,
+                    };
+                    api.saveAll(payload).catch((err) => console.error(err));
+                }, 800);
+
+                return () => {
+                    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+                };
+            }, [
+                banks,
+                products,
+                payments,
+                expenseSources,
+                subscriptionSources,
+                incomeSources,
+                statusTracker,
+                subscriptionTracker,
+                isAuthenticated,
+            ]);
+
+            // -------------------------
+            // ID generation (next integer)
+            // -------------------------
+            const nextIdFor = (collection) => {
+                const ids = (collection || []).map((x) => Number(x.id)).filter((n) => Number.isFinite(n));
+                const max = ids.length ? Math.max(...ids) : 0;
+                return max + 1;
+            };
+            const addMonths = (dateStr, m) => {
+                const d = new Date(dateStr + "T00:00:00");
+                const day = d.getDate();
+                d.setMonth(d.getMonth() + m);
+                if (d.getDate() !== day) d.setDate(0);
+                d.setHours(0, 0, 0, 0);
+                return d;
+            };
+
+            const generateLoanInstallments = (loanProduct) => {
+                const first = loanProduct.firstPaymentDate;
+                const n = Number(loanProduct.totalInstallments || 0);
+                const amt = Number(loanProduct.installmentAmount || 0);
+                if (!first || !n || !amt) return [];
+
+                const t = today();
+                t.setHours(0, 0, 0, 0);
+
+                const rows = [];
+                for (let i = 0; i < n; i++) {
+                    const due = addMonths(first, i);
+
+                    const autoPaid = due < t; // geçmiş taksitler otomatik ödendi
+                    rows.push({
+                        title: loanProduct.name,
+                        subtitle: `Kredi Taksiti ${i + 1}/${n}`,
+                        amount: amt,
+                        dueDate: due.toISOString(),
+                        type: "loan",
+                        isPaid: autoPaid,
+                        productId: loanProduct.id,
+                        installmentNo: i + 1,
+                        totalInstallments: n,
+                    });
+                }
+                return rows;
+            };
+
+            const upsertLoanPayments = (loanProduct) => {
+                const generated = generateLoanInstallments(loanProduct);
+                if (!generated.length) return;
+
+                setPayments((prev) => {
+                    const withoutOld = (prev || []).filter(
+                        (p) => !(p.type === "loan" && String(p.productId) === String(loanProduct.id))
+                    );
+
+                    let nextId = nextIdFor(withoutOld);
+                    const withIds = generated.map((r) => ({ ...r, id: nextId++ }));
+
+                    return withoutOld.concat(withIds);
+                });
+            };
+            // -------------------------
+            // Status toggles
+            // -------------------------
+            const toggleExpenseOrIncomeStatus = (item) => {
+                const key = monthKey(item.id, item.date || item.dueDate);
+                setStatusTracker((prev) => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            const togglePaymentStatus = (paymentRow) => {
+                // Payments sheet rows store isPaid
+                setPayments((prev) =>
+                    prev.map((p) => (Number(p.id) === Number(paymentRow.id) ? { ...p, isPaid: !p.isPaid } : p))
+                );
+            };
+
+            const toggleSubscriptionStatus = (item) => {
+                const key = monthKey(item.id, item.dueDate);
+                setSubscriptionTracker((prev) => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            // -------------------------
+            // Month navigation
+            // -------------------------
+            const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+            const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+
+            // -------------------------
+            // View generator (sources -> month view)
+            // -------------------------
+            const generateViewData = (sources, tracker, kind) => {
+                const currentMonth = viewDate.getMonth();
+                const currentYear = viewDate.getFullYear();
+                let items = [];
+
+                (sources || []).forEach((source) => {
+                    if (source.type === "one-time") {
+                        const iDate = new Date(source.date);
+                        if (iDate.getMonth() === currentMonth && iDate.getFullYear() === currentYear) {
+                            const key = `${source.id}_${currentMonth}_${currentYear}`;
+                            const isDone = !!tracker[key];
+                            items.push({
+                                ...source,
+                                dueDate: source.date,
+                                date: source.date,
+                                isPaid: isDone,
+                                isReceived: isDone,
+                                isRecurring: false,
+                                subtitle: "Tek Seferlik",
+                                isManual: true,
+                            });
+                        }
+                    } else if (source.type === "recurring") {
+                        const startDate = new Date(source.startDate);
+                        const endDate = source.endDate ? new Date(source.endDate) : null;
+
+                        const dueDay = Number(source.dayOfMonth || startDate.getDate());
+                        const generatedDate = new Date(currentYear, currentMonth, dueDay);
+                        generatedDate.setHours(0, 0, 0, 0);
+
+                        const startCompare = new Date(startDate);
+                        startCompare.setHours(0, 0, 0, 0);
+
+                        let isValid = generatedDate >= startCompare;
+
+                        if (isValid && endDate) {
+                            const endCompare = new Date(endDate);
+                            endCompare.setHours(0, 0, 0, 0);
+                            if (generatedDate > endCompare) isValid = false;
+                        }
+
+                        if (isValid) {
+                            const key = `${source.id}_${currentMonth}_${currentYear}`;
+                            const isDone = !!tracker[key];
+
+                            items.push({
+                                ...source,
+                                dueDate: generatedDate.toISOString(),
+                                date: generatedDate.toISOString(),
+                                isPaid: isDone,
+                                isReceived: isDone,
+                                isRecurring: true,
+                                subtitle: "Tekrarlanan",
+                                isManual: true,
+                            });
+                        }
+                    }
+                });
+
+                return items.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            };
+
+            // -------------------------
+            // Card monthly payment logic (madde 4)
+            // -------------------------
+            const cardNeedsAmountThisMonth = (card) => {
+                const m = viewDate.getMonth();
+                const y = viewDate.getFullYear();
+                const cutoffDay = Number(card.cutoffDay);
+                if (!cutoffDay) return false;
+
+                // "kesim tarihi geçtiyse" uyarı çıkar
+                const cutoff = new Date(y, m, cutoffDay);
+                const now = new Date();
+                // sadece o ay görüntülenirken mantıklı: eğer o ayın kesimi bugünden küçük/eşitse
+                return cutoff <= now;
+            };
+
+            const ensureCardPaymentRowForMonth = (card) => {
+                const m = viewDate.getMonth();
+                const y = viewDate.getFullYear();
+
+                const dueDay = Number(card.paymentDueDay || 0);
+                if (!dueDay) return null;
+
+                const dueDate = new Date(y, m, dueDay);
+                dueDate.setHours(0, 0, 0, 0);
+
+                // Payments sheet’te bu ay bu kart için type=card satırı var mı?
+                const existing = (payments || []).find((p) => {
+                    if (p.type !== "card") return false;
+                    if (String(p.productId || "") !== String(card.id)) return false;
+                    const d = new Date(p.dueDate);
+                    return d.getMonth() === m && d.getFullYear() === y;
+                });
+
+                if (existing) {
+                    // amount 0 veya boş ise + kesim geçtiyse uyar
+                    const needs = cardNeedsAmountThisMonth(card) && Number(existing.amount || 0) <= 0;
+                    return {
+                        ...existing,
+                        title: `${card.name}`,
+                        subtitle: `Kredi Kartı Ödemesi`,
+                        needsCardAmount: needs,
+                        isManual: false,
+                    };
+                }
+
+                // yoksa UI'da görünmesi için "placeholder row" üret (henüz kaydetmiyoruz)
+                const needs = cardNeedsAmountThisMonth(card);
+                return {
+                    id: -1, // UI placeholder
+                    title: `${card.name}`,
+                    subtitle: `Kredi Kartı Ödemesi`,
+                    amount: 0,
+                    dueDate: dueDate.toISOString(),
+                    type: "card",
+                    isPaid: false,
+                    productId: card.id,
+                    needsCardAmount: needs,
+                    isManual: false,
+                    __placeholder: true,
+                };
+            };
+
+            const upsertCardPaymentAmount = (row, amount) => {
+                const amt = Number(amount || 0);
+                const m = new Date(row.dueDate).getMonth();
+                const y = new Date(row.dueDate).getFullYear();
+
+                // varsa update, yoksa create
+                const existingIdx = payments.findIndex((p) => {
+                    if (p.type !== "card") return false;
+                    if (String(p.productId) !== String(row.productId)) return false;
+                    const d = new Date(p.dueDate);
+                    return d.getMonth() === m && d.getFullYear() === y;
+                });
+
+                if (existingIdx >= 0) {
+                    setPayments((prev) =>
+                        prev.map((p, idx) => (idx === existingIdx ? { ...p, amount: amt } : p))
+                    );
+                } else {
+                    const newId = nextIdFor(payments);
+                    setPayments((prev) =>
+                        prev.concat([
+                            {
+                                id: newId,
+                                title: row.title || "Kart Ödemesi",
+                                subtitle: row.subtitle || "",
+                                amount: amt,
+                                dueDate: row.dueDate,
+                                type: "card",
+                                isPaid: false,
+                                productId: row.productId,
+                            },
+                        ])
+                    );
+                }
+            };
+
+            // -------------------------
+            // Note modal
+            // -------------------------
+            const openNoteModal = (item, type) => {
+                setNoteModalItem(item);
+                setNoteTargetType(type);
+
+                if (type === "subscription") {
+                    const src = subscriptionSources.find((s) => Number(s.id) === Number(item.id));
+                    setNoteText((src && src.note) || "");
+                } else if (type === "income") {
+                    const src = incomeSources.find((s) => Number(s.id) === Number(item.id));
+                    setNoteText((src && src.note) || "");
+                } else if (type === "expense") {
+                    const src = expenseSources.find((s) => Number(s.id) === Number(item.id));
+                    setNoteText((src && src.note) || "");
+                }
+
+                setActiveModal("noteModal");
+            };
+
+            const saveNote = () => {
+                const txt = noteText || "";
+                if (noteTargetType === "subscription" && noteModalItem) {
+                    setSubscriptionSources((prev) => prev.map((s) => (Number(s.id) === Number(noteModalItem.id) ? { ...s, note: txt } : s)));
+                }
+                if (noteTargetType === "income" && noteModalItem) {
+                    setIncomeSources((prev) => prev.map((s) => (Number(s.id) === Number(noteModalItem.id) ? { ...s, note: txt } : s)));
+                }
+                if (noteTargetType === "expense" && noteModalItem) {
+                    setExpenseSources((prev) => prev.map((s) => (Number(s.id) === Number(noteModalItem.id) ? { ...s, note: txt } : s)));
+                }
+                setActiveModal("none");
+                setNoteModalItem(null);
+                setNoteText("");
+                setNoteTargetType(null);
+            };
+
+            // -------------------------
+            // CRUD: Bank
+            // -------------------------
+            const openBankModal = (bank = null) => {
+                setEditingItem(bank);
+                setNewBankName(bank ? bank.name : "");
+                setNewBankColor(bank ? bank.color : "from-blue-600 to-blue-800");
+                setActiveModal("bankModal");
+            };
+
+            const handleSaveBank = () => {
+                if (!newBankName) return;
+
+                if (editingItem) {
+                    setBanks((prev) =>
+                        prev.map((b) =>
+                            Number(b.id) === Number(editingItem.id)
+                                ? { ...b, name: newBankName, color: newBankColor }
+                                : b
+                        )
+                    );
+
+                    // ✅ Eğer şu an detayına baktığın banka buysa, header anında güncellensin
+                    setSelectedBank((prev) => {
+                        if (!prev) return prev; // detay sayfasında değilsek dokunma
+                        if (Number(prev.id) !== Number(editingItem.id)) return prev; // başka bankaysa dokunma
+                        return { ...prev, name: newBankName, color: newBankColor }; // aynı bankaysa güncelle
+                    });
+                } else {
+                    const newId = nextIdFor(banks);
+                    setBanks((prev) => prev.concat([{ id: newId, name: newBankName, color: newBankColor }]));
+                }
+
+                setActiveModal("none");
+                setNewBankName("");
+                setEditingItem(null);
+            };
+
+            // -------------------------
+            // CRUD: Product (card/loan)
+            // -------------------------
+            const openProductModal = (product = null) => {
+                setEditingItem(product);
+
+                if (product) {
+                    setNewProduct({
+                        bankId: String(product.bankId || ""),
+                        type: product.type || "card",
+                        name: product.name || "",
+                        cardType: product.cardType || "physical",
+                        parentCardId: product.parentCardId != null ? String(product.parentCardId) : "",
+                        last4Digits: product.last4Digits || "",
+                        limit: product.limit != null ? String(product.limit) : "",
+                        cutoffDay: product.cutoffDay != null ? String(product.cutoffDay) : "",
+                        paymentDueDay: product.paymentDueDay != null ? String(product.paymentDueDay) : "",
+                        total: product.total != null ? String(product.total) : "",
+                        remaining: product.remaining != null ? String(product.remaining) : "",
+                        installment: product.installment != null ? String(product.installment) : "",
+                        totalInstallments: product.totalInstallments != null ? String(product.totalInstallments) : "",
+                        startDate: product.startDate || "",
+                        installmentAmount: product.installmentAmount != null ? String(product.installmentAmount) : "",
+                        firstPaymentDate: product.firstPaymentDate || "",
+                    });
+                } else {
+                    setNewProduct({
+                        bankId: "",
+                        type: "card",
+                        name: "",
+                        cardType: "physical",
+                        parentCardId: "",
+                        last4Digits: "",
+                        limit: "",
+                        cutoffDay: "",
+                        paymentDueDay: "",
+                        total: "",
+                        remaining: "",
+                        installment: "",
+                        totalInstallments: "",
+                        startDate: "",
+                        installmentAmount: "",     // <-- burada product yok
+                        firstPaymentDate: "",      // <-- burada product yok
+                    });
+                }
+
+                setActiveModal("productModal");
+            };
+
+            const handleSaveProduct = () => {
+                if (!newProduct.bankId || !newProduct.name) return;
+                if (newProduct.type === "card" && newProduct.cardType === "virtual" && !newProduct.parentCardId) {
+                    alert("Sanal kart eklemek için bağlı olduğu fiziki kartı seçmelisiniz.");
+                    return;
+                }
+
+                const productData = {
+                    id: editingItem ? Number(editingItem.id) : nextIdFor(products),
+                    bankId: Number(newProduct.bankId),
+                    type: newProduct.type,
+                    name: newProduct.name,
+                    ...(newProduct.type === "card"
+                        ? {
+                            cardType: newProduct.cardType,
+                            parentCardId: newProduct.cardType === "virtual" ? Number(newProduct.parentCardId) : null,
+                            last4Digits: newProduct.last4Digits || "",
+                            limit: Number(newProduct.limit || 0),
+                            cutoffDay: Number(newProduct.cutoffDay || 0),
+                            paymentDueDay: Number(newProduct.paymentDueDay || 0),
+                        }
+                        : {
+                            installmentAmount: Number(newProduct.installmentAmount || 0),
+                            totalInstallments: Number(newProduct.totalInstallments || 0),
+                            firstPaymentDate: newProduct.firstPaymentDate || "",
+
+                            total: Number(newProduct.installmentAmount || 0) * Number(newProduct.totalInstallments || 0),
+                            remaining: Number(newProduct.installmentAmount || 0) * Number(newProduct.totalInstallments || 0),
+                        }),
+                };
+
+                if (editingItem) {
+                    setProducts((prev) => prev.map((p) => (Number(p.id) === Number(editingItem.id) ? productData : p)));
+                } else {
+                    setProducts((prev) => prev.concat([productData]));
+                }
+                if (productData.type === "loan") {
+                    upsertLoanPayments(productData);
+                }
+                setActiveModal("none");
+                setEditingItem(null);
+            };
+
+            // -------------------------
+            // CRUD: Sources (income/expense/subscription)
+            // with "future" logic requirements (6 & 7)
+            // -------------------------
+            const openSourceModal = (type, item = null) => {
+                setEditingItem(item);
+                setUpdateScope("all");
+                setEffectiveDate("");
+
+                if (type === "income") {
+                    if (item) {
+                        const src = incomeSources.find((s) => Number(s.id) === Number(item.id));
+                        setNewIncome({
+                            title: src.title || "",
+                            amount: String(src.amount ?? ""),
+                            type: src.type || "recurring",
+                            category: src.category || "salary",
+                            date: src.type === "recurring" ? (src.startDate || "") : (src.date || ""),
+                            endDate: src.endDate || "",
+                            note: src.note || "",
+                        });
+                    } else {
+                        setNewIncome({ title: "", amount: "", type: "recurring", date: "", category: "salary", endDate: "", note: "" });
+                    }
+                    setActiveModal("incomeModal");
+                }
+
+                if (type === "expense") {
+                    if (item) {
+                        const src = expenseSources.find((s) => Number(s.id) === Number(item.id));
+                        setNewExpense({
+                            title: src.title || "",
+                            amount: String(src.amount ?? ""),
+                            type: src.type || "recurring",
+                            category: src.category || "bills",
+                            date: src.type === "recurring" ? (src.startDate || "") : (src.date || ""),
+                            endDate: src.endDate || "",
+                            note: src.note || "",
+                        });
+                    } else {
+                        setNewExpense({ title: "", amount: "", type: "recurring", date: "", category: "bills", endDate: "", note: "" });
+                    }
+                    setActiveModal("expenseModal");
+                }
+
+                if (type === "subscription") {
+                    if (item) {
+                        const src = subscriptionSources.find((s) => Number(s.id) === Number(item.id));
+                        setNewSubscription({
+                            title: src.title || "",
+                            amount: String(src.amount ?? ""),
+                            type: src.type || "recurring",
+                            date: src.type === "recurring" ? (src.startDate || "") : (src.date || ""),
+                            endDate: src.endDate || "",
+                            paymentMethodType: (src.paymentMethod && src.paymentMethod.type) || "bank",
+                            paymentMethodValue: (src.paymentMethod && src.paymentMethod.value) || "",
+                            relatedCardId: src.relatedCardId ? String(src.relatedCardId) : "",
+                            note: src.note || "",
+                        });
+                    } else {
+                        setNewSubscription({
+                            title: "",
+                            amount: "",
+                            type: "recurring",
+                            date: "",
+                            endDate: "",
+                            paymentMethodType: "bank",
+                            paymentMethodValue: "",
+                            relatedCardId: "",
+                            note: "",
+                        });
+                    }
+                    setActiveModal("subscriptionModal");
+                }
+            };
+
+            const handleSaveSource = (type) => {
+                let form, setForm, sources, setSources, defaultForm;
+
+                if (type === "income") {
+                    form = newIncome;
+                    setForm = setNewIncome;
+                    sources = incomeSources;
+                    setSources = setIncomeSources;
+                    defaultForm = { title: "", amount: "", type: "recurring", date: "", category: "salary", endDate: "", note: "" };
+                } else if (type === "expense") {
+                    form = newExpense;
+                    setForm = setNewExpense;
+                    sources = expenseSources;
+                    setSources = setExpenseSources;
+                    defaultForm = { title: "", amount: "", type: "recurring", date: "", category: "bills", endDate: "", note: "" };
+                } else {
+                    form = newSubscription;
+                    setForm = setNewSubscription;
+                    sources = subscriptionSources;
+                    setSources = setSubscriptionSources;
+                    defaultForm = {
+                        title: "",
+                        amount: "",
+                        type: "recurring",
+                        date: "",
+                        endDate: "",
+                        paymentMethodType: "bank",
+                        paymentMethodValue: "",
+                        relatedCardId: "",
+                        note: "",
+                    };
+                }
+
+                if (!form.title || form.amount === "" || !form.date) return;
+
+                const base = {
+                    id: editingItem ? Number(editingItem.id) : nextIdFor(sources),
+                    title: form.title,
+                    amount: Number(form.amount || 0),
+                    type: form.type,
+                    category: form.category || null,
+                    endDate: form.endDate || null,
+                    note: form.note || "",
+                    ...(type === "subscription"
+                        ? {
+                            paymentMethod: { type: form.paymentMethodType, value: form.paymentMethodValue },
+                            relatedCardId: form.relatedCardId || "",
+                        }
+                        : {}),
+                };
+
+                // one-time vs recurring
+                if (form.type === "recurring") {
+                    const start = new Date(form.date);
+                    const dayOfMonth = start.getDate();
+                    base.startDate = isoDateOnly(start);
+                    base.dayOfMonth = dayOfMonth;
+                    delete base.date;
+                } else {
+                    base.date = new Date(form.date).toISOString();
+                    delete base.startDate;
+                    delete base.dayOfMonth;
+                }
+
+                // edit logic
+                if (editingItem) {
+                    const oldSource = sources.find((s) => Number(s.id) === Number(editingItem.id));
+
+                    // Future edit: old endDate = effectiveDate - 1 day
+                    if (oldSource && oldSource.type === "recurring" && updateScope === "future" && effectiveDate) {
+                        const cut = addDays(effectiveDate, -1);
+                        const updatedOld = { ...oldSource, endDate: isoDateOnly(cut) };
+
+                        // requirement (7): old dayOfMonth korunacak, sadece başlık/tutar değişecek
+                        const newRec = {
+                            ...oldSource,
+                            id: nextIdFor(sources),
+                            title: base.title,
+                            amount: base.amount,
+                            note: base.note,
+                            // new start date is effectiveDate but dayOfMonth remains old
+                            startDate: isoDateOnly(effectiveDate),
+                            dayOfMonth: Number(oldSource.dayOfMonth || new Date(oldSource.startDate).getDate()),
+                            endDate: base.endDate || null,
+                        };
+
+                        if (type === "subscription") {
+                            newRec.paymentMethod = base.paymentMethod;
+                            newRec.relatedCardId = base.relatedCardId;
+                        }
+                        if (type !== "subscription") {
+                            newRec.category = base.category;
+                        }
+
+                        setSources((prev) => prev.map((s) => (Number(s.id) === Number(oldSource.id) ? updatedOld : s)).concat([newRec]));
+                    } else {
+                        // Normal edit
+                        setSources((prev) => prev.map((s) => (Number(s.id) === Number(editingItem.id) ? { ...s, ...base } : s)));
+                    }
+                } else {
+                    setSources((prev) => prev.concat([base]));
+                }
+
+                setForm(defaultForm);
+                setEditingItem(null);
+                setActiveModal("none");
+            };
+
+            // -------------------------
+            // Delete
+            // -------------------------
+            const initDeleteSource = (item, type) => {
+                const sources = type === "income" ? incomeSources : type === "subscription" ? subscriptionSources : expenseSources;
+                const source = sources.find((s) => Number(s.id) === Number(item.id));
+                if (!source) return;
+                setDeletingItem({ type, data: source });
+                setActiveModal("deleteConfirm");
+            };
+
+            const initDeleteBank = (bank) => {
+                if (!bank) return;
+
+                const relatedProducts = (products || []).filter((p) => Number(p.bankId) === Number(bank.id));
+                const relatedProductIds = new Set(relatedProducts.map((p) => String(p.id)));
+
+                const relatedPaymentsCount = (payments || []).filter((p) => {
+                    // loan/card satırlarında productId var
+                    if (p.type !== "loan" && p.type !== "card") return false;
+                    return relatedProductIds.has(String(p.productId));
+                }).length;
+
+                const relatedSubscriptionsCount = (subscriptionSources || []).filter((s) => {
+                    return s.paymentMethod?.type === "bank" && String(s.paymentMethod?.value) === String(bank.id);
+                }).length;
+
+                setDeletingItem({
+                    type: "bank",
+                    data: bank,
+                    meta: {
+                        productCount: relatedProducts.length,
+                        paymentsCount: relatedPaymentsCount,
+                        subscriptionsCount: relatedSubscriptionsCount,
+                    },
+                });
+
+                setActiveModal("deleteConfirm");
+            };
+
+            const confirmDelete = () => {
+                if (!deletingItem) return;
+
+                // ✅ BANK SİLME
+                if (deletingItem.type === "bank") {
+                    const bankId = deletingItem.data.id;
+
+                    // 1) Bankaya bağlı ürünleri bul
+                    const relatedProducts = (products || []).filter((p) => Number(p.bankId) === Number(bankId));
+                    const relatedProductIds = new Set(relatedProducts.map((p) => String(p.id)));
+
+                    // 2) Products: bankaya bağlı ürünleri sil
+                    setProducts((prev) => (prev || []).filter((p) => Number(p.bankId) !== Number(bankId)));
+
+                    // 3) Payments: o ürünlere bağlı loan/card satırlarını sil
+                    setPayments((prev) =>
+                        (prev || []).filter((p) => {
+                            if (p.type !== "loan" && p.type !== "card") return true;
+                            return !relatedProductIds.has(String(p.productId));
+                        })
+                    );
+
+                    // 4) Abonelikler: ödeme bankası silinen bankaysa manual’a çevir
+                    setSubscriptionSources((prev) =>
+                        (prev || []).map((s) => {
+                            const isThisBank = s.paymentMethod?.type === "bank" && String(s.paymentMethod?.value) === String(bankId);
+                            if (!isThisBank) return s;
+                            return {
+                                ...s,
+                                paymentMethod: { type: "manual", value: "" }, // istersen "Banka Silindi" yazabilirsin
+                                relatedCardId: "", // bankaya bağlı kart da silinmiş olabilir
+                            };
+                        })
+                    );
+
+                    // 5) Bankalar listesinden sil
+                    setBanks((prev) => (prev || []).filter((b) => Number(b.id) !== Number(bankId)));
+
+                    // 6) Eğer o banka açık ekrandaysa geri çık
+                    setSelectedBank((prev) => {
+                        if (!prev) return prev;
+                        if (Number(prev.id) !== Number(bankId)) return prev;
+                        return null;
+                    });
+
+                    setDeletingItem(null);
+                    setActiveModal("none");
+                    return;
+                }
+
+                // ✅ Mevcut source delete akışın (income/expense/subscription) aynen kalsın
+                if (deletingItem.type === "income")
+                    setIncomeSources((prev) => prev.filter((s) => Number(s.id) !== Number(deletingItem.data.id)));
+                if (deletingItem.type === "expense")
+                    setExpenseSources((prev) => prev.filter((s) => Number(s.id) !== Number(deletingItem.data.id)));
+                if (deletingItem.type === "subscription")
+                    setSubscriptionSources((prev) => prev.filter((s) => Number(s.id) !== Number(deletingItem.data.id)));
+
+                setDeletingItem(null);
+                setActiveModal("none");
+            };
+
+            // -------------------------
+            // Pages
+            // -------------------------
+            const renderGiderPage = () => {
+                const m = viewDate.getMonth();
+                const y = viewDate.getFullYear();
+
+                // base: loan/card payments from Payments sheet filtered by month
+                const paymentRowsThisMonth = (payments || []).filter((p) => {
+                    const d = new Date(p.dueDate);
+                    return d.getMonth() === m && d.getFullYear() === y;
+                });
+
+                // add "card due rows" for cards even if missing in sheet (placeholder)
+                const cardProducts = (products || []).filter((p) => p.type === "card" && p.cardType !== "virtual");
+                const cardRows = cardProducts
+                    .map((card) => ensureCardPaymentRowForMonth(card))
+                    .filter(Boolean)
+                    // if sheet already has it, ensureCardPaymentRowForMonth returns that row; otherwise placeholder
+                    ;
+
+                // Merge: if paymentRows contains card rows, keep those; add placeholders only for missing
+                const merged = [...paymentRowsThisMonth];
+                cardRows.forEach((row) => {
+                    if (row.__placeholder) {
+                        const exists = merged.some(
+                            (p) => p.type === "card" && String(p.productId) === String(row.productId) && new Date(p.dueDate).getMonth() === m && new Date(p.dueDate).getFullYear() === y
+                        );
+                        if (!exists) merged.push(row);
+                    }
+                });
+
+                // manual recurring/one-time expense sources
+                const manualExpenses = generateViewData(expenseSources, statusTracker, "expense");
+
+                // Combine all
+                const allExpenses = [...merged.map((p) => ({ ...p })), ...manualExpenses];
+
+                const totalRemaining = allExpenses.filter((p) => !p.isPaid).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+                const totalPaid = allExpenses.filter((p) => p.isPaid).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+
+                const filteredList = allExpenses
+                    .filter((p) => (paymentTab === "pending" ? !p.isPaid : p.isPaid))
+                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)); // stabil şart değil dedin
+
+                const toggleItem = (item) => {
+                    // payments sheet row => toggle isPaid there
+                    if (item.type === "loan" || item.type === "card") {
+                        if (item.__placeholder) {
+                            // placeholder toggling doesn't make sense; require amount first
+                            setCardAmountTarget(item);
+                            setActiveModal("cardAmountModal");
+                            return;
+                        }
+                        togglePaymentStatus(item);
+                    } else {
+                        // expense sources use tracker
+                        toggleExpenseOrIncomeStatus(item);
+                    }
+                };
+
+                return (
+                    <div className="space-y-6 pb-24">
+                        <div className="bg-gray-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-12 relative overflow-hidden">
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-center mb-6">
+                                    <button onClick={prevMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
+                                        <Icon name="chevron-left" size={20} className="text-white" />
+                                    </button>
+                                    <div className="text-center">
+                                        <h2 className="text-2xl font-bold">{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
+                                        <span className="text-xs text-gray-400 font-medium">{viewDate.getFullYear()} Giderleri</span>
+                                    </div>
+                                    <button onClick={nextMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
+                                        <Icon name="chevron-right" size={20} className="text-white" />
+                                    </button>
+                                </div>
+                                <div className="flex gap-3">
+                                    <div className="flex-1 bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-2xl shadow-lg">
+                                        <p className="text-red-100 text-xs font-medium mb-1">Ödenecek</p>
+                                        <h3 className="text-2xl font-bold">₺{formatMoneyTR(totalRemaining)}</h3>
+                                    </div>
+                                    <div className="flex-1 bg-gradient-to-br from-green-600 to-green-700 p-4 rounded-2xl shadow-lg">
+                                        <p className="text-green-100 text-xs font-medium mb-1">Ödenen</p>
+                                        <h3 className="text-2xl font-bold">₺{formatMoneyTR(totalPaid)}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-1 rounded-xl border border-gray-200 flex mx-1 shadow-sm">
+                            <button
+                                onClick={() => setPaymentTab("pending")}
+                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${paymentTab === "pending" ? "bg-gray-100 text-gray-900" : "text-gray-400"
+                                    }`}
+                            >
+                                Ödenecekler
+                            </button>
+                            <button
+                                onClick={() => setPaymentTab("paid")}
+                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${paymentTab === "paid" ? "bg-green-50 text-green-700" : "text-gray-400"
+                                    }`}
+                            >
+                                Ödenmişler
+                            </button>
+                        </div>
+
+                        <div className="px-1 min-h-[300px]">
+                            {filteredList.map((item, idx) => (
+                                <PaymentItem
+                                    key={`${item.id}-${idx}`}
+                                    item={item}
+                                    onToggle={() => toggleItem(item)}
+                                    onEdit={(itm) => openSourceModal("expense", itm)}
+                                    onDelete={(itm) => initDeleteSource(itm, "expense")}
+                                    onCardNeedAmount={(row) => {
+                                        setCardAmountTarget(row);
+                                        setActiveModal("cardAmountModal");
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderGelirPage = () => {
+                const incomes = generateViewData(incomeSources, statusTracker, "income");
+                const totalExpected = incomes.filter((i) => !i.isReceived).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+                const totalReceived = incomes.filter((i) => i.isReceived).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+                const filteredList = incomes.filter((i) => (incomeTab === "expected" ? !i.isReceived : i.isReceived));
+
+                return (
+                    <div className="space-y-6 pb-24">
+                        <div className="bg-teal-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-12 relative overflow-hidden">
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-center mb-6">
+                                    <button onClick={prevMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
+                                        <Icon name="chevron-left" size={20} className="text-white" />
+                                    </button>
+                                    <div className="text-center">
+                                        <h2 className="text-2xl font-bold">{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
+                                        <span className="text-xs text-teal-200 font-medium">{viewDate.getFullYear()} Gelirleri</span>
+                                    </div>
+                                    <button onClick={nextMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
+                                        <Icon name="chevron-right" size={20} className="text-white" />
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <div className="flex-1 bg-gradient-to-br from-teal-500 to-teal-700 p-4 rounded-2xl shadow-lg shadow-teal-900/20">
+                                        <p className="text-teal-100 text-xs font-medium mb-1">Beklenen</p>
+                                        <h3 className="text-2xl font-bold">₺{formatMoneyTR(totalExpected)}</h3>
+                                    </div>
+                                    <div className="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-700 p-4 rounded-2xl shadow-lg shadow-emerald-900/20">
+                                        <p className="text-emerald-100 text-xs font-medium mb-1">Alınan</p>
+                                        <h3 className="text-2xl font-bold">₺{formatMoneyTR(totalReceived)}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-1 rounded-xl border border-gray-200 flex mx-1 shadow-sm">
+                            <button
+                                onClick={() => setIncomeTab("expected")}
+                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${incomeTab === "expected" ? "bg-teal-50 text-teal-900" : "text-gray-400"
+                                    }`}
+                            >
+                                Beklenen Ödemeler
+                            </button>
+                            <button
+                                onClick={() => setIncomeTab("received")}
+                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${incomeTab === "received" ? "bg-emerald-50 text-emerald-700" : "text-gray-400"
+                                    }`}
+                            >
+                                Alınan Ödemeler
+                            </button>
+                        </div>
+
+                        <div className="px-1 min-h-[300px]">
+                            {filteredList.map((item, idx) => (
+                                <IncomeItem
+                                    key={`${item.id}-${idx}`}
+                                    item={item}
+                                    onToggle={() => toggleExpenseOrIncomeStatus(item)}
+                                    onEdit={(itm) => openSourceModal("income", itm)}
+                                    onDelete={(itm) => initDeleteSource(itm, "income")}
+                                    onOpenNote={(itm) => openNoteModal(itm, "income")}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderSubscriptionsPage = () => {
+                const subs = generateViewData(subscriptionSources, subscriptionTracker, "subscription");
+                const totalCost = subs.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+
+                return (
+                    <div className="space-y-6 pb-24">
+                        <div className="bg-purple-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-12 relative overflow-hidden">
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-center mb-6">
+                                    <button onClick={prevMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
+                                        <Icon name="chevron-left" size={20} className="text-white" />
+                                    </button>
+                                    <div className="text-center">
+                                        <h2 className="text-2xl font-bold">{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
+                                        <span className="text-xs text-purple-200 font-medium">{viewDate.getFullYear()} Abonelikler</span>
+                                    </div>
+                                    <button onClick={nextMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
+                                        <Icon name="chevron-right" size={20} className="text-white" />
+                                    </button>
+                                </div>
+
+                                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-2xl shadow-lg shadow-purple-900/40 flex justify-between items-center">
+                                    <div>
+                                        <p className="text-purple-100 text-xs font-medium mb-1">Aylık Toplam Tutar</p>
+                                        <h3 className="text-3xl font-bold">₺{formatMoneyTR(totalCost)}</h3>
+                                    </div>
+                                    <div className="bg-white/10 p-3 rounded-full">
+                                        <Icon name="monitor" size={24} className="text-purple-100" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-1 min-h-[300px]">
+                            {subs.map((item, idx) => (
+                                <SubscriptionItem
+                                    key={`${item.id}-${idx}`}
+                                    item={item}
+                                    banks={banks}
+                                    products={products}
+                                    onOpenNote={(itm) => openNoteModal(itm, "subscription")}
+                                    onEdit={(itm) => openSourceModal("subscription", itm)}
+                                    onDelete={(itm) => initDeleteSource(itm, "subscription")}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const getBestCards = () => {
+                const t = today();
+                t.setHours(0, 0, 0, 0);
+
+                const cards = (products || []).filter(p => p.type === "card" && Number(p.cutoffDay) > 0 && Number(p.paymentDueDay) > 0);
+
+                const calc = (card) => {
+                    const cutoffDay = Number(card.cutoffDay);
+                    const dueDay = Number(card.paymentDueDay);
+
+                    // next cutoff
+                    const y = t.getFullYear();
+                    const m = t.getMonth();
+
+                    let cutoff = new Date(y, m, cutoffDay);
+                    cutoff.setHours(0, 0, 0, 0);
+                    if (cutoff < t) {
+                        cutoff = new Date(y, m + 1, cutoffDay);
+                        cutoff.setHours(0, 0, 0, 0);
+                    }
+
+                    // payment = cutoff’tan sonraki ayın dueDay’i
+                    const pay = new Date(cutoff.getFullYear(), cutoff.getMonth() + 1, dueDay);
+                    pay.setHours(0, 0, 0, 0);
+
+                    const daysToCutoff = getDaysDifference(cutoff, t);   // cutoff - today
+                    const daysToPayment = getDaysDifference(pay, t);     // payment - today
+
+                    return { card, cutoff, pay, daysToCutoff, daysToPayment };
+                };
+
+                const ranked = cards.map(calc)
+                    .sort((a, b) => {
+                        if (a.daysToCutoff !== b.daysToCutoff) return a.daysToCutoff - b.daysToCutoff; // küçük iyi
+                        return b.daysToPayment - a.daysToPayment; // büyük iyi
+                    });
+
+                return ranked.slice(0, 3);
+            };
+
+            const renderBanksPage = () => {
+                const getLoanRemaining = (loan) => {
+                    const paidCount = (payments || []).filter(
+                        (p) => p.type === "loan" && Number(p.productId) === Number(loan.id) && p.isPaid
+                    ).length;
+
+                    const total = Number(loan.installmentAmount || 0) * Number(loan.totalInstallments || 0);
+                    const remaining = total - paidCount * Number(loan.installmentAmount || 0);
+                    return Math.max(0, remaining);
+                };
+
+                let globalCardLimit = 0;
+                let globalLoanDebt = 0;
+
+                (products || []).forEach((p) => {
+                    if (p.type === "card") globalCardLimit += Number(p.limit || 0);
+                    if (p.type === "loan") globalLoanDebt += getLoanRemaining(p);
+                });
+
+                if (selectedBank) {
+                    const bankProducts = products.filter((p) => Number(p.bankId) === Number(selectedBank.id));
+                    const cards = bankProducts.filter((p) => p.type === "card");
+                    const loans = bankProducts.filter((p) => p.type === "loan");
+
+                    return (
+                        <div className="pb-24 pt-4">
+                            <div className="flex items-center gap-2 mb-6 px-1">
+                                <button
+                                    onClick={() => setSelectedBank(null)}
+                                    className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                                >
+                                    <Icon name="chevron-left" size={20} className="text-gray-600" />
+                                </button>
+
+                                <h2 className="text-xl font-bold text-gray-800 flex-1">{selectedBank.name}</h2>
+
+                                <button
+                                    onClick={() => openBankModal(selectedBank)}
+                                    className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                                    title="Bankayı Düzenle"
+                                >
+                                    <Icon name="edit-2" size={18} className="text-current" />
+                                </button>
+
+                                <button
+                                    onClick={() => initDeleteBank(selectedBank)}
+                                    className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-red-600"
+                                    title="Bankayı Sil"
+                                >
+                                    <Icon name="trash-2" size={18} className="text-current" />
+                                </button>
+                            </div>
+
+                            <div className={`w-full h-24 rounded-2xl bg-gradient-to-r ${selectedBank.color} mb-6 flex items-center px-6 shadow-lg relative overflow-hidden`}>
+                                <div className="text-white/20 w-24 h-24 absolute -right-2 -bottom-4">
+                                    <Icon name="building-2" size={96} className="text-white/20" />
+                                </div>
+                                <div className="text-white z-10">
+                                    <p className="text-white/80 text-xs">Toplam Ürün</p>
+                                    <p className="text-2xl font-bold">{bankProducts.length}</p>
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <h3 className="font-bold text-gray-700 flex items-center gap-2 mb-3 text-sm px-1">
+                                    <Icon name="credit-card" size={16} className="text-gray-700" /> Kredi Kartları
+                                </h3>
+                                {cards.map((card) => (
+                                    <div key={card.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-2 relative overflow-hidden">
+                                        <div className={`absolute top-0 right-0 px-2 py-0.5 text-[9px] font-bold text-white rounded-bl-lg ${card.cardType === "virtual" ? "bg-purple-500" : "bg-gray-600"}`}>
+                                            {card.cardType === "virtual" ? "SANAL" : "FİZİKİ"}
+                                        </div>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-gray-800 text-sm">{card.name}</p>
+                                                    <span className="text-xs text-gray-400 font-mono">**** {card.last4Digits}</span>
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 mt-1">Kesim: {card.cutoffDay} / Son Ödeme: {card.paymentDueDay}</p>
+                                                {card.cardType === "virtual" && (
+                                                    <p className="text-[10px] text-gray-500 mt-1">
+                                                        Bağlı Kart:{" "}
+                                                        <b>
+                                                            {(() => {
+                                                                const parent = (products || []).find(
+                                                                    (p) => p.type === "card" && String(p.id) === String(card.parentCardId)
+                                                                );
+                                                                return parent ? `${parent.name} (**** ${parent.last4Digits})` : "Seçilmedi";
+                                                            })()}
+                                                        </b>
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="text-right flex flex-col items-end">
+                                                <p className="text-[10px] text-gray-500">Limit</p>
+                                                <p className="font-bold text-gray-800 text-sm mb-1">₺{formatMoneyTR(card.limit)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-gray-700 flex items-center gap-2 mb-3 text-sm px-1">
+                                    <Icon name="pie-chart" size={16} className="text-gray-700" /> Krediler
+                                </h3>
+                                {loans.map((loan) => (
+                                    <div key={loan.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-2">
+                                        <div className="flex justify-between mb-1">
+                                            <p className="font-bold text-gray-800 text-sm">{loan.name}</p>
+                                            <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Aktif</span>
+                                        </div>
+                                        <div className="flex justify-between text-[10px] text-gray-500">
+                                            <span>{loan.totalInstallments} Taksit</span>
+                                            <span>₺{formatMoneyTR(loan.installmentAmount)}/ay</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className="pb-24 pt-4 space-y-4">
+                        <div className="bg-gray-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-8 relative overflow-hidden mb-6">
+                            <div className="relative z-10">
+                                <h2 className="text-2xl font-bold mb-4">Varlıklar & Borçlar</h2>
+                                <div className="flex gap-3">
+                                    <div className="flex-1 bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/5">
+                                        <p className="text-gray-300 text-[10px] uppercase tracking-wider mb-1">Top. Kart Limiti</p>
+                                        <p className="font-bold text-lg">₺{formatMoneyTR(globalCardLimit)}</p>
+                                    </div>
+                                    <div className="flex-1 bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/5">
+                                        <p className="text-gray-300 text-[10px] uppercase tracking-wider mb-1">Top. Kredi Borcu</p>
+                                        <p className="font-bold text-lg">₺{formatMoneyTR(globalLoanDebt)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-1 flex items-center justify-between gap-2">
+                            <h3 className="font-bold text-gray-800 mb-2">Bankalar</h3>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        const top = getBestCards();
+                                        setBestCards(top);
+                                        setActiveModal("bestCardsModal");
+                                    }}
+                                    className="text-xs font-bold text-gray-900 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-100"
+                                    title="Bugün hangi kart daha avantajlı?"
+                                >
+                                    ⭐ Avantajlı Kartlar
+                                </button>
+
+                                <button
+                                    onClick={() => openBankModal(null)}
+                                    className="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full hover:bg-blue-100"
+                                >
+                                    + Banka
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3">
+                            {banks.map((bank) => {
+                                const bankProducts = products.filter((p) => Number(p.bankId) === Number(bank.id));
+                                const bankCardLimit = bankProducts.filter((p) => p.type === "card").reduce((acc, curr) => acc + Number(curr.limit || 0), 0);
+                                const bankLoanDebt = bankProducts
+                                    .filter((p) => p.type === "loan")
+                                    .reduce((acc, curr) => acc + getLoanRemaining(curr), 0);
+
+                                return (
+                                    <div
+                                        key={bank.id}
+                                        onClick={() => setSelectedBank(bank)}
+                                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3 group hover:border-blue-200 transition-all cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${bank.color} flex items-center justify-center text-white shadow-sm`}>
+                                                <Icon name="building-2" size={20} className="text-white" />
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-gray-800">{bank.name}</h3>
+                                                <p className="text-xs text-gray-400">{bankProducts.length} Ürün</p>
+                                            </div>
+
+                                            {/* DÜZENLE BUTONU (yeni) */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openBankModal(bank);
+                                                }}
+                                                className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-blue-600"
+                                                title="Bankayı Düzenle"
+                                            >
+                                                <Icon name="edit-2" size={16} className="text-current" />
+                                            </button>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    initDeleteBank(bank);
+                                                }}
+                                                className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-red-600"
+                                                title="Bankayı Sil"
+                                            >
+                                                <Icon name="trash-2" size={16} className="text-current" />
+                                            </button>
+
+                                            <Icon name="chevron-right" size={18} className="text-gray-300 group-hover:text-blue-500" />
+                                        </div>
+
+                                        {(bankCardLimit > 0 || bankLoanDebt > 0) && (
+                                            <div className="flex gap-2 pt-3 border-t border-gray-50">
+                                                {bankCardLimit > 0 && (
+                                                    <div className="flex-1 bg-gray-50 rounded-lg p-2">
+                                                        <p className="text-[9px] text-gray-500 uppercase font-bold mb-0.5">Kart Limiti</p>
+                                                        <p className="text-sm font-bold text-gray-700">₺{formatMoneyTR(bankCardLimit)}</p>
+                                                    </div>
+                                                )}
+                                                {bankLoanDebt > 0 && (
+                                                    <div className="flex-1 bg-orange-50 rounded-lg p-2">
+                                                        <p className="text-[9px] text-orange-600 uppercase font-bold mb-0.5">Kredi Borcu</p>
+                                                        <p className="text-sm font-bold text-orange-700">₺{formatMoneyTR(bankLoanDebt)}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => openProductModal(null)}
+                            className="w-full mt-2 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                        >
+                            Kart / Kredi Ekle
+                        </button>
+                    </div>
+                );
+            };
+
+            // -------------------------
+            // Modals (REAL, no placeholders)
+            // -------------------------
+            const closeModal = () => {
+                setActiveModal("none");
+                setEditingItem(null);
+                setDeletingItem(null);
+                setCardAmountTarget(null);
+            };
+
+            const DeleteConfirmModal = () => {
+                const isBankDelete = deletingItem?.type === "bank";
+                const meta = deletingItem?.meta || {};
+
+                return (
+                    <ModalShell onClose={closeModal}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">Silme Onayı</h3>
+                            <button onClick={closeModal}>
+                                <Icon name="x" size={24} className="text-gray-400" />
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-6">
+                            {isBankDelete ? (
+                                <>
+                                    <span className="font-bold">{deletingItem?.data?.name}</span> bankasını silmek istiyor musun?
+
+                                    <div className="mt-3 text-xs bg-red-50 border border-red-100 p-3 rounded-xl text-red-800">
+                                        Bu işlemle birlikte:
+                                        <ul className="list-disc ml-5 mt-2 space-y-1">
+                                            <li>
+                                                <b>{meta.productCount || 0}</b> bağlı kart/kredi silinecek
+                                            </li>
+                                            <li>
+                                                <b>{meta.paymentsCount || 0}</b> ödeme satırı (loan/card) temizlenecek
+                                            </li>
+                                            <li>
+                                                <b>{meta.subscriptionsCount || 0}</b> aboneliğin banka ödeme yöntemi “manuel”e çevrilecek
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="font-bold">{deletingItem?.data?.title}</span> kaydını silmek istiyor musun?
+                                </>
+                            )}
+                        </p>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={closeModal}
+                                className="flex-1 py-3 rounded-xl font-bold border border-gray-200 text-gray-600 hover:bg-gray-50"
+                            >
+                                Vazgeç
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700"
+                            >
+                                Sil
+                            </button>
+                        </div>
+                    </ModalShell>
+                );
+            };
+
+            const NoteModal = () => (
+                <ModalShell onClose={closeModal}>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                            <Icon name="sticky-note" size={20} className="text-purple-600" />
+                            Notlarım
+                        </h3>
+                        <button onClick={closeModal}>
+                            <Icon name="x" size={24} className="text-gray-400" />
+                        </button>
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100">
+                        <h4 className="font-bold text-gray-800 mb-1">{noteModalItem?.title}</h4>
+                        <p className="text-xs text-gray-500">Bu kayıt için uzun notunuzu aşağıya girebilirsiniz.</p>
+                    </div>
+
+                    <textarea
+                        className="w-full p-4 rounded-xl border border-gray-200 h-32 resize-none text-sm focus:outline-none focus:border-purple-500"
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                    />
+
+                    <button onClick={saveNote} className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition-colors mt-4">
+                        Kaydet
+                    </button>
+                </ModalShell>
+            );
+
+            const CardAmountModal = () => {
+                const [amount, setAmount] = useState(cardAmountTarget?.amount ? String(cardAmountTarget.amount) : "");
+
+                return (
+                    <ModalShell onClose={closeModal}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <Icon name="info" size={20} className="text-amber-600" />
+                                Kredi Kartı Tutarı
+                            </h3>
+                            <button onClick={closeModal}>
+                                <Icon name="x" size={24} className="text-gray-400" />
+                            </button>
+                        </div>
+
+                        <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl mb-4">
+                            <p className="text-sm text-amber-900 font-bold">Bu ayın kredi kartı ödeme miktarını girin!</p>
+                            <p className="text-xs text-amber-800 mt-1">
+                                Kart: <span className="font-bold">{cardAmountTarget?.title}</span>
+                            </p>
+                        </div>
+
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tutar (₺)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-amber-500"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                        />
+
+                        <button
+                            onClick={() => {
+                                upsertCardPaymentAmount(cardAmountTarget, amount);
+                                closeModal();
+                            }}
+                            className="w-full bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition-colors mt-4"
+                        >
+                            Kaydet
+                        </button>
+                    </ModalShell>
+                );
+            };
+
+            // -------------------------
+            // Auth gate
+            // -------------------------
+            if (!isAuthenticated) {
+                return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+            }
+
+            // -------------------------
+            // Main render
+            // -------------------------
+            return (
+                <div className="bg-gray-50 min-h-screen font-sans text-gray-900 max-w-md mx-auto border-x border-gray-200 shadow-2xl overflow-hidden relative">
+                    {/* HEADER */}
+                    {activeTab !== "gider" && (
+                        <div className="bg-white p-4 shadow-sm sticky top-0 z-10 flex justify-between items-center">
+                            <span className="font-bold text-lg text-blue-600 tracking-tight">FinOwn</span>
+                            <button onClick={() => setIsAuthenticated(false)} className="text-gray-400 hover:text-red-500 transition-colors">
+                                <Icon name="log-out" size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* CONTENT */}
+                    <div className="p-4 h-full overflow-y-auto custom-scrollbar">
+                        {activeTab === "gider" && renderGiderPage()}
+                        {activeTab === "gelir" && renderGelirPage()}
+                        {activeTab === "abonelik" && renderSubscriptionsPage()}
+                        {activeTab === "banks" && renderBanksPage()}
+                    </div>
+
+                    {/* BOTTOM NAV */}
+                    <div className="fixed bottom-0 max-w-md w-full bg-white border-t border-gray-200 flex justify-around py-3 px-2 z-20 pb-safe">
+                        <button
+                            onClick={() => setActiveTab("gelir")}
+                            className={`flex flex-col items-center gap-1 p-2 rounded-lg ${activeTab === "gelir" ? "text-teal-600 scale-105" : "text-gray-400"
+                                }`}
+                        >
+                            <Icon name="trending-up" size={24} className="text-current" />
+                            <span className="text-[10px] font-medium">Gelir</span>
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab("gider")}
+                            className={`flex flex-col items-center gap-1 p-2 rounded-lg ${activeTab === "gider" ? "text-blue-600 scale-105" : "text-gray-400"
+                                }`}
+                        >
+                            <Icon name="trending-down" size={24} className="text-current" />
+                            <span className="text-[10px] font-medium">Gider</span>
+                        </button>
+
+                        <button
+                            onClick={() => setActiveModal("quickMenu")}
+                            className="bg-gray-900 text-white rounded-full p-4 -mt-8 shadow-lg shadow-gray-400 hover:bg-black transition-colors transform active:scale-95 border-4 border-gray-50"
+                        >
+                            <Icon name="plus" size={28} className="text-white" />
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab("abonelik")}
+                            className={`flex flex-col items-center gap-1 p-2 rounded-lg ${activeTab === "abonelik" ? "text-purple-600 scale-105" : "text-gray-400"
+                                }`}
+                        >
+                            <Icon name="monitor" size={24} className="text-current" />
+                            <span className="text-[10px] font-medium">Abonelik</span>
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab("banks")}
+                            className={`flex flex-col items-center gap-1 p-2 rounded-lg ${activeTab === "banks" ? "text-blue-600 scale-105" : "text-gray-400"
+                                }`}
+                        >
+                            <Icon name="building-2" size={24} className="text-current" />
+                            <span className="text-[10px] font-medium">Bankalar</span>
+                        </button>
+                    </div>
+
+                    {/* MODALS */}
+                    {activeModal !== "none" && (
+                        <>
+                            {activeModal === "quickMenu" && (
+                                <div className="absolute inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm">
+                                    <div className="bg-white w-full rounded-2xl p-6 animate-slide-up max-w-md">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-lg font-bold">Hızlı İşlem</h3>
+                                            <button onClick={closeModal}>
+                                                <Icon name="x" size={24} className="text-gray-400" />
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                onClick={() => {
+                                                    setEditingItem(null);
+                                                    setActiveModal("none");      // sadece quick menu kapat
+                                                    openSourceModal("income", null); // sonra gelir modalını aç
+                                                }}
+                                                className="p-3 bg-teal-50 text-teal-700 rounded-xl font-bold border border-teal-100 flex flex-col items-center gap-2"
+                                            >
+                                                <Icon name="trending-up" size={24} className="text-teal-700" /> Gelir Ekle
+                                            </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    setEditingItem(null);
+                                                    setActiveModal("none");
+                                                    openSourceModal("expense", null);
+                                                }}
+                                                className="p-3 bg-red-50 text-red-700 rounded-xl font-bold border border-red-100 flex flex-col items-center gap-2"
+                                            >
+                                                <Icon name="trending-down" size={24} className="text-red-700" /> Gider Ekle
+                                            </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    setEditingItem(null);
+                                                    setActiveModal("none");
+                                                    openSourceModal("subscription", null);
+                                                }}
+                                                className="p-3 bg-purple-50 text-purple-700 rounded-xl font-bold border border-purple-100 flex flex-col items-center gap-2"
+                                            >
+                                                <Icon name="monitor" size={24} className="text-purple-700" /> Abonelik Ekle
+                                            </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    setActiveModal("none");
+                                                    openBankModal(null);
+                                                }}
+                                                className="p-3 bg-blue-50 text-blue-700 rounded-xl font-bold border border-blue-100 flex flex-col items-center gap-2"
+                                            >
+                                                <Icon name="building-2" size={24} className="text-blue-700" /> Banka Ekle
+                                            </button>
+                                        </div>
+
+                                        <button
+                                            onClick={() => {
+                                                setActiveModal("none");
+                                                openProductModal(null);
+                                            }}
+                                            className="w-full mt-4 bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-colors"
+                                        >
+                                            <span className="inline-flex items-center justify-center gap-2">
+                                                <Icon name="credit-card" size={18} className="text-white" />
+                                                Kart / Kredi Ekle
+                                            </span>
+                                        </button>
+
+                                        <button
+                                            onClick={closeModal}
+                                            className="w-full mt-3 bg-gray-50 text-gray-700 py-3 rounded-xl font-bold border border-gray-200 hover:bg-gray-100 transition-colors"
+                                        >
+                                            Kapat
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeModal === "bankModal" && (
+                                <BankModal
+                                    editingItem={editingItem}
+                                    newBankName={newBankName}
+                                    setNewBankName={setNewBankName}
+                                    newBankColor={newBankColor}
+                                    setNewBankColor={setNewBankColor}
+                                    onClose={closeModal}
+                                    onSave={handleSaveBank}
+                                />
+                            )}
+                            {activeModal === "productModal" && (
+                                <ProductModal
+                                    key={editingItem ? `product-${editingItem.id}` : "product-new"}
+                                    editingItem={editingItem}
+                                    newProduct={newProduct}
+                                    setNewProduct={setNewProduct}
+                                    banks={banks}
+                                    products={products}
+                                    onClose={closeModal}
+                                    onSave={handleSaveProduct}
+                                />
+                            )}
+                            {activeModal === "incomeModal" && (
+                                <SourceModal
+                                    type="income"
+                                    editingItem={editingItem}
+                                    form={newIncome}
+                                    setForm={setNewIncome}
+                                    banks={banks}
+                                    products={products}
+                                    updateScope={updateScope}
+                                    setUpdateScope={setUpdateScope}
+                                    effectiveDate={effectiveDate}
+                                    setEffectiveDate={setEffectiveDate}
+                                    onClose={closeModal}
+                                    onSave={() => handleSaveSource("income")}
+                                />
+                            )}
+
+                            {activeModal === "expenseModal" && (
+                                <SourceModal
+                                    type="expense"
+                                    editingItem={editingItem}
+                                    form={newExpense}
+                                    setForm={setNewExpense}
+                                    banks={banks}
+                                    products={products}
+                                    updateScope={updateScope}
+                                    setUpdateScope={setUpdateScope}
+                                    effectiveDate={effectiveDate}
+                                    setEffectiveDate={setEffectiveDate}
+                                    onClose={closeModal}
+                                    onSave={() => handleSaveSource("expense")}
+                                />
+                            )}
+
+                            {activeModal === "subscriptionModal" && (
+                                <SourceModal
+                                    type="subscription"
+                                    editingItem={editingItem}
+                                    form={newSubscription}
+                                    setForm={setNewSubscription}
+                                    banks={banks}
+                                    products={products}
+                                    updateScope={updateScope}
+                                    setUpdateScope={setUpdateScope}
+                                    effectiveDate={effectiveDate}
+                                    setEffectiveDate={setEffectiveDate}
+                                    onClose={closeModal}
+                                    onSave={() => handleSaveSource("subscription")}
+                                />
+                            )}
+                            {activeModal === "deleteConfirm" && <DeleteConfirmModal />}
+                            {activeModal === "noteModal" && <NoteModal />}
+                            {activeModal === "cardAmountModal" && <CardAmountModal />}
+                            {activeModal === "bestCardsModal" && (
+                                <ModalShell onClose={closeModal}>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-bold">Kart Avantajı Detayları</h3>
+                                        <button onClick={closeModal}>
+                                            <Icon name="x" size={24} className="text-gray-400" />
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {(bestCards || []).map((x, i) => {
+                                            const bank = banks.find(b => Number(b.id) === Number(x.card.bankId));
+                                            const bankName = bank ? bank.name : "Bilinmeyen Banka";
+                                            const cardLabel = `${bankName} - ${x.card.name}${x.card.last4Digits ? ` (**** ${x.card.last4Digits})` : ""}`;
+
+                                            return (
+                                                <div key={`${x.card.id}-${i}`} className="flex gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-blue-600">
+                                                        {i + 1}.
+                                                    </div>
+                                                    <div className="text-sm text-gray-700 leading-6">
+                                                        Bugün <b>{cardLabel}</b> kartını kullanırsanız, ödemenizi{" "}
+                                                        <b>{x.daysToPayment} gün sonra</b> yapacaksınız.
+                                                        <div className="text-[11px] text-gray-500 mt-1">
+                                                            Kesim: <b>{formatDate(x.cutoff)}</b> • Ödeme: <b>{formatDate(x.pay)}</b>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {(!bestCards || bestCards.length === 0) && (
+                                            <div className="text-sm text-gray-600 bg-gray-50 border border-gray-100 p-3 rounded-xl">
+                                                Avantaj hesabı için kartlarda <b>Kesim Günü</b> ve <b>Son Ödeme Günü</b> dolu olmalı.
+                                            </div>
+                                        )}
+                                    </div>
+                                </ModalShell>
+                            )}
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        // -------------------------
+        // Small CSS for animation
+        // -------------------------
+        const style = document.createElement("style");
+        style.innerHTML = `
+        @keyframes slideUp {
+          from { transform: translateY(24px); opacity: 0; }
+          to   { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up { animation: slideUp .18s ease-out; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
+      `;
+        document.head.appendChild(style);
+
+        // -------------------------
+        // Mount
+        // -------------------------
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
