@@ -114,7 +114,9 @@ function AppContent() {
       // Map item to form
       // Important: Handle date/dueDate mapping
       const d = item ? (item.date || item.dueDate) : new Date().toISOString().split('T')[0];
-      const mapped = item ? { ...item, date: d.split('T')[0] } : {
+      // eslint-disable-next-line no-unused-vars
+      const { id: existingId, ...itemWithoutId } = item || {};
+      const mapped = item ? { ...itemWithoutId, date: d.split('T')[0] } : {
         ...initialSource,
         category: type === 'income' ? 'salary' : 'bills',
         date: new Date().toISOString().split('T')[0]
@@ -193,9 +195,11 @@ function AppContent() {
     }
 
     try {
-      // Prepare payload - ensure amount is number
+      // Prepare payload - ensure amount is number and remove id
+      // eslint-disable-next-line no-unused-vars
+      const { id: formId, ...formWithoutId } = sourceForm;
       const payload = {
-        ...sourceForm,
+        ...formWithoutId,
         amount: parseFloat(String(sourceForm.amount).replace(',', '.')) || 0
       };
 
