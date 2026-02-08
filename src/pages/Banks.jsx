@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext';
 import { Icon } from '../components/ui/Icon';
 import { formatMoneyTR, getDaysDifference } from '../utils';
 
-// Static cash debt in USD (elden borç)
+// Static cash debt in USD (elden borc)
 const CASH_DEBT_USD = 5000;
 
 export default function Banks({ onOpenModal }) {
@@ -49,44 +49,87 @@ export default function Banks({ onOpenModal }) {
         return Math.max(0, remaining);
     };
 
+    /**
+     * Avantajli Kart Algoritmasi
+     * 
+     * Hedef: Bugun yapilan harcamayi en gec tarihte odemesini saglayacak karti bulmak.
+     * 
+     * Turkiye Bankacilik Kurallari:
+     * - Hesap kesim tarihi = Ekstrenin olusturdugu gun
+     * - Son odeme tarihi = Kesim gunu + yaklasik 10 gun (bankaya gore degisir)
+     * - Bugun yapilan harcama = Mevcut kesim donemine dahil olur
+     * 
+     * Kurallar:
+     * - Eger bugun < kesim_tarihi: Harcama bu ayin ekstresine girer
+     * - Eger bugun >= kesim_tarihi: Harcama gelecek ayin ekstresine girer (en avantajli!)
+     */
     const getBestCards = () => {
-        const t = new Date();
-        t.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayDay = today.getDate();
 
-        const cards = (products || []).filter(p => p.type === "card" && Number(p.cutoffDay) > 0 && Number(p.paymentDueDay) > 0);
+        const cards = (products || []).filter(p =>
+            p.type === "card" &&
+            Number(p.cutoffDay) > 0 &&
+            Number(p.paymentDueDay) > 0
+        );
 
-        const calc = (card) => {
+        const calculateCardAdvantage = (card) => {
             const cutoffDay = Number(card.cutoffDay);
             const dueDay = Number(card.paymentDueDay);
 
-            // next cutoff
-            const y = t.getFullYear();
-            const m = t.getMonth();
+            const year = today.getFullYear();
+            const month = today.getMonth();
 
-            let cutoff = new Date(y, m, cutoffDay);
-            cutoff.setHours(0, 0, 0, 0);
-            if (cutoff < t) {
-                cutoff = new Date(y, m + 1, cutoffDay);
-                cutoff.setHours(0, 0, 0, 0);
+            let cutoffDate, paymentDate;
+            let isNextPeriod = false;
+
+            if (todayDay < cutoffDay) {
+                // Kesim tarihi henuz gelmedi - bu ayin ekstresine girecek
+                cutoffDate = new Date(year, month, cutoffDay);
+                // Odeme genellikle kesimden sonraki ayin dueDay'inde
+                // Ama bazi bankalar ayni ay icinde odeme aliyor, kontrol edelim
+                if (dueDay > cutoffDay) {
+                    // Ayni ay icinde odeme (orn: kesim 10, odeme 20)
+                    paymentDate = new Date(year, month, dueDay);
+                } else {
+                    // Sonraki ay odeme (orn: kesim 25, odeme 5)
+                    paymentDate = new Date(year, month + 1, dueDay);
+                }
+            } else {
+                // Kesim tarihi gecti - gelecek ayin ekstresine girecek (AVANTAJLI!)
+                isNextPeriod = true;
+                cutoffDate = new Date(year, month + 1, cutoffDay);
+                // Odeme gelecek kesimden sonra
+                if (dueDay > cutoffDay) {
+                    paymentDate = new Date(year, month + 1, dueDay);
+                } else {
+                    paymentDate = new Date(year, month + 2, dueDay);
+                }
             }
 
-            // payment = cutoff’tan sonraki ayın dueDay’i
-            const pay = new Date(cutoff.getFullYear(), cutoff.getMonth() + 1, dueDay);
-            pay.setHours(0, 0, 0, 0);
+            cutoffDate.setHours(0, 0, 0, 0);
+            paymentDate.setHours(0, 0, 0, 0);
 
-            const daysToCutoff = getDaysDifference(cutoff, t);   // cutoff - today
-            const daysToPayment = getDaysDifference(pay, t);     // payment - today
+            const daysToCutoff = getDaysDifference(cutoffDate, today);
+            const daysToPayment = getDaysDifference(paymentDate, today);
 
-            return { card, cutoff, pay, daysToCutoff, daysToPayment };
+            return {
+                card,
+                cutoff: cutoffDate,
+                pay: paymentDate,
+                daysToCutoff,
+                daysToPayment,
+                isNextPeriod // Kesim gecmis mi (avantajli durum)
+            };
         };
 
-        const ranked = cards.map(calc)
-            .sort((a, b) => {
-                if (a.daysToCutoff !== b.daysToCutoff) return a.daysToCutoff - b.daysToCutoff; // küçük iyi
-                return b.daysToPayment - a.daysToPayment; // büyük iyi
-            });
+        // Tum kartlari hesapla ve EN UZUN VADEYE gore sirala (buyuk -> kucuk)
+        const ranked = cards
+            .map(calculateCardAdvantage)
+            .sort((a, b) => b.daysToPayment - a.daysToPayment);
 
-        return ranked.slice(0, 3);
+        return ranked.slice(0, 5); // En iyi 5 karti dondur
     };
 
     const handleBestCards = () => {
@@ -123,7 +166,7 @@ export default function Banks({ onOpenModal }) {
                     <button
                         onClick={() => onOpenModal("bank", selectedBank)}
                         className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                        title="Bankayı Düzenle"
+                        title="Bankayi Duzenle"
                     >
                         <Icon name="edit-2" size={18} className="text-current" />
                     </button>
@@ -131,7 +174,7 @@ export default function Banks({ onOpenModal }) {
                     <button
                         onClick={() => onOpenModal("delete_bank", selectedBank)}
                         className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-red-600"
-                        title="Bankayı Sil"
+                        title="Bankayi Sil"
                     >
                         <Icon name="trash-2" size={18} className="text-current" />
                     </button>
@@ -142,19 +185,19 @@ export default function Banks({ onOpenModal }) {
                         <Icon name="building-2" size={96} className="text-white/20" />
                     </div>
                     <div className="text-white z-10">
-                        <p className="text-white/80 text-xs">Toplam Ürün</p>
+                        <p className="text-white/80 text-xs">Toplam Urun</p>
                         <p className="text-2xl font-bold">{bankProducts.length}</p>
                     </div>
                 </div>
 
                 <div className="mb-6">
                     <h3 className="font-bold text-gray-700 flex items-center gap-2 mb-3 text-sm px-1">
-                        <Icon name="credit-card" size={16} className="text-gray-700" /> Kredi Kartları
+                        <Icon name="credit-card" size={16} className="text-gray-700" /> Kredi Kartlari
                     </h3>
                     {cards.map((card) => (
                         <div key={card.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-2 relative overflow-hidden">
                             <div className={`absolute top-0 right-0 px-2 py-0.5 text-[9px] font-bold text-white rounded-bl-lg ${card.cardType === "virtual" ? "bg-purple-500" : "bg-gray-600"}`}>
-                                {card.cardType === "virtual" ? "SANAL" : "FİZİKİ"}
+                                {card.cardType === "virtual" ? "SANAL" : "FIZIKI"}
                             </div>
                             <div className="flex justify-between items-center mt-1">
                                 <div>
@@ -162,28 +205,28 @@ export default function Banks({ onOpenModal }) {
                                         <p className="font-bold text-gray-800 text-sm">{card.name}</p>
                                         <span className="text-xs text-gray-400 font-mono">**** {card.last4Digits}</span>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); onOpenModal("product", card); }} // Edit product
+                                            onClick={(e) => { e.stopPropagation(); onOpenModal("product", card); }}
                                             className="ml-2 p-1 text-blue-600 hover:bg-blue-50 rounded"
                                         >
                                             <Icon name="edit-2" size={12} />
                                         </button>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); onOpenModal("delete_product", card); }} // Edit product
+                                            onClick={(e) => { e.stopPropagation(); onOpenModal("delete_product", card); }}
                                             className="ml-1 p-1 text-red-600 hover:bg-red-50 rounded"
                                         >
                                             <Icon name="trash-2" size={12} />
                                         </button>
                                     </div>
-                                    <p className="text-[10px] text-gray-500 mt-1">Kesim: {card.cutoffDay} / Son Ödeme: {card.paymentDueDay}</p>
+                                    <p className="text-[10px] text-gray-500 mt-1">Kesim: {card.cutoffDay} / Son Odeme: {card.paymentDueDay}</p>
                                     {card.cardType === "virtual" && (
                                         <p className="text-[10px] text-gray-500 mt-1">
-                                            Bağlı Kart:{" "}
+                                            Bagli Kart:{" "}
                                             <b>
                                                 {(() => {
                                                     const parent = (products || []).find(
                                                         (p) => p.type === "card" && String(p.id) === String(card.parentCardId)
                                                     );
-                                                    return parent ? `${parent.name} (**** ${parent.last4Digits})` : "Seçilmedi";
+                                                    return parent ? `${parent.name} (**** ${parent.last4Digits})` : "Secilmedi";
                                                 })()}
                                             </b>
                                         </p>
@@ -196,7 +239,7 @@ export default function Banks({ onOpenModal }) {
                             </div>
                         </div>
                     ))}
-                    {cards.length === 0 && <p className="text-xs text-gray-400 italic px-2">Kart bulunamadı.</p>}
+                    {cards.length === 0 && <p className="text-xs text-gray-400 italic px-2">Kart bulunamadi.</p>}
                 </div>
 
                 <div>
@@ -223,7 +266,7 @@ export default function Banks({ onOpenModal }) {
                             </div>
                         </div>
                     ))}
-                    {loans.length === 0 && <p className="text-xs text-gray-400 italic px-2">Kredi bulunamadı.</p>}
+                    {loans.length === 0 && <p className="text-xs text-gray-400 italic px-2">Kredi bulunamadi.</p>}
                 </div>
             </div>
         );
@@ -238,7 +281,7 @@ export default function Banks({ onOpenModal }) {
         <div className="pb-24 pt-4 space-y-4">
             <div className="bg-gray-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-8 relative overflow-hidden mb-6">
                 <div className="relative z-10">
-                    <h2 className="text-2xl font-bold mb-4">Varlıklar & Borçlar</h2>
+                    <h2 className="text-2xl font-bold mb-4">Varliklar & Borclar</h2>
 
                     {/* 2x2 Grid */}
                     <div className="grid grid-cols-2 gap-2">
@@ -256,14 +299,14 @@ export default function Banks({ onOpenModal }) {
 
                         {/* Cash Debt (USD) */}
                         <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-blue-500/30">
-                            <p className="text-blue-300 text-[10px] uppercase tracking-wider mb-1">Elden Borç (USD)</p>
+                            <p className="text-blue-300 text-[10px] uppercase tracking-wider mb-1">Elden Borc (USD)</p>
                             <p className="font-bold text-lg text-blue-200">${CASH_DEBT_USD.toLocaleString('en-US')}</p>
                             <p className="text-[10px] text-gray-400">≈ ₺{formatMoneyTR(cashDebtTL)}</p>
                         </div>
 
                         {/* Total Debt */}
                         <div className="bg-gradient-to-br from-red-600/30 to-red-800/30 p-3 rounded-xl backdrop-blur-sm border border-red-500/30">
-                            <p className="text-red-200 text-[10px] uppercase tracking-wider mb-1">Toplam Borç</p>
+                            <p className="text-red-200 text-[10px] uppercase tracking-wider mb-1">Toplam Borc</p>
                             <p className="font-bold text-lg text-white">₺{formatMoneyTR(totalDebt)}</p>
                         </div>
                     </div>
@@ -280,9 +323,9 @@ export default function Banks({ onOpenModal }) {
                     <button
                         onClick={handleBestCards}
                         className="text-xs font-bold text-gray-900 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-100"
-                        title="Bugün hangi kart daha avantajlı?"
+                        title="Bugun hangi kart daha avantajli?"
                     >
-                        ⭐ Avantajlı Kartlar
+                        ⭐ Avantajli Kartlar
                     </button>
 
                     <button
@@ -315,7 +358,7 @@ export default function Banks({ onOpenModal }) {
 
                                 <div className="flex-1">
                                     <h3 className="font-bold text-gray-800">{bank.name}</h3>
-                                    <p className="text-xs text-gray-400">{bankProducts.length} Ürün</p>
+                                    <p className="text-xs text-gray-400">{bankProducts.length} Urun</p>
                                 </div>
 
                                 <button
@@ -324,7 +367,7 @@ export default function Banks({ onOpenModal }) {
                                         onOpenModal("bank", bank);
                                     }}
                                     className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-blue-600"
-                                    title="Bankayı Düzenle"
+                                    title="Bankayi Duzenle"
                                 >
                                     <Icon name="edit-2" size={16} className="text-current" />
                                 </button>
@@ -335,7 +378,7 @@ export default function Banks({ onOpenModal }) {
                                         onOpenModal("delete_bank", bank);
                                     }}
                                     className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-red-600"
-                                    title="Bankayı Sil"
+                                    title="Bankayi Sil"
                                 >
                                     <Icon name="trash-2" size={16} className="text-current" />
                                 </button>
@@ -364,7 +407,7 @@ export default function Banks({ onOpenModal }) {
                 })}
                 {banks.length === 0 && (
                     <div className="text-center py-8 text-gray-400 text-sm">
-                        Henüz banka eklenmemiş.
+                        Henuz banka eklenmemis.
                     </div>
                 )}
             </div>
