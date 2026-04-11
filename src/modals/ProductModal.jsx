@@ -15,7 +15,7 @@ export const ProductModal = ({
         <ModalShell onClose={onClose}>
             {/* Fixed Header */}
             <div className="flex justify-between items-center p-4 border-b border-gray-100 flex-shrink-0">
-                <h3 className="text-lg font-bold">{editingItem ? "Urun Duzenle" : "Kart/Kredi Ekle"}</h3>
+                <h3 className="text-lg font-bold">{editingItem ? "Ürün Düzenle" : "Kart/Kredi Ekle"}</h3>
                 <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors -mr-2">
                     <Icon name="x" size={20} className="text-gray-500" />
                 </button>
@@ -31,7 +31,7 @@ export const ProductModal = ({
                             value={newProduct.bankId}
                             onChange={(e) => setNewProduct((p) => ({ ...p, bankId: e.target.value }))}
                         >
-                            <option value="">Seciniz</option>
+                            <option value="">Seçiniz</option>
                             {banks.map((b) => (
                                 <option key={b.id} value={b.id}>
                                     {b.name}
@@ -58,7 +58,7 @@ export const ProductModal = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Urun Adi</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Ürün Adı</label>
                         <input
                             type="text"
                             className="w-full p-3 rounded-xl border border-gray-200"
@@ -89,7 +89,7 @@ export const ProductModal = ({
                             {newProduct.type === "card" && newProduct.cardType === "virtual" && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Bagli Oldugu Fiziki Kart
+                                        Bağlı Olduğu Fiziki Kart
                                     </label>
 
                                     <select
@@ -97,7 +97,7 @@ export const ProductModal = ({
                                         value={newProduct.parentCardId || ""}
                                         onChange={(e) => setNewProduct((p) => ({ ...p, parentCardId: e.target.value }))}
                                     >
-                                        <option value="">Fiziki Kart Seciniz</option>
+                                        <option value="">Fiziki Kart Seçiniz</option>
 
                                         {(products || [])
                                             .filter(
@@ -114,7 +114,7 @@ export const ProductModal = ({
                                     </select>
 
                                     <p className="text-[11px] text-gray-500 mt-1">
-                                        Sanal kart, sectiginiz fiziki karta bagli olarak sadece bilgilendirme amacli tutulur.
+                                        Sanal kart, seçtiğiniz fiziki karta bağlı olarak sadece bilgilendirme amaçlı tutulur.
                                     </p>
                                 </div>
                             )}
@@ -146,7 +146,7 @@ export const ProductModal = ({
                             {newProduct.cardType === "physical" && (
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kesim Gunu</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kesim Günü</label>
                                         <input
                                             type="number"
                                             className="w-full p-3 rounded-xl border border-gray-200"
@@ -155,7 +155,7 @@ export const ProductModal = ({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Son Odeme Gunu</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Son Ödeme Günü</label>
                                         <input
                                             type="number"
                                             className="w-full p-3 rounded-xl border border-gray-200"
@@ -170,7 +170,7 @@ export const ProductModal = ({
                         <>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Aylik Taksit (TL)</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Aylık Taksit (₺)</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -181,7 +181,7 @@ export const ProductModal = ({
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kac Taksit</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kaç Taksit</label>
                                     <input
                                         type="number"
                                         className="w-full p-3 rounded-xl border border-gray-200"
@@ -192,7 +192,7 @@ export const ProductModal = ({
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Ilk Taksit Odeme Tarihi</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">İlk Taksit Ödeme Tarihi</label>
                                 <input
                                     type="date"
                                     className="w-full p-3 rounded-xl border border-gray-200"
@@ -202,8 +202,8 @@ export const ProductModal = ({
                             </div>
 
                             <div className="text-[11px] text-gray-500 bg-gray-50 border border-gray-100 rounded-xl p-3">
-                                Toplam kredi otomatik hesaplanir: <b>(aylik taksit x taksit sayisi)</b>.
-                                Gecmis taksitler otomatik "odendi" isaretlenecek.
+                                Toplam kredi otomatik hesaplanır: <b>(aylık taksit x taksit sayısı)</b>.<br></br>
+                                Geçmiş taksitler otomatik "ödendi" işaretlenecek.
                             </div>
                         </>
                     )}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ModalShell } from '../components/ui/Modal';
 import { Icon } from '../components/ui/Icon';
-import { formatDateTR } from '../utils';
+import { formatDateTR, formatMoneyTR } from '../utils';
 
 export const BestCardsModal = ({ bestCards, banks, onClose }) => {
     const today = new Date();
@@ -29,7 +29,7 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
             {/* Fixed Header */}
             <div className="flex justify-between items-center p-4 border-b border-gray-100 flex-shrink-0">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">Avantajli Kart Onerisi</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Avantajlı Kart Önerisi</h3>
                     <p className="text-xs text-gray-500">{todayFormatted}</p>
                 </div>
                 <button
@@ -64,10 +64,13 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
                                         {topCard.card.last4Digits && (
                                             <p className="text-white/60 text-xs font-mono">**** {topCard.card.last4Digits}</p>
                                         )}
+                                        {Number(topCard.card.limit) > 0 && (
+                                            <p className="text-emerald-100 text-[11px] font-bold mt-1 bg-black/10 inline-block px-1.5 py-0.5 rounded">Limit: ₺{formatMoneyTR(topCard.card.limit)}</p>
+                                        )}
                                     </div>
                                     <div className="text-right">
                                         <p className="text-3xl font-bold">{topCard.daysToPayment}</p>
-                                        <p className="text-white/70 text-xs">gun vade</p>
+                                        <p className="text-white/70 text-xs">gün vade</p>
                                     </div>
                                 </div>
 
@@ -78,7 +81,7 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
                                         <span className="font-medium">{topCard.card.cutoffDay}</span>
                                     </div>
                                     <div>
-                                        <span className="text-white/60">Son Odeme: </span>
+                                        <span className="text-white/60">Son Ödeme: </span>
                                         <span className="font-medium">{formatDateTR(topCard.pay)}</span>
                                     </div>
                                     {topCard.isNextPeriod && (
@@ -99,14 +102,14 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
                                         <Icon name="clock" size={16} className="text-amber-600" />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-xs text-amber-700 font-medium">En Yakin Odeme</p>
+                                        <p className="text-xs text-amber-700 font-medium">En Yakın Ödeme</p>
                                         <p className="text-sm font-semibold text-gray-800">
                                             {getBankName(nearestPaymentCard.card)} - {nearestPaymentCard.card.name}
                                         </p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-lg font-bold text-amber-600">{nearestPaymentCard.daysToPayment}</p>
-                                        <p className="text-[10px] text-amber-500">gun</p>
+                                        <p className="text-[10px] text-amber-500">gün</p>
                                     </div>
                                 </div>
                             </div>
@@ -115,7 +118,7 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
                         {/* All Cards List */}
                         <div className="space-y-2">
                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1 mb-2">
-                                Tum Kartlar ({bestCards.length})
+                                Tüm Kartlar ({bestCards.length})
                             </p>
 
                             {bestCards.map((x, i) => {
@@ -141,11 +144,18 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
 
                                         {/* Card Details */}
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-gray-800 text-sm truncate">
-                                                {getBankName(x.card)} - {x.card.name}
-                                            </p>
-                                            <p className="text-[10px] text-gray-500">
-                                                Kesim: {x.card.cutoffDay} • Odeme: {x.card.paymentDueDay}
+                                            <div className="flex justify-between items-start">
+                                                <p className="font-semibold text-gray-800 text-sm truncate pr-2">
+                                                    {getBankName(x.card)} - {x.card.name}
+                                                </p>
+                                                {Number(x.card.limit) > 0 && (
+                                                    <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded font-bold text-gray-600 mt-0.5 text-right flex-shrink-0">
+                                                        ₺{formatMoneyTR(x.card.limit)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">
+                                                Kesim: {x.card.cutoffDay} • Ödeme: {x.card.paymentDueDay}
                                                 {x.isNextPeriod && <span className="text-emerald-600 ml-1">• Gelecek ay</span>}
                                             </p>
                                         </div>
@@ -155,7 +165,7 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
                                             <p className={`text-lg font-bold ${isTop ? 'text-emerald-600' : isNearest ? 'text-amber-600' : 'text-gray-700'}`}>
                                                 {x.daysToPayment}
                                             </p>
-                                            <p className="text-[9px] text-gray-400 uppercase">gun</p>
+                                            <p className="text-[9px] text-gray-400 uppercase">gün</p>
                                         </div>
                                     </div>
                                 );
@@ -167,7 +177,7 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
                             <div className="flex gap-2">
                                 <Icon name="info" size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
                                 <p className="text-[11px] text-blue-600">
-                                    <b>Ipucu:</b> Kesim tarihi gecmis kartlar en avantajlidir cunku harcama gelecek ayin ekstresine girer.
+                                    <b>İpucu:</b> Kesim tarihi geçmiş kartlar en avantajlıdır çünkü harcama gelecek ayın ekstresine girer.
                                 </p>
                             </div>
                         </div>
@@ -178,10 +188,10 @@ export const BestCardsModal = ({ bestCards, banks, onClose }) => {
                         <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Icon name="credit-card" size={28} className="text-gray-400" />
                         </div>
-                        <h4 className="font-semibold text-gray-700 mb-2">Kart Bulunamadi</h4>
+                        <h4 className="font-semibold text-gray-700 mb-2">Kart Bulunamadı</h4>
                         <p className="text-sm text-gray-500 max-w-xs mx-auto">
-                            Avantaj hesabi icin kartlarinizda <b>Kesim Gunu</b> ve{" "}
-                            <b>Son Odeme Gunu</b> bilgilerinin dolu olmasi gerekiyor.
+                            Avantaj hesabı için kartlarınızda <b>Kesim Günü</b> ve{" "}
+                            <b>Son Ödeme Günü</b> bilgilerinin dolu olması gerekiyor.
                         </p>
                     </div>
                 )}

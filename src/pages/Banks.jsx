@@ -152,121 +152,159 @@ export default function Banks({ onOpenModal }) {
         const loans = bankProducts.filter((p) => p.type === "loan");
 
         return (
-            <div className="pb-24 pt-4">
-                <div className="flex items-center gap-2 mb-6 px-1">
+            <div className="pb-24 pt-4 px-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* Top Nav */}
+                <div className="flex items-center gap-3 mb-6">
                     <button
                         onClick={() => setSelectedBank(null)}
-                        className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                        className="p-2.5 bg-white rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
                     >
-                        <Icon name="chevron-left" size={20} className="text-gray-600" />
+                        <Icon name="chevron-left" size={20} className="text-current" />
                     </button>
 
-                    <h2 className="text-xl font-bold text-gray-800 flex-1">{selectedBank.name}</h2>
+                    <h2 className="text-2xl font-extrabold text-gray-800 flex-1">{selectedBank.name}</h2>
 
-                    <button
-                        onClick={() => onOpenModal("bank", selectedBank)}
-                        className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                        title="Bankayi Duzenle"
-                    >
-                        <Icon name="edit-2" size={18} className="text-current" />
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => onOpenModal("bank", selectedBank)}
+                            className="p-2.5 bg-white rounded-xl border border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                            title="Bankayı Düzenle"
+                        >
+                            <Icon name="edit-2" size={18} className="text-current" />
+                        </button>
 
-                    <button
-                        onClick={() => onOpenModal("delete_bank", selectedBank)}
-                        className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-red-600"
-                        title="Bankayi Sil"
-                    >
-                        <Icon name="trash-2" size={18} className="text-current" />
-                    </button>
-                </div>
-
-                <div className={`w-full h-24 rounded-2xl bg-gradient-to-r ${selectedBank.color} mb-6 flex items-center px-6 shadow-lg relative overflow-hidden`}>
-                    <div className="text-white/20 w-24 h-24 absolute -right-2 -bottom-4">
-                        <Icon name="building-2" size={96} className="text-white/20" />
-                    </div>
-                    <div className="text-white z-10">
-                        <p className="text-white/80 text-xs">Toplam Urun</p>
-                        <p className="text-2xl font-bold">{bankProducts.length}</p>
+                        <button
+                            onClick={() => onOpenModal("delete_bank", selectedBank)}
+                            className="p-2.5 bg-white rounded-xl border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm"
+                            title="Bankayı Sil"
+                        >
+                            <Icon name="trash-2" size={18} className="text-current" />
+                        </button>
                     </div>
                 </div>
 
-                <div className="mb-6">
-                    <h3 className="font-bold text-gray-700 flex items-center gap-2 mb-3 text-sm px-1">
-                        <Icon name="credit-card" size={16} className="text-gray-700" /> Kredi Kartlari
+                {/* Bank Header Card */}
+                <div className={`w-full rounded-3xl bg-gradient-to-br ${selectedBank.color} mb-8 p-6 shadow-xl shadow-${selectedBank.color.split('-')[1]}-500/20 relative overflow-hidden group`}>
+                    <div className="absolute -right-4 -bottom-6 opacity-20 transform group-hover:scale-110 transition-transform duration-500">
+                        <Icon name="building-2" size={120} className="text-white" />
+                    </div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-white/5 mask-image-diagonal rounded-3xl pointer-events-none"></div>
+                    <div className="text-white relative z-10 flex w-full items-center justify-between">
+                        <div>
+                            <p className="text-white/80 text-sm font-medium uppercase tracking-wider mb-1">Toplam Ürün</p>
+                            <p className="text-4xl font-black tracking-tight">{bankProducts.length}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Credit Cards Section */}
+                <div className="mb-8">
+                    <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4 text-base px-1">
+                        <Icon name="credit-card" size={20} className="text-blue-500" /> Kredi Kartları
                     </h3>
-                    {cards.map((card) => (
-                        <div key={card.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-2 relative overflow-hidden">
-                            <div className={`absolute top-0 right-0 px-2 py-0.5 text-[9px] font-bold text-white rounded-bl-lg ${card.cardType === "virtual" ? "bg-purple-500" : "bg-gray-600"}`}>
-                                {card.cardType === "virtual" ? "SANAL" : "FIZIKI"}
-                            </div>
-                            <div className="flex justify-between items-center mt-1">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <p className="font-bold text-gray-800 text-sm">{card.name}</p>
-                                        <span className="text-xs text-gray-400 font-mono">**** {card.last4Digits}</span>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); onOpenModal("product", card); }}
-                                            className="ml-2 p-1 text-blue-600 hover:bg-blue-50 rounded"
-                                        >
-                                            <Icon name="edit-2" size={12} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); onOpenModal("delete_product", card); }}
-                                            className="ml-1 p-1 text-red-600 hover:bg-red-50 rounded"
-                                        >
-                                            <Icon name="trash-2" size={12} />
-                                        </button>
+                    <div className="space-y-3">
+                        {cards.map((card) => (
+                            <div key={card.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden hover:shadow-md hover:border-blue-100 transition-all group">
+                                <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-bold text-white rounded-bl-xl ${card.cardType === "virtual" ? "bg-purple-500" : "bg-gray-700"}`}>
+                                    {card.cardType === "virtual" ? "SANAL KART" : "FİZİKİ KART"}
+                                </div>
+                                
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-2">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <p className="font-extrabold text-gray-900 text-base">{card.name}</p>
+                                            <span className="text-xs text-gray-400 font-mono tracking-widest bg-gray-50 px-2 py-0.5 rounded-md">**** {card.last4Digits}</span>
+                                        </div>
+                                        
+                                        <p className="text-[11px] text-gray-500 font-medium">Kesim: <span className="text-gray-800">{card.cutoffDay}</span> • Son Ödeme: <span className="text-gray-800">{card.paymentDueDay}</span></p>
+                                        
+                                        {card.cardType === "virtual" && (
+                                            <p className="text-[11px] text-gray-500 mt-1.5 flex items-center gap-1">
+                                                <Icon name="link" size={12} className="text-gray-400" /> Bağlı Kart:{" "}
+                                                <b className="text-gray-700">
+                                                    {(() => {
+                                                        const parent = (products || []).find(
+                                                            (p) => p.type === "card" && String(p.id) === String(card.parentCardId)
+                                                        );
+                                                        return parent ? `${parent.name} (**** ${parent.last4Digits})` : "Seçilmedi";
+                                                    })()}
+                                                </b>
+                                            </p>
+                                        )}
                                     </div>
-                                    <p className="text-[10px] text-gray-500 mt-1">Kesim: {card.cutoffDay} / Son Odeme: {card.paymentDueDay}</p>
-                                    {card.cardType === "virtual" && (
-                                        <p className="text-[10px] text-gray-500 mt-1">
-                                            Bagli Kart:{" "}
-                                            <b>
-                                                {(() => {
-                                                    const parent = (products || []).find(
-                                                        (p) => p.type === "card" && String(p.id) === String(card.parentCardId)
-                                                    );
-                                                    return parent ? `${parent.name} (**** ${parent.last4Digits})` : "Secilmedi";
-                                                })()}
-                                            </b>
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="text-right flex flex-col items-end">
-                                    <p className="text-[10px] text-gray-500">Limit</p>
-                                    <p className="font-bold text-gray-800 text-sm mb-1">₺{formatMoneyTR(card.limit)}</p>
+
+                                    <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 sm:border-l border-gray-100 pt-3 sm:pt-0 sm:pl-4">
+                                        <div className="text-left sm:text-right">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Limit</p>
+                                            <p className="font-extrabold text-gray-900 text-lg">₺{formatMoneyTR(card.limit)}</p>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-1 mt-0 sm:mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onOpenModal("product", card); }}
+                                                className="w-8 h-8 flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors"
+                                            >
+                                                <Icon name="edit-2" size={14} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onOpenModal("delete_product", card); }}
+                                                className="w-8 h-8 flex items-center justify-center text-red-600 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
+                                            >
+                                                <Icon name="trash-2" size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        ))}
+                    </div>
+                    {cards.length === 0 && (
+                        <div className="bg-gray-50 border border-gray-100 border-dashed rounded-2xl p-6 text-center">
+                            <Icon name="credit-card" size={24} className="text-gray-300 mx-auto mb-2" />
+                            <p className="text-sm font-medium text-gray-400">Kart bulunamadı.</p>
                         </div>
-                    ))}
-                    {cards.length === 0 && <p className="text-xs text-gray-400 italic px-2">Kart bulunamadi.</p>}
+                    )}
                 </div>
 
+                {/* Loans Section */}
                 <div>
-                    <h3 className="font-bold text-gray-700 flex items-center gap-2 mb-3 text-sm px-1">
-                        <Icon name="pie-chart" size={16} className="text-gray-700" /> Krediler
+                    <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4 text-base px-1">
+                        <Icon name="pie-chart" size={20} className="text-orange-500" /> Krediler
                     </h3>
-                    {loans.map((loan) => (
-                        <div key={loan.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-2 relative group">
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 p-1 rounded border border-gray-100">
-                                <button className="p-1 text-blue-600 hover:bg-blue-50 rounded" onClick={(e) => { e.stopPropagation(); onOpenModal("product", loan); }}>
-                                    <Icon name="edit-2" size={12} />
-                                </button>
-                                <button className="p-1 text-red-600 hover:bg-red-50 rounded" onClick={(e) => { e.stopPropagation(); onOpenModal("delete_product", loan); }}>
-                                    <Icon name="trash-2" size={12} />
-                                </button>
+                    <div className="space-y-3">
+                        {loans.map((loan) => (
+                            <div key={loan.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative group hover:shadow-md hover:border-orange-100 transition-all">
+                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 p-1 rounded-xl shadow-sm border border-gray-100">
+                                    <button className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" onClick={(e) => { e.stopPropagation(); onOpenModal("product", loan); }}>
+                                        <Icon name="edit-2" size={14} />
+                                    </button>
+                                    <button className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors" onClick={(e) => { e.stopPropagation(); onOpenModal("delete_product", loan); }}>
+                                        <Icon name="trash-2" size={14} />
+                                    </button>
+                                </div>
+                                <div className="flex justify-between items-center mb-3">
+                                    <p className="font-extrabold text-gray-900 text-base">{loan.name}</p>
+                                    <span className="text-[10px] font-bold tracking-wider uppercase bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full">Aktif</span>
+                                </div>
+                                <div className="flex items-center gap-4 text-sm font-medium">
+                                    <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Taksit Sayısı</p>
+                                        <p className="text-gray-800">{loan.totalInstallments}</p>
+                                    </div>
+                                    <div className="flex-1 bg-orange-50 rounded-lg p-3">
+                                        <p className="text-[10px] text-orange-400/80 uppercase tracking-wider mb-1">Aylık Taksit</p>
+                                        <p className="text-orange-700">₺{formatMoneyTR(loan.installmentAmount)}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between mb-1">
-                                <p className="font-bold text-gray-800 text-sm">{loan.name}</p>
-                                <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Aktif</span>
-                            </div>
-                            <div className="flex justify-between text-[10px] text-gray-500">
-                                <span>{loan.totalInstallments} Taksit</span>
-                                <span>₺{formatMoneyTR(loan.installmentAmount)}/ay</span>
-                            </div>
+                        ))}
+                    </div>
+                    {loans.length === 0 && (
+                        <div className="bg-gray-50 border border-gray-100 border-dashed rounded-2xl p-6 text-center">
+                            <Icon name="pie-chart" size={24} className="text-gray-300 mx-auto mb-2" />
+                            <p className="text-sm font-medium text-gray-400">Kredi bulunamadı.</p>
                         </div>
-                    ))}
-                    {loans.length === 0 && <p className="text-xs text-gray-400 italic px-2">Kredi bulunamadi.</p>}
+                    )}
                 </div>
             </div>
         );
@@ -278,35 +316,35 @@ export default function Banks({ onOpenModal }) {
     const totalDebt = globalLoanDebt + cashDebtTL;
 
     return (
-        <div className="pb-24 pt-4 space-y-4">
+        <div className="pb-24 pt-4 space-y-4 px-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="bg-gray-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-8 relative overflow-hidden mb-6">
                 <div className="relative z-10">
-                    <h2 className="text-2xl font-bold mb-4">Varliklar & Borclar</h2>
+                    <h2 className="text-2xl font-bold mb-4">Varlıklar & Borçlar</h2>
 
                     {/* 2x2 Grid */}
                     <div className="grid grid-cols-2 gap-2">
                         {/* Card Limit */}
                         <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/5">
-                            <p className="text-gray-300 text-[10px] uppercase tracking-wider mb-1">Top. Kart Limiti</p>
+                            <p className="text-gray-300 text-[10px] tracking-wider mb-1">TOP. KART LİMİTİ</p>
                             <p className="font-bold text-lg">₺{formatMoneyTR(globalCardLimit)}</p>
                         </div>
 
                         {/* Loan Debt */}
                         <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-orange-500/30">
-                            <p className="text-orange-300 text-[10px] uppercase tracking-wider mb-1">Kredi Borcu</p>
+                            <p className="text-orange-300 text-[10px] tracking-wider mb-1">KREDİ BORCU</p>
                             <p className="font-bold text-lg text-orange-200">₺{formatMoneyTR(globalLoanDebt)}</p>
                         </div>
 
                         {/* Cash Debt (USD) */}
                         <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-blue-500/30">
-                            <p className="text-blue-300 text-[10px] uppercase tracking-wider mb-1">Elden Borc (USD)</p>
+                            <p className="text-blue-300 text-[10px] tracking-wider mb-1">ELDEN BORÇ (USD)</p>
                             <p className="font-bold text-lg text-blue-200">${CASH_DEBT_USD.toLocaleString('en-US')}</p>
                             <p className="text-[10px] text-gray-400">≈ ₺{formatMoneyTR(cashDebtTL)}</p>
                         </div>
 
                         {/* Total Debt */}
                         <div className="bg-gradient-to-br from-red-600/30 to-red-800/30 p-3 rounded-xl backdrop-blur-sm border border-red-500/30">
-                            <p className="text-red-200 text-[10px] uppercase tracking-wider mb-1">Toplam Borc</p>
+                            <p className="text-red-200 text-[10px] tracking-wider mb-1">TOPLAM BORÇ</p>
                             <p className="font-bold text-lg text-white">₺{formatMoneyTR(totalDebt)}</p>
                         </div>
                     </div>
@@ -316,21 +354,21 @@ export default function Banks({ onOpenModal }) {
                 </div>
             </div>
 
-            <div className="px-1 flex items-center justify-between gap-2">
-                <h3 className="font-bold text-gray-800 mb-2">Bankalar</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+                <h3 className="font-extrabold text-gray-800 text-lg">Bankalar</h3>
 
                 <div className="flex gap-2">
                     <button
                         onClick={handleBestCards}
-                        className="text-xs font-bold text-gray-900 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-100"
-                        title="Bugun hangi kart daha avantajli?"
+                        className="text-xs font-bold text-gray-900 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full hover:bg-amber-100/80 transition-colors shadow-sm flex items-center gap-1"
+                        title="Bugün hangi kart daha avantajlı?"
                     >
-                        ⭐ Avantajli Kartlar
+                        ⭐ Avantajlı Kartlar
                     </button>
 
                     <button
                         onClick={() => onOpenModal("bank", null)}
-                        className="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full hover:bg-blue-100"
+                        className="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors shadow-sm"
                     >
                         + Banka
                     </button>
@@ -349,55 +387,59 @@ export default function Banks({ onOpenModal }) {
                         <div
                             key={bank.id}
                             onClick={() => setSelectedBank(bank)}
-                            className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3 group hover:border-blue-200 transition-all cursor-pointer"
+                            className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4 group hover:shadow-md hover:border-blue-100 transition-all cursor-pointer relative overflow-hidden"
                         >
-                            <div className="flex items-center gap-3">
-                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${bank.color} flex items-center justify-center text-white shadow-sm`}>
-                                    <Icon name="building-2" size={20} className="text-white" />
-                                </div>
-
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-gray-800">{bank.name}</h3>
-                                    <p className="text-xs text-gray-400">{bankProducts.length} Urun</p>
-                                </div>
-
+                            {/* Hover Edit/Delete Options */}
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10 bg-white/90 p-1 rounded-xl shadow-sm border border-gray-100 backdrop-blur-sm">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onOpenModal("bank", bank);
                                     }}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-blue-600"
-                                    title="Bankayi Duzenle"
+                                    className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Bankayı Düzenle"
                                 >
-                                    <Icon name="edit-2" size={16} className="text-current" />
+                                    <Icon name="edit-2" size={14} />
                                 </button>
-
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onOpenModal("delete_bank", bank);
                                     }}
-                                    className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-red-600"
-                                    title="Bankayi Sil"
+                                    className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Bankayı Sil"
                                 >
-                                    <Icon name="trash-2" size={16} className="text-current" />
+                                    <Icon name="trash-2" size={14} />
                                 </button>
+                            </div>
 
-                                <Icon name="chevron-right" size={18} className="text-gray-300 group-hover:text-blue-500" />
+                            <div className="flex items-center gap-4">
+                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${bank.color} flex items-center justify-center text-white shadow-md transform group-hover:scale-105 transition-transform`}>
+                                    <Icon name="building-2" size={24} className="text-white" />
+                                </div>
+
+                                <div className="flex-1 pr-8">
+                                    <h3 className="font-extrabold text-gray-900 text-base">{bank.name}</h3>
+                                    <p className="text-xs text-gray-500 font-medium">{bankProducts.length} Ürün</p>
+                                </div>
+
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                    <Icon name="chevron-right" size={18} className="text-gray-400 group-hover:text-blue-600" />
+                                </div>
                             </div>
 
                             {(bankCardLimit > 0 || bankLoanDebt > 0) && (
-                                <div className="flex gap-2 pt-3 border-t border-gray-50">
+                                <div className="flex gap-2 pt-3 border-t border-gray-100">
                                     {bankCardLimit > 0 && (
-                                        <div className="flex-1 bg-gray-50 rounded-lg p-2">
-                                            <p className="text-[9px] text-gray-500 uppercase font-bold mb-0.5">Kart Limiti</p>
-                                            <p className="text-sm font-bold text-gray-700">₺{formatMoneyTR(bankCardLimit)}</p>
+                                        <div className="flex-1 bg-gray-50 rounded-xl p-3">
+                                            <p className="text-[10px] text-gray-500 font-bold mb-1 tracking-wider uppercase">KART LİMİTİ</p>
+                                            <p className="text-sm font-extrabold text-gray-800">₺{formatMoneyTR(bankCardLimit)}</p>
                                         </div>
                                     )}
                                     {bankLoanDebt > 0 && (
-                                        <div className="flex-1 bg-orange-50 rounded-lg p-2">
-                                            <p className="text-[9px] text-orange-600 uppercase font-bold mb-0.5">Kredi Borcu</p>
-                                            <p className="text-sm font-bold text-orange-700">₺{formatMoneyTR(bankLoanDebt)}</p>
+                                        <div className="flex-1 bg-orange-50 rounded-xl p-3">
+                                            <p className="text-[10px] text-orange-600 font-bold mb-1 tracking-wider uppercase">KREDİ BORCU</p>
+                                            <p className="text-sm font-extrabold text-orange-700">₺{formatMoneyTR(bankLoanDebt)}</p>
                                         </div>
                                     )}
                                 </div>
@@ -407,7 +449,7 @@ export default function Banks({ onOpenModal }) {
                 })}
                 {banks.length === 0 && (
                     <div className="text-center py-8 text-gray-400 text-sm">
-                        Henuz banka eklenmemis.
+                        Henüz banka eklenmemiş.
                     </div>
                 )}
             </div>

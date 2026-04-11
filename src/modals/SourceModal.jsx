@@ -27,7 +27,7 @@ export const SourceModal = ({
         <ModalShell onClose={onClose}>
             {/* Fixed Header */}
             <div className="flex justify-between items-center p-4 border-b border-gray-100 flex-shrink-0">
-                <h3 className="text-lg font-bold">{editingItem ? `${title} Duzenle` : `${title} Ekle`}</h3>
+                <h3 className="text-lg font-bold">{editingItem ? `${title} Düzenle` : `${title} Ekle`}</h3>
                 <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors -mr-2">
                     <Icon name="x" size={20} className="text-gray-500" />
                 </button>
@@ -37,27 +37,27 @@ export const SourceModal = ({
             <div className="flex-1 overflow-y-auto p-4">
                 {canFutureEdit && (
                     <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4">
-                        <p className="text-xs text-gray-600 font-medium mb-2">Guncelleme kapsami</p>
+                        <p className="text-xs text-gray-600 font-medium mb-2">Güncelleme Kapsamı</p>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setUpdateScope("all")}
                                 className={`flex-1 py-2 rounded-xl font-bold text-sm border ${updateScope === "all" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200"
                                     }`}
                             >
-                                Tumu
+                                Tümü
                             </button>
                             <button
                                 onClick={() => setUpdateScope("future")}
                                 className={`flex-1 py-2 rounded-xl font-bold text-sm border ${updateScope === "future" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"
                                     }`}
                             >
-                                Future
+                                Gelecek
                             </button>
                         </div>
 
                         {updateScope === "future" && (
                             <div className="mt-3">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Geçerlilik Tarihi (Effective Date)</label>
                                 <input
                                     type="date"
                                     className="w-full p-3 rounded-xl border border-gray-200"
@@ -65,7 +65,7 @@ export const SourceModal = ({
                                     onChange={(e) => setEffectiveDate(e.target.value)}
                                 />
                                 <p className="text-[11px] text-gray-500 mt-1">
-                                    Eski kaydin endDate'i <b>effectiveDate - 1 gun</b> olacak.
+                                    Eski kaydın bitiş tarihi <b>yeni başlangıç - 1 gün</b> olacak.
                                 </p>
                             </div>
                         )}
@@ -74,7 +74,7 @@ export const SourceModal = ({
 
                 <div className="space-y-3">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Baslik</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Başlık</label>
                         <input
                             type="text"
                             className="w-full p-3 rounded-xl border border-gray-200"
@@ -84,7 +84,7 @@ export const SourceModal = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tutar (TL)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tutar (₺)</label>
                         <input
                             type="number"
                             step="0.01"
@@ -104,7 +104,7 @@ export const SourceModal = ({
                             >
                                 {isIncome ? (
                                     <>
-                                        <option value="salary">Maas</option>
+                                        <option value="salary">Maaş</option>
                                         <option value="freelance">Freelance</option>
                                     </>
                                 ) : (
@@ -112,11 +112,11 @@ export const SourceModal = ({
                                         <option value="bills">Faturalar</option>
                                         <option value="rent">Kira</option>
                                         <option value="market">Market</option>
-                                        <option value="credit_card">Kredi Karti</option>
-                                        <option value="other">Diger</option>
+                                        <option value="credit_card">Kredi Kartı</option>
+                                        <option value="other">Diğer</option>
                                     </>
                                 )}
-                            </select>
+                            </select>>
                         </div>
                     )}
 
@@ -139,7 +139,7 @@ export const SourceModal = ({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {form.type === "recurring" ? "Baslangic Tarihi" : "Tarih"}
+                            {form.type === "recurring" ? "Başlangıç Tarihi" : "Tarih"}
                         </label>
                         <input
                             type="date"
@@ -150,7 +150,7 @@ export const SourceModal = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date (opsiyonel)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Bitiş Tarihi (Opsiyonel)</label>
                         <input
                             type="date"
                             className="w-full p-3 rounded-xl border border-gray-200"
@@ -163,7 +163,7 @@ export const SourceModal = ({
                         <>
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Odeme Tipi</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Ödeme Tipi</label>
                                     <select
                                         className="w-full p-3 rounded-xl border border-gray-200"
                                         value={form.paymentMethodType}
@@ -174,14 +174,14 @@ export const SourceModal = ({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Odeme Degeri</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Ödeme Değeri</label>
                                     {form.paymentMethodType === "bank" ? (
                                         <select
                                             className="w-full p-3 rounded-xl border border-gray-200"
                                             value={form.paymentMethodValue}
                                             onChange={(e) => setForm((p) => ({ ...p, paymentMethodValue: e.target.value }))}
                                         >
-                                            <option value="">Banka Sec</option>
+                                            <option value="">Banka Seç</option>
                                             {banks.map((b) => (
                                                 <option key={b.id} value={b.id}>
                                                     {b.name}
@@ -201,13 +201,13 @@ export const SourceModal = ({
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Bagli Kart (opsiyonel)</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Bağlı Kart (Opsiyonel)</label>
                                 <select
                                     className="w-full p-3 rounded-xl border border-gray-200"
                                     value={form.relatedCardId}
                                     onChange={(e) => setForm((p) => ({ ...p, relatedCardId: e.target.value }))}
                                 >
-                                    <option value="">Secme</option>
+                                    <option value="">Seçme</option>
                                     {products
                                         .filter((p) => p.type === "card")
                                         .map((c) => (
@@ -221,7 +221,7 @@ export const SourceModal = ({
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Kisa Not</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kısa Not</label>
                         <input
                             type="text"
                             className="w-full p-3 rounded-xl border border-gray-200"
