@@ -30,6 +30,7 @@ function AppContent() {
   const {
     loading, fetchData,
     banks, products,
+    statusTracker, toggleTracker,
     addBank, editBank, removeBank,
     addProduct, editProduct, removeProduct,
     addSource, updateSource, deleteSource,
@@ -137,17 +138,16 @@ function AppContent() {
       setNoteText(item ? item.note || "" : "");
       setActiveModal("noteModal");
     } else if (type === "delete_bank" || type === "delete_product" || type.startsWith("delete_")) {
-      // item is the object to delete
-      // augment item with type if needed
       const delType = type.replace("delete_", "");
-      // But we need to pass a structured object to DeleteConfirmModal
-      // Let's attach data to 'item' directly or wrapper
-      // DeleteConfirmModal expects { type, data, meta }
-      // Let's create a wrapper
       let wrapper = { type: delType, data: item };
       if (delType === 'bank') {
         const countP = products.filter(p => p.bankId == item.id).length;
         wrapper.meta = { productCount: countP };
+      }
+      // Check if subscription is already archived
+      if (delType === 'subscription' && item) {
+        const archiveKey = `sub_archived_${item.id}`;
+        wrapper.data = { ...item, isArchived: !!statusTracker[archiveKey] };
       }
       setEditingItem(wrapper);
       setActiveModal("deleteConfirm");
@@ -221,7 +221,32 @@ function AppContent() {
     const { type, data } = editingItem;
     if (type === 'bank') await removeBank(data.id);
     else if (type === 'product') await removeProduct(data.id);
-    else await deleteSource(type, data.id);
+    else {
+      // Hard delete: also clean up archive tracker if exists
+      if (type === 'subscription') {
+        const archiveKey = `sub_archived_${data.id}`;
+        if (statusTracker[archiveKey]) {
+          await toggleTracker(archiveKey, true); // sets to false
+        }
+      }
+      await deleteSource(type, data.id);
+    }
+    closeModal();
+  };
+
+  const handleSoftDelete = async () => {
+    if (!editingItem) return;
+    const { data } = editingItem;
+    const archiveKey = `sub_archived_${data.id}`;
+    await toggleTracker(archiveKey, false); // sets to true (archived)
+    closeModal();
+  };
+
+  const handleReactivate = async () => {
+    if (!editingItem) return;
+    const { data } = editingItem;
+    const archiveKey = `sub_archived_${data.id}`;
+    await toggleTracker(archiveKey, true); // sets to false (active)
     closeModal();
   };
 
@@ -390,7 +415,7 @@ function AppContent() {
             onClose={closeModal} onSave={() => handleSaveSource('subscription')}
           />
         )}
-        {activeModal === "deleteConfirm" && <DeleteConfirmModal deletingItem={editingItem} onClose={closeModal} onConfirm={handleDelete} />}
+        {activeModal === "deleteConfirm" && <DeleteConfirmModal deletingItem={editingItem} onClose={closeModal} onConfirm={handleDelete} onSoftDelete={handleSoftDelete} onReactivate={handleReactivate} />}
         {activeModal === "noteModal" && <NoteModal item={editingItem} noteText={noteText} setNoteText={setNoteText} onClose={closeModal} onSave={handleSaveNote} />}
         {activeModal === "cardAmountModal" && <CardAmountModal target={editingItem} onClose={closeModal} onSave={handleSaveCardAmount} />}
         {activeModal === "paymentConfirmModal" && (

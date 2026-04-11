@@ -21,6 +21,7 @@ export const useViewData = (sources, tracker, viewDate, type) => {
                     const isDone = !!(tracker && tracker[key]);
                     items.push({
                         ...source,
+                        trackerKey: key,
                         dueDate: source.date,
                         date: source.date,
                         isPaid: isDone,
@@ -72,6 +73,7 @@ export const useViewData = (sources, tracker, viewDate, type) => {
 
                     items.push({
                         ...source,
+                        trackerKey: key,
                         dueDate: generatedDate.toISOString(),
                         date: generatedDate.toISOString(),
                         isPaid: isDone,
