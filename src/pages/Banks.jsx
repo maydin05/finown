@@ -317,35 +317,35 @@ export default function Banks({ onOpenModal }) {
 
     return (
         <div className="pb-24 pt-4 space-y-4 px-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="bg-gray-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-8 relative overflow-hidden mb-6">
+            <div className="bg-gray-900 text-white p-5 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-8 relative overflow-hidden mb-6">
                 <div className="relative z-10">
-                    <h2 className="text-2xl font-bold mb-4">Varlıklar & Borçlar</h2>
+                    <h2 className="text-xl font-bold mb-3">Varlıklar & Borçlar</h2>
 
                     {/* 2x2 Grid */}
                     <div className="grid grid-cols-2 gap-2">
                         {/* Card Limit */}
-                        <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/5">
-                            <p className="text-gray-300 text-[10px] tracking-wider mb-1">TOP. KART LİMİTİ</p>
-                            <p className="font-bold text-lg">₺{formatMoneyTR(globalCardLimit)}</p>
+                        <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-sm border border-white/5">
+                            <p className="text-gray-400 text-[9px] tracking-wider mb-0.5">TOP. KART LİMİTİ</p>
+                            <p className="font-bold text-base">₺{formatMoneyTR(globalCardLimit)}</p>
                         </div>
 
                         {/* Loan Debt */}
-                        <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-orange-500/30">
-                            <p className="text-orange-300 text-[10px] tracking-wider mb-1">KREDİ BORCU</p>
-                            <p className="font-bold text-lg text-orange-200">₺{formatMoneyTR(globalLoanDebt)}</p>
+                        <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-sm border border-orange-500/30">
+                            <p className="text-orange-300 text-[9px] tracking-wider mb-0.5">KREDİ BORCU</p>
+                            <p className="font-bold text-base text-orange-200">₺{formatMoneyTR(globalLoanDebt)}</p>
                         </div>
 
                         {/* Cash Debt (USD) */}
-                        <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-blue-500/30">
-                            <p className="text-blue-300 text-[10px] tracking-wider mb-1">ELDEN BORÇ (USD)</p>
-                            <p className="font-bold text-lg text-blue-200">${CASH_DEBT_USD.toLocaleString('en-US')}</p>
-                            <p className="text-[10px] text-gray-400">≈ ₺{formatMoneyTR(cashDebtTL)}</p>
+                        <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-sm border border-blue-500/30">
+                            <p className="text-blue-300 text-[9px] tracking-wider mb-0.5">ELDEN BORÇ (USD)</p>
+                            <p className="font-bold text-base text-blue-200">${CASH_DEBT_USD.toLocaleString('en-US')}</p>
+                            <p className="text-[9px] text-gray-400">≈ ₺{formatMoneyTR(cashDebtTL)}</p>
                         </div>
 
                         {/* Total Debt */}
-                        <div className="bg-gradient-to-br from-red-600/30 to-red-800/30 p-3 rounded-xl backdrop-blur-sm border border-red-500/30">
-                            <p className="text-red-200 text-[10px] tracking-wider mb-1">TOPLAM BORÇ</p>
-                            <p className="font-bold text-lg text-white">₺{formatMoneyTR(totalDebt)}</p>
+                        <div className="bg-gradient-to-br from-red-600/30 to-red-800/30 p-2.5 rounded-xl backdrop-blur-sm border border-red-500/30">
+                            <p className="text-red-200 text-[9px] tracking-wider mb-0.5">TOPLAM BORÇ</p>
+                            <p className="font-bold text-base text-white">₺{formatMoneyTR(totalDebt)}</p>
                         </div>
                     </div>
 

@@ -94,48 +94,65 @@ export default function Expenses({ viewDate, prevMonth, nextMonth, onOpenModal, 
 
     return (
         <div className="space-y-6 pb-24">
-            <div className="bg-gray-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-12 relative overflow-hidden">
+            <div className="bg-gray-900 text-white p-5 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-10 relative overflow-hidden">
                 <div className="relative z-10">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex justify-between items-center mb-4">
                         <button onClick={prevMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
                             <Icon name="chevron-left" size={20} className="text-white" />
                         </button>
                         <div className="text-center">
-                            <h2 className="text-2xl font-bold">{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
-                            <span className="text-xs text-gray-400 font-medium">{viewDate.getFullYear()} Giderleri</span>
+                            <h2 className="text-xl font-bold">{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
+                            <span className="text-[11px] text-gray-400 font-medium">{viewDate.getFullYear()} Giderleri</span>
                         </div>
                         <button onClick={nextMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
                             <Icon name="chevron-right" size={20} className="text-white" />
                         </button>
                     </div>
-                    <div className="flex gap-3">
-                        <div className="flex-1 bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-2xl shadow-lg">
-                            <p className="text-red-100 text-xs font-medium mb-1">Ödenecek</p>
-                            <h3 className="text-2xl font-bold">₺{formatMoneyTR(totalRemaining)}</h3>
+
+                    <div className="bg-gradient-to-r from-red-600 to-rose-700 p-4 rounded-2xl shadow-lg shadow-red-900/30 relative overflow-hidden">
+                        <div className="absolute -right-3 -bottom-4 opacity-15">
+                            <Icon name="trending-down" size={80} className="text-white" />
                         </div>
-                        <div className="flex-1 bg-gradient-to-br from-green-600 to-green-700 p-4 rounded-2xl shadow-lg">
-                            <p className="text-green-100 text-xs font-medium mb-1">Ödenen</p>
-                            <h3 className="text-2xl font-bold">₺{formatMoneyTR(totalPaid)}</h3>
+                        <div className="relative z-10 flex items-end justify-between">
+                            <div>
+                                <p className="text-red-200 text-[10px] font-bold tracking-widest uppercase mb-0.5">Ödenecek</p>
+                                <h3 className="text-3xl font-extrabold tracking-tight">₺{formatMoneyTR(totalRemaining)}</h3>
+                            </div>
+                            <div className="bg-white/15 rounded-xl px-3 py-2 backdrop-blur-sm border border-white/10">
+                                <p className="text-[9px] text-red-100 uppercase tracking-widest font-bold mb-0.5">Ödenen</p>
+                                <p className="text-base font-bold text-white">₺{formatMoneyTR(totalPaid)}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white p-1 rounded-xl border border-gray-200 flex mx-1 shadow-sm">
-                <button
-                    onClick={() => setPaymentTab("pending")}
-                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${paymentTab === "pending" ? "bg-gray-100 text-gray-900" : "text-gray-400"
+            {/* Tabs */}
+            <div className="px-1">
+                <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+                    <button
+                        onClick={() => setPaymentTab("pending")}
+                        className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                            paymentTab === "pending"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-500 hover:text-gray-700"
                         }`}
-                >
-                    Ödenecekler
-                </button>
-                <button
-                    onClick={() => setPaymentTab("paid")}
-                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${paymentTab === "paid" ? "bg-green-50 text-green-700" : "text-gray-400"
+                    >
+                        <Icon name="clock" size={14} className="text-current" />
+                        Ödenecekler
+                    </button>
+                    <button
+                        onClick={() => setPaymentTab("paid")}
+                        className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                            paymentTab === "paid"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-500 hover:text-gray-700"
                         }`}
-                >
-                    Ödenmişler
-                </button>
+                    >
+                        <Icon name="check-circle" size={14} className="text-current" />
+                        Ödenmişler
+                    </button>
+                </div>
             </div>
 
             <div className="px-1 min-h-[300px]">

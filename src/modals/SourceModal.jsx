@@ -137,6 +137,34 @@ export const SourceModal = ({
                         </button>
                     </div>
 
+                    {/* Billing Cycle - only for subscriptions + recurring */}
+                    {isSubscription && form.type === "recurring" && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Fatura Periyodu</label>
+                            <div className="grid grid-cols-4 gap-1.5">
+                                {[
+                                    { value: "monthly", label: "Aylık" },
+                                    { value: "quarterly", label: "3 Aylık" },
+                                    { value: "semi-annual", label: "6 Aylık" },
+                                    { value: "annual", label: "Yıllık" },
+                                ].map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setForm((p) => ({ ...p, billingCycle: opt.value }))}
+                                        className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                                            (form.billingCycle || "monthly") === opt.value
+                                                ? "bg-purple-600 text-white border-purple-600"
+                                                : "bg-white text-gray-600 border-gray-200 hover:border-purple-300"
+                                        }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             {form.type === "recurring" ? "Başlangıç Tarihi" : "Tarih"}
@@ -179,7 +207,7 @@ export const SourceModal = ({
                                         <select
                                             className="w-full p-3 rounded-xl border border-gray-200"
                                             value={form.paymentMethodValue}
-                                            onChange={(e) => setForm((p) => ({ ...p, paymentMethodValue: e.target.value }))}
+                                            onChange={(e) => setForm((p) => ({ ...p, paymentMethodValue: e.target.value, relatedCardId: '' }))}
                                         >
                                             <option value="">Banka Seç</option>
                                             {banks.map((b) => (
@@ -209,7 +237,7 @@ export const SourceModal = ({
                                 >
                                     <option value="">Seçme</option>
                                     {products
-                                        .filter((p) => p.type === "card")
+                                        .filter((p) => p.type === 'card' && (!form.paymentMethodValue || String(p.bankId) === String(form.paymentMethodValue)))
                                         .map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name} (**** {c.last4Digits})

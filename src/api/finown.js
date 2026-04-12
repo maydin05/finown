@@ -156,15 +156,17 @@ export const createExpense = (item) => insertItem('expense_sources', item);
 export const updateExpense = (id, updates) => updateItem('expense_sources', id, updates);
 export const deleteExpense = (id) => deleteItem('expense_sources', id);
 
+// Fields that exist only at runtime (added by useViewData) and NOT in the DB table
+const stripRuntimeFields = (obj) => {
+    const { category, dueDate, isPaid, isRecurring, isReceived, trackerKey, subtitle, isManual, isArchived, _originalDate, ...clean } = obj;
+    return clean;
+};
+
 export const createSubscription = (item) => {
-    // subscription_sources doesn't have 'category' column, so filter it out
-    const { category, ...subscriptionData } = item;
-    return insertItem('subscription_sources', subscriptionData);
+    return insertItem('subscription_sources', stripRuntimeFields(item));
 };
 export const updateSubscription = (id, updates) => {
-    // subscription_sources doesn't have 'category' column, so filter it out
-    const { category, ...subscriptionUpdates } = updates;
-    return updateItem('subscription_sources', id, subscriptionUpdates);
+    return updateItem('subscription_sources', id, stripRuntimeFields(updates));
 };
 export const deleteSubscription = (id) => deleteItem('subscription_sources', id);
 

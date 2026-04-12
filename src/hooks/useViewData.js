@@ -37,19 +37,15 @@ export const useViewData = (sources, tracker, viewDate, type) => {
                 const startDate = new Date(startSource);
                 const endDate = source.endDate ? new Date(source.endDate) : null;
 
-                // For recurring, we generate the date for the CURRENT view month.
-                // But we need to verify if the "Start Date" aligns.
-
                 // FIXED Logic: Use dayOfMonth if available, otherwise get from startDate.
                 let dueDay = 1;
                 if (source.dayOfMonth) {
                     dueDay = source.dayOfMonth;
                 } else if (startSource) {
-                    dueDay = new Date(startSource).getDate(); // Use Local day to match expectations
+                    dueDay = new Date(startSource).getDate();
                 }
 
-                // Construct generated date in LOCAL time for UI display (so it appears correctly in calendar)
-                // BUT logically we treat it as the item for 'currentMonth'.
+                // Construct generated date in LOCAL time for UI display
                 const generatedDate = new Date(currentYear, currentMonth, dueDay);
                 generatedDate.setHours(0, 0, 0, 0);
 
@@ -57,10 +53,22 @@ export const useViewData = (sources, tracker, viewDate, type) => {
                 startCompare.setHours(0, 0, 0, 0);
 
                 let isValid = generatedDate >= startCompare;
+
+                // Billing cycle check (for subscriptions)
+                if (isValid && source.billingCycle && source.billingCycle !== 'monthly') {
+                    const startMonth = startDate.getMonth();
+                    const startYear = startDate.getFullYear();
+                    const monthsSinceStart = (currentYear - startYear) * 12 + (currentMonth - startMonth);
+                    const interval = source.billingCycle === 'quarterly' ? 3
+                        : source.billingCycle === 'semi-annual' ? 6
+                        : source.billingCycle === 'annual' ? 12 : 1;
+                    if (monthsSinceStart < 0 || monthsSinceStart % interval !== 0) {
+                        isValid = false;
+                    }
+                }
+
                 if (isValid && endDate) {
                     const endCompare = new Date(endDate);
-                    // FIX: Database Date column truncates to UTC. For GMT+3, '2026-03-05 00:00' becomes '2026-03-04 21:00' -> Stored as '2026-03-04'.
-                    // We must extend the End Date check by 1 day (and use end of day) to compensate and ensure inclusivity.
                     endCompare.setDate(endCompare.getDate() + 1);
                     endCompare.setHours(23, 59, 59, 999);
 
@@ -75,6 +83,7 @@ export const useViewData = (sources, tracker, viewDate, type) => {
                         ...source,
                         trackerKey: key,
                         dueDate: generatedDate.toISOString(),
+                        _originalDate: source.date || source.startDate,
                         date: generatedDate.toISOString(),
                         isPaid: isDone,
                         // ...

@@ -27,49 +27,65 @@ export default function Incomes({ viewDate, prevMonth, nextMonth, onOpenModal, i
 
     return (
         <div className="space-y-6 pb-24">
-            <div className="bg-teal-900 text-white p-6 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-12 relative overflow-hidden">
+            <div className="bg-teal-900 text-white p-5 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-10 relative overflow-hidden">
                 <div className="relative z-10">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex justify-between items-center mb-4">
                         <button onClick={prevMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
                             <Icon name="chevron-left" size={20} className="text-white" />
                         </button>
                         <div className="text-center">
-                            <h2 className="text-2xl font-bold">{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
-                            <span className="text-xs text-teal-200 font-medium">{viewDate.getFullYear()} Gelirleri</span>
+                            <h2 className="text-xl font-bold">{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
+                            <span className="text-[11px] text-teal-200 font-medium">{viewDate.getFullYear()} Gelirleri</span>
                         </div>
                         <button onClick={nextMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
                             <Icon name="chevron-right" size={20} className="text-white" />
                         </button>
                     </div>
 
-                    <div className="flex gap-3">
-                        <div className="flex-1 bg-gradient-to-br from-teal-500 to-teal-700 p-4 rounded-2xl shadow-lg shadow-teal-900/20">
-                            <p className="text-teal-100 text-xs font-medium mb-1">Beklenen</p>
-                            <h3 className="text-2xl font-bold">₺{formatMoneyTR(totalExpected)}</h3>
+                    <div className="bg-gradient-to-r from-teal-600 to-emerald-600 p-4 rounded-2xl shadow-lg shadow-teal-900/30 relative overflow-hidden">
+                        <div className="absolute -right-3 -bottom-4 opacity-15">
+                            <Icon name="trending-up" size={80} className="text-white" />
                         </div>
-                        <div className="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-700 p-4 rounded-2xl shadow-lg shadow-emerald-900/20">
-                            <p className="text-emerald-100 text-xs font-medium mb-1">Alınan</p>
-                            <h3 className="text-2xl font-bold">₺{formatMoneyTR(totalReceived)}</h3>
+                        <div className="relative z-10 flex items-end justify-between">
+                            <div>
+                                <p className="text-teal-200 text-[10px] font-bold tracking-widest uppercase mb-0.5">Beklenen</p>
+                                <h3 className="text-3xl font-extrabold tracking-tight">₺{formatMoneyTR(totalExpected)}</h3>
+                            </div>
+                            <div className="bg-white/15 rounded-xl px-3 py-2 backdrop-blur-sm border border-white/10">
+                                <p className="text-[9px] text-emerald-100 uppercase tracking-widest font-bold mb-0.5">Alınan</p>
+                                <p className="text-base font-bold text-white">₺{formatMoneyTR(totalReceived)}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white p-1 rounded-xl border border-gray-200 flex mx-1 shadow-sm">
-                <button
-                    onClick={() => setIncomeTab("expected")}
-                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${incomeTab === "expected" ? "bg-teal-50 text-teal-900" : "text-gray-400"
+            {/* Tabs */}
+            <div className="px-1">
+                <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+                    <button
+                        onClick={() => setIncomeTab("expected")}
+                        className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                            incomeTab === "expected"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-500 hover:text-gray-700"
                         }`}
-                >
-                    Beklenen Ödemeler
-                </button>
-                <button
-                    onClick={() => setIncomeTab("received")}
-                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${incomeTab === "received" ? "bg-emerald-50 text-emerald-700" : "text-gray-400"
+                    >
+                        <Icon name="clock" size={14} className="text-current" />
+                        Beklenen
+                    </button>
+                    <button
+                        onClick={() => setIncomeTab("received")}
+                        className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                            incomeTab === "received"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-500 hover:text-gray-700"
                         }`}
-                >
-                    Alınan Ödemeler
-                </button>
+                    >
+                        <Icon name="check-circle" size={14} className="text-current" />
+                        Alınan
+                    </button>
+                </div>
             </div>
 
             <div className="px-1 min-h-[300px]">

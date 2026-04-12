@@ -114,7 +114,7 @@ function AppContent() {
     } else if (["income", "expense", "subscription"].includes(type)) {
       // Map item to form
       // Important: Handle date/dueDate mapping
-      const d = item ? (item.date || item.dueDate) : new Date().toISOString().split('T')[0];
+      const d = item ? (item._originalDate || item.startDate || item.date || item.dueDate) : new Date().toISOString().split('T')[0];
       // eslint-disable-next-line no-unused-vars
       const { id: existingId, ...itemWithoutId } = item || {};
       const mapped = item ? { ...itemWithoutId, date: d.split('T')[0] } : {
@@ -123,11 +123,12 @@ function AppContent() {
         date: new Date().toISOString().split('T')[0]
       };
 
-      // Special fields
+      // Special fields for subscription
       if (type === "subscription") {
-        mapped.paymentMethodType = item?.paymentMethod?.type || "bank";
-        mapped.paymentMethodValue = item?.paymentMethod?.value || "";
+        mapped.paymentMethodType = item?.paymentMethodType || item?.paymentMethod?.type || "bank";
+        mapped.paymentMethodValue = item?.paymentMethodValue || item?.paymentMethod?.value || "";
         mapped.relatedCardId = item?.relatedCardId || "";
+        mapped.billingCycle = item?.billingCycle || "monthly";
       }
 
       setSourceForm(mapped);
@@ -202,6 +203,15 @@ function AppContent() {
         ...formWithoutId,
         amount: parseFloat(String(sourceForm.amount).replace(',', '.')) || 0
       };
+
+      // For subscriptions, sync startDate and dayOfMonth from the date field
+      if (type === 'subscription' && payload.date) {
+        const parsed = new Date(payload.date);
+        if (!isNaN(parsed.getTime())) {
+          payload.startDate = payload.date;
+          payload.dayOfMonth = parsed.getDate();
+        }
+      }
 
       console.log('Saving source:', type, editingItem?.id, payload);
 
