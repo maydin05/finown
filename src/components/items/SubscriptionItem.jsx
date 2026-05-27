@@ -2,7 +2,16 @@ import React from 'react';
 import { Icon } from '../ui/Icon';
 import { formatDateTR, formatMoneyTR, getDaysDifference } from '../../utils';
 
-export const SubscriptionItem = ({ item, onOpenNote, onEdit, onDelete, onTogglePaid, banks, products }) => {
+export const SubscriptionItem = ({ 
+    item, 
+    onOpenNote, 
+    onEdit, 
+    onDelete, 
+    onTogglePaid, 
+    onOpenPaymentEntry,
+    banks, 
+    products 
+}) => {
     const paymentMethodType = item.paymentMethod?.type || item.paymentMethodType;
     const paymentMethodValue = item.paymentMethod?.value || item.paymentMethodValue;
 
@@ -41,10 +50,25 @@ export const SubscriptionItem = ({ item, onOpenNote, onEdit, onDelete, onToggleP
         iconName = 'activity';
         iconColor = 'text-orange-500';
         iconBg = 'bg-orange-50';
-    } else if (t.includes('internet') || t.includes('turkcell') || t.includes('vodafone') || t.includes('telekom')) {
+    } else if (t.includes('internet') || t.includes('turkcell') || t.includes('vodafone') || t.includes('telekom') || t.includes('fatura') || t.includes('elektrik') || t.includes('su') || t.includes('gaz')) {
         iconName = 'wifi';
         iconColor = 'text-indigo-500';
         iconBg = 'bg-indigo-50';
+    }
+
+    // Specific icons for water, electric, gas bills if possible
+    if (t.includes('elektrik') || t.includes('enerji')) {
+        iconName = 'zap';
+        iconColor = 'text-yellow-600';
+        iconBg = 'bg-yellow-50';
+    } else if (t.includes('su') || t.includes('iski') || t.includes('maski') || t.includes('aski')) {
+        iconName = 'droplet';
+        iconColor = 'text-cyan-500';
+        iconBg = 'bg-cyan-50';
+    } else if (t.includes('gaz') || t.includes('igdaş') || t.includes('doğalgaz')) {
+        iconName = 'flame';
+        iconColor = 'text-orange-600';
+        iconBg = 'bg-orange-50';
     }
 
     const todayDate = new Date();
@@ -72,6 +96,23 @@ export const SubscriptionItem = ({ item, onOpenNote, onEdit, onDelete, onToggleP
         badgeClass = "bg-emerald-50 text-emerald-600 border border-emerald-200";
     }
 
+    const handlePayClick = (e) => {
+        e.stopPropagation();
+        if (item.isVariable && !item.isPaid) {
+            onOpenPaymentEntry(item);
+        } else {
+            onTogglePaid();
+        }
+    };
+
+    const displayAmount = item.isPaid && item.actualAmount !== null && item.actualAmount !== undefined
+        ? item.actualAmount 
+        : (item.expectedAmount || item.amount || 0);
+
+    const diff = item.isPaid && item.actualAmount !== null && item.actualAmount !== undefined
+        ? Number(item.actualAmount) - Number(item.expectedAmount || item.amount || 0)
+        : 0;
+
     return (
         <div className={`group relative p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm border ${item.isPaid ? 'border-emerald-100 bg-emerald-50/40 opacity-80' : 'border-gray-100 bg-white hover:border-purple-200 hover:shadow-md'} mb-4 transition-all flex flex-col justify-between gap-3 sm:gap-4 overflow-hidden`}>
             
@@ -88,9 +129,9 @@ export const SubscriptionItem = ({ item, onOpenNote, onEdit, onDelete, onToggleP
             <div className="flex gap-3 items-start w-full min-w-0 pr-8 sm:pr-12">
                 {/* Paid Checkbox */}
                 <button 
-                    onClick={(e) => { e.stopPropagation(); onTogglePaid(); }} 
+                    onClick={handlePayClick} 
                     className={`w-5 h-5 shrink-0 mt-2 sm:mt-1.5 rounded border-[1.5px] flex items-center justify-center transition-all ${item.isPaid ? 'bg-emerald-500 border-emerald-500 shadow-sm' : 'border-gray-300 hover:border-purple-400 bg-gray-50'}`}
-                    title={item.isPaid ? "Ödemeyi Geri Al" : "Ödendi İşaretle"}
+                    title={item.isPaid ? "Ödemeyi Geri Al" : (item.isVariable ? "Tutar Gir ve Öde" : "Ödendi İşaretle")}
                 >
                     {item.isPaid && <Icon name="check" size={12} className="text-white" />}
                 </button>
@@ -104,6 +145,14 @@ export const SubscriptionItem = ({ item, onOpenNote, onEdit, onDelete, onToggleP
                     <div className="flex flex-col min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                             <h4 className={`font-extrabold text-sm sm:text-base line-clamp-1 ${item.isPaid ? 'text-gray-500 line-through decoration-1 decoration-gray-400' : 'text-gray-900'}`}>{item.title}</h4>
+                            
+                            {/* Variable Badge */}
+                            {item.isVariable && (
+                                <span className="bg-purple-50 text-purple-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-purple-100 flex items-center gap-0.5 shrink-0 uppercase tracking-wider">
+                                    <Icon name="bar-chart-2" size={9} /> Fatura
+                                </span>
+                            )}
+                            
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${badgeClass} whitespace-nowrap`}>
                                 {badgeText}
                             </span>
@@ -146,11 +195,41 @@ export const SubscriptionItem = ({ item, onOpenNote, onEdit, onDelete, onToggleP
                     <Icon name="sticky-note" size={12} /> Notlarım
                 </button>
 
-                <div className="text-right flex items-center gap-2">
-                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block">Tutar</p>
-                    <span className={`font-black tracking-tight ${item.isPaid ? 'text-gray-400 line-through decoration-emerald-500 decoration-2 text-lg sm:text-xl' : 'text-gray-900 text-xl sm:text-2xl'}`}>
-                        ₺{formatMoneyTR(item.amount)}
-                    </span>
+                <div className="text-right flex items-center gap-3">
+                    {/* Expected vs Actual Diff badge for variable bill */}
+                    {item.isVariable && item.isPaid && diff !== 0 && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-0.5 border ${
+                            diff > 0 
+                                ? 'bg-red-50 text-red-600 border-red-100' 
+                                : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        }`}>
+                            {diff > 0 ? '+' : ''}₺{formatMoneyTR(diff)}
+                        </span>
+                    )}
+
+                    {/* Unpaid Variable Fatura Action */}
+                    {item.isVariable && !item.isPaid ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-gray-400 font-bold block sm:inline-block">
+                                BEKLENEN: ₺{formatMoneyTR(item.expectedAmount || item.amount)}
+                            </span>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onOpenPaymentEntry(item); }}
+                                className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-black transition-all shadow-sm shadow-amber-200 flex items-center gap-1"
+                            >
+                                <Icon name="credit-card" size={12} /> Tutar Gir & Öde
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block">
+                                {item.isVariable ? "Ödenen" : "Tutar"}
+                            </p>
+                            <span className={`font-black tracking-tight ${item.isPaid ? 'text-gray-400 line-through decoration-emerald-500 decoration-2 text-lg sm:text-xl' : 'text-gray-900 text-xl sm:text-2xl'}`}>
+                                ₺{formatMoneyTR(displayAmount)}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

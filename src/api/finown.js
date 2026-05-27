@@ -96,6 +96,7 @@ export const getAllData = async () => {
         incomeSources,
         expenseSources,
         subscriptionSources,
+        subscriptionPayments,
         trackers
     ] = await Promise.all([
         fetchTable('banks'),
@@ -104,6 +105,10 @@ export const getAllData = async () => {
         fetchTable('income_sources'),
         fetchTable('expense_sources'),
         fetchTable('subscription_sources'),
+        fetchTable('subscription_payments').catch(err => {
+            console.warn("Could not fetch subscription_payments (table may not exist yet):", err.message);
+            return [];
+        }),
         fetchTable('trackers', 'key') // Trackers doesn't have created_at
     ]);
 
@@ -130,6 +135,7 @@ export const getAllData = async () => {
         incomeSources,
         expenseSources,
         subscriptionSources,
+        subscriptionPayments,
         statusTracker,
         subscriptionTracker: statusTracker,
     };
@@ -169,6 +175,22 @@ export const updateSubscription = (id, updates) => {
     return updateItem('subscription_sources', id, stripRuntimeFields(updates));
 };
 export const deleteSubscription = (id) => deleteItem('subscription_sources', id);
+
+// Subscription Payments
+export const createSubscriptionPayment = (item) => insertItem('subscription_payments', item);
+export const updateSubscriptionPayment = (id, updates) => updateItem('subscription_payments', id, updates);
+export const deleteSubscriptionPayment = (id) => deleteItem('subscription_payments', id);
+export const upsertSubscriptionPayment = async (item) => {
+    const user = await getUser();
+    const snakeItem = { ...keysToSnake(item), user_id: user.id };
+    const { data, error } = await supabase
+        .from('subscription_payments')
+        .upsert(snakeItem, { onConflict: 'subscription_id,period_year,period_month' })
+        .select()
+        .single();
+    if (error) throw error;
+    return keysToCamel(data);
+};
 
 // Payments (generated installments or manual payments)
 export const createPayment = (item) => insertItem('payments', item);

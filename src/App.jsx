@@ -20,6 +20,7 @@ import { SourceModal } from './modals/SourceModal';
 import { BankModal } from './modals/BankModal';
 import { ProductModal } from './modals/ProductModal';
 import { NoteModal } from './modals/NoteModal';
+import { PaymentEntryModal } from './modals/PaymentEntryModal';
 import { DeleteConfirmModal } from './modals/DeleteConfirmModal';
 import { CardAmountModal } from './modals/CardAmountModal';
 import { PaymentConfirmModal } from './modals/PaymentConfirmModal';
@@ -34,7 +35,8 @@ function AppContent() {
     addBank, editBank, removeBank,
     addProduct, editProduct, removeProduct,
     addSource, updateSource, deleteSource,
-    addPayment, upsertPayment, editPayment
+    addPayment, upsertPayment, editPayment,
+    markSubscriptionPaid
   } = useData();
 
   const [session, setSession] = useState(null);
@@ -65,7 +67,7 @@ function AppContent() {
   });
 
   // Source Forms
-  const initialSource = { title: "", amount: "", type: "recurring", date: "", endDate: "", note: "" };
+  const initialSource = { title: "", amount: "", type: "recurring", date: "", endDate: "", note: "", isVariable: false };
   const [sourceForm, setSourceForm] = useState({ ...initialSource, category: "bills" });
   // We reuse sourceForm for Income, Expense, Subscription (mapped fields)
 
@@ -129,12 +131,16 @@ function AppContent() {
         mapped.paymentMethodValue = item?.paymentMethodValue || item?.paymentMethod?.value || "";
         mapped.relatedCardId = item?.relatedCardId || "";
         mapped.billingCycle = item?.billingCycle || "monthly";
+        mapped.isVariable = item?.isVariable || false;
       }
 
       setSourceForm(mapped);
       setUpdateScope("all");
       setEffectiveDate("");
       setActiveModal(type + "Modal");
+    } else if (type === "payment_entry") {
+      setEditingItem(item);
+      setActiveModal("paymentEntryModal");
     } else if (type === "note") {
       setNoteText(item ? item.note || "" : "");
       setActiveModal("noteModal");
@@ -336,11 +342,8 @@ function AppContent() {
     <BrowserRouter>
       <div className="bg-gray-50 min-h-screen font-sans text-gray-900 max-w-md mx-auto border-x border-gray-200 shadow-2xl overflow-hidden relative">
 
-        {/* Header conditionally rendered */}
-        <Routes>
-          <Route path="/" element={null} />
-          <Route path="*" element={<Header />} />
-        </Routes>
+        {/* Header always visible */}
+        <Header />
 
         <div className="h-full overflow-y-auto custom-scrollbar">
           <Routes>
@@ -441,6 +444,23 @@ function AppContent() {
               } catch (error) {
                 console.error('Error confirming payment:', error);
                 alert('Ödeme onaylanırken hata oluştu: ' + error.message);
+              }
+            }}
+          />
+        )}
+        {activeModal === "paymentEntryModal" && (
+          <PaymentEntryModal
+            item={editingItem}
+            onClose={closeModal}
+            onSave={async (amount, paidDate, note) => {
+              try {
+                const currentMonth = viewDate.getMonth() + 1; // 1-12
+                const currentYear = viewDate.getFullYear();
+                await markSubscriptionPaid(editingItem.id, currentYear, currentMonth, amount, paidDate, note);
+                closeModal();
+              } catch (error) {
+                console.error('Error saving subscription payment:', error);
+                alert('Ödeme kaydedilirken hata oluştu: ' + error.message);
               }
             }}
           />
