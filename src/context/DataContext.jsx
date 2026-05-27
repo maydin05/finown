@@ -13,10 +13,82 @@ export const DataProvider = ({ children }) => {
     const [incomeSources, setIncomeSources] = useState([]);
     const [expenseSources, setExpenseSources] = useState([]);
     const [subscriptionSources, setSubscriptionSources] = useState([]);
+    const [subscriptionPayments, setSubscriptionPayments] = useState([]);
     const [statusTracker, setStatusTracker] = useState({});
 
     // Veri yüklendi mi?
     const loadedRef = useRef(false);
+
+    const migrateLegacyTrackers = useCallback(async (sources, payments, trackers) => {
+        if (!sources || !sources.length || !trackers) return;
+
+        const legacyPaidKeys = Object.keys(trackers).filter(key => {
+            if (!trackers[key]) return false;
+            const parts = key.split('_');
+            if (parts.length !== 3) return false;
+            const subId = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const year = parseInt(parts[2]);
+            return !isNaN(subId) && !isNaN(month) && !isNaN(year) && sources.some(s => s.id === subId);
+        });
+
+        if (!legacyPaidKeys.length) return;
+
+        const paymentsToCreate = [];
+
+        legacyPaidKeys.forEach(key => {
+            const parts = key.split('_');
+            const subId = parseInt(parts[0]);
+            const monthIndex = parseInt(parts[1]); // 0-11
+            const year = parseInt(parts[2]);
+            const sub = sources.find(s => s.id === subId);
+            const periodMonth = monthIndex + 1; // 1-12
+
+            const exists = (payments || []).some(
+                p => p.subscriptionId === subId && 
+                p.periodYear === year && 
+                p.periodMonth === periodMonth
+            );
+
+            if (!exists && sub) {
+                const dueDay = sub.dayOfMonth || 1;
+                const dueDate = `${year}-${String(periodMonth).padStart(2, '0')}-${String(dueDay).padStart(2, '0')}`;
+                paymentsToCreate.push({
+                    subscriptionId: subId,
+                    periodYear: year,
+                    periodMonth,
+                    expectedAmount: sub.amount,
+                    actualAmount: sub.amount,
+                    dueDate,
+                    paidDate: dueDate,
+                    isPaid: true,
+                    note: 'Eski sistemden otomatik aktarıldı'
+                });
+            }
+        });
+
+        if (paymentsToCreate.length > 0) {
+            console.log(`Migrating ${paymentsToCreate.length} legacy trackers inside client...`);
+            try {
+                const promises = paymentsToCreate.map(p => api.upsertSubscriptionPayment(p));
+                const results = await Promise.all(promises);
+                
+                setSubscriptionPayments(prev => {
+                    const next = [...prev];
+                    results.forEach(saved => {
+                        const exists = next.some(p => p.id === saved.id || (p.subscriptionId === saved.subscriptionId && p.periodYear === saved.periodYear && p.periodMonth === saved.periodMonth));
+                        if (!exists) {
+                            next.push(saved);
+                        }
+                    });
+                    return next;
+                });
+                console.log("Legacy trackers migrated successfully!");
+            } catch (err) {
+                console.error("Failed to migrate legacy trackers on client:", err);
+            }
+        }
+    }, []);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -28,15 +100,19 @@ export const DataProvider = ({ children }) => {
             setIncomeSources(data.incomeSources);
             setExpenseSources(data.expenseSources);
             setSubscriptionSources(data.subscriptionSources);
+            setSubscriptionPayments(data.subscriptionPayments || []);
             setStatusTracker(data.statusTracker); // merging status & sub trackers
             loadedRef.current = true;
+
+            // Trigger client-side legacy migration
+            migrateLegacyTrackers(data.subscriptionSources, data.subscriptionPayments || [], data.statusTracker);
         } catch (error) {
             console.error("Data fetch failed:", error);
             // alert?
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [migrateLegacyTrackers]);
 
     // --- BANKS ---
     const addBank = async (bank) => {
@@ -167,6 +243,63 @@ export const DataProvider = ({ children }) => {
         }
     };
 
+    // --- SUBSCRIPTION PAYMENTS ---
+    const saveSubscriptionPayment = async (payment) => {
+        const saved = await api.upsertSubscriptionPayment(payment);
+        setSubscriptionPayments(prev => {
+            const exists = prev.some(p => p.id === saved.id || (p.subscriptionId === saved.subscriptionId && p.periodYear === saved.periodYear && p.periodMonth === saved.periodMonth));
+            if (exists) {
+                return prev.map(p => (p.id === saved.id || (p.subscriptionId === saved.subscriptionId && p.periodYear === saved.periodYear && p.periodMonth === saved.periodMonth)) ? saved : p);
+            }
+            return [...prev, saved];
+        });
+        return saved;
+    };
+
+    const markSubscriptionPaid = async (subscriptionId, year, month, actualAmount, paidDate, note, isPaid = true) => {
+        const sub = subscriptionSources.find(s => s.id === subscriptionId);
+        if (!sub) return;
+
+        const existing = subscriptionPayments.find(p => p.subscriptionId === subscriptionId && p.periodYear === year && p.periodMonth === month);
+
+        const payment = {
+            ...(existing || {}),
+            subscriptionId,
+            periodYear: year,
+            periodMonth: month,
+            expectedAmount: sub.amount,
+            actualAmount: actualAmount !== undefined && actualAmount !== null ? Number(actualAmount) : sub.amount,
+            dueDate: existing?.dueDate || (sub.startDate ? `${year}-${String(month).padStart(2, '0')}-${String(sub.dayOfMonth || 1).padStart(2, '0')}` : null),
+            paidDate: paidDate || new Date().toISOString().split('T')[0],
+            isPaid,
+            note: note !== undefined ? note : (existing?.note || '')
+        };
+
+        return saveSubscriptionPayment(payment);
+    };
+
+    const toggleSubscriptionPaid = async (subscriptionId, year, month, currentIsPaid) => {
+        const sub = subscriptionSources.find(s => s.id === subscriptionId);
+        if (!sub) return;
+
+        const existing = subscriptionPayments.find(p => p.subscriptionId === subscriptionId && p.periodYear === year && p.periodMonth === month);
+        const nextIsPaid = !currentIsPaid;
+
+        const payment = {
+            ...(existing || {}),
+            subscriptionId,
+            periodYear: year,
+            periodMonth: month,
+            expectedAmount: sub.amount,
+            actualAmount: nextIsPaid ? sub.amount : null,
+            dueDate: existing?.dueDate || (sub.startDate ? `${year}-${String(month).padStart(2, '0')}-${String(sub.dayOfMonth || 1).padStart(2, '0')}` : null),
+            paidDate: nextIsPaid ? new Date().toISOString().split('T')[0] : null,
+            isPaid: nextIsPaid
+        };
+
+        return saveSubscriptionPayment(payment);
+    };
+
     // --- RESET ---
     const resetData = () => {
         setBanks([]);
@@ -175,6 +308,7 @@ export const DataProvider = ({ children }) => {
         setIncomeSources([]);
         setExpenseSources([]);
         setSubscriptionSources([]);
+        setSubscriptionPayments([]);
         setStatusTracker({});
         loadedRef.current = false;
     };
@@ -190,6 +324,7 @@ export const DataProvider = ({ children }) => {
         incomeSources,
         expenseSources,
         subscriptionSources,
+        subscriptionPayments,
         statusTracker,
 
         addBank, editBank, removeBank,
@@ -199,6 +334,9 @@ export const DataProvider = ({ children }) => {
         addSource, updateSource, deleteSource,
 
         toggleTracker,
+        saveSubscriptionPayment,
+        markSubscriptionPaid,
+        toggleSubscriptionPaid,
     };
 
     return (

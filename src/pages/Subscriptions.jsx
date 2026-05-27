@@ -26,12 +26,22 @@ const cycleInterval = (cycle) => {
 };
 
 export default function Subscriptions({ viewDate, prevMonth, nextMonth, onOpenModal }) {
-    const { subscriptionSources, statusTracker, banks, products, toggleTracker } = useData();
+    const { 
+        subscriptionSources, 
+        subscriptionPayments, 
+        statusTracker, 
+        banks, 
+        products, 
+        toggleSubscriptionPaid 
+    } = useData();
     const [showArchived, setShowArchived] = useState(false);
     const [tab, setTab] = useState("pending"); // "pending" | "paid"
 
+    const currentYear = viewDate.getFullYear();
+    const currentMonth = viewDate.getMonth() + 1; // 1-12
+
     // 1. Generate items for current view month
-    const allSubs = useViewData(subscriptionSources, statusTracker, viewDate, "subscription");
+    const allSubs = useViewData(subscriptionSources, statusTracker, viewDate, "subscription", subscriptionPayments);
 
     // 2. Split active vs archived
     const activeSubs = allSubs.filter(s => !statusTracker[`sub_archived_${s.id}`]);
@@ -44,44 +54,38 @@ export default function Subscriptions({ viewDate, prevMonth, nextMonth, onOpenMo
 
     // 4. Totals - use ALL active sources (not just current month view) for projections
     const allActiveSources = (subscriptionSources || []).filter(s => 
-        !statusTracker[`sub_archived_${s.id}`] && s.type === 'recurring'
+        !statusTracker[`sub_archived_${s.id}`]
     );
 
-    // This month's cost (from visible items)
-    const monthCost = activeSubs.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+    // This month's cost: paid actual amounts + unpaid expected amounts
+    const monthCost = activeSubs.reduce((acc, curr) => {
+        if (curr.isPaid && curr.actualAmount !== null && curr.actualAmount !== undefined) {
+            return acc + Number(curr.actualAmount);
+        }
+        return acc + Number(curr.expectedAmount || curr.amount || 0);
+    }, 0);
 
-    // Smart annual projection: each sub contributes amount * cycleMultiplier
+    // Smart annual projection
     const annualProjection = allActiveSources.reduce((acc, s) => {
         return acc + Number(s.amount || 0) * cycleMultiplier(s.billingCycle);
     }, 0);
 
-    // Historical total spending: how much paid since start of each subscription until now
+    // Historical total spending: exact sum of all actual paid subscription payments
     const totalSpent = useMemo(() => {
-        const now = new Date();
-        return allActiveSources.reduce((total, source) => {
-            const startSource = source.startDate || source.date;
-            if (!startSource) return total;
-            const start = new Date(startSource);
-            const endSource = source.endDate ? new Date(source.endDate) : now;
-            const effectiveEnd = endSource < now ? endSource : now;
+        return (subscriptionPayments || [])
+            .filter(p => p.isPaid)
+            .reduce((sum, p) => sum + Number(p.actualAmount !== null && p.actualAmount !== undefined ? p.actualAmount : p.expectedAmount || 0), 0);
+    }, [subscriptionPayments]);
 
-            // Months between start and now
-            const monthsDiff = (effectiveEnd.getFullYear() - start.getFullYear()) * 12 
-                + (effectiveEnd.getMonth() - start.getMonth());
-            if (monthsDiff < 0) return total;
-
-            const interval = cycleInterval(source.billingCycle);
-            const paymentsCount = Math.floor(monthsDiff / interval) + 1; // +1 includes the start month
-            return total + paymentsCount * Number(source.amount || 0);
-        }, 0);
-    }, [allActiveSources]);
-
-    const paidTotal = paidSubs.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
-    const pendingTotal = pendingSubs.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+    const paidTotal = paidSubs.reduce((acc, curr) => acc + Number(curr.actualAmount !== null && curr.actualAmount !== undefined ? curr.actualAmount : curr.expectedAmount || curr.amount || 0), 0);
+    const pendingTotal = pendingSubs.reduce((acc, curr) => acc + Number(curr.expectedAmount || curr.amount || 0), 0);
 
     const handleTogglePaid = (item) => {
-        if (!item.trackerKey) return;
-        toggleTracker(item.trackerKey, item.isPaid);
+        if (item.isVariable && !item.isPaid) {
+            onOpenModal("payment_entry", item);
+        } else {
+            toggleSubscriptionPaid(item.id, currentYear, currentMonth, item.isPaid);
+        }
     };
 
     const renderItem = (item, idx, prefix = "") => (
@@ -91,6 +95,7 @@ export default function Subscriptions({ viewDate, prevMonth, nextMonth, onOpenMo
             banks={banks}
             products={products}
             onTogglePaid={() => handleTogglePaid(item)}
+            onOpenPaymentEntry={(itm) => onOpenModal("payment_entry", itm)}
             onOpenNote={(itm) => onOpenModal("note", { ...itm, sourceType: 'subscription' })}
             onEdit={(itm) => onOpenModal("subscription", itm)}
             onDelete={(itm) => onOpenModal("delete_subscription", itm)}

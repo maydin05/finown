@@ -83,8 +83,40 @@ export const SourceModal = ({
                         />
                     </div>
 
+                    {isSubscription && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Abonelik Tipi</label>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setForm((p) => ({ ...p, isVariable: false }))}
+                                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm border transition-all ${
+                                        !form.isVariable
+                                            ? "bg-purple-600 text-white border-purple-600"
+                                            : "bg-white text-gray-600 border-gray-200 hover:border-purple-200"
+                                    }`}
+                                >
+                                    Sabit Tutar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setForm((p) => ({ ...p, isVariable: true }))}
+                                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm border transition-all ${
+                                        form.isVariable
+                                            ? "bg-purple-600 text-white border-purple-600"
+                                            : "bg-white text-gray-600 border-gray-200 hover:border-purple-200"
+                                    }`}
+                                >
+                                    Değişken Fatura
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tutar (₺)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {isSubscription && form.isVariable ? "Beklenen Aylık Tutar (₺)" : "Tutar (₺)"}
+                        </label>
                         <input
                             type="number"
                             step="0.01"
@@ -116,7 +148,7 @@ export const SourceModal = ({
                                         <option value="other">Diğer</option>
                                     </>
                                 )}
-                            </select>>
+                            </select>
                         </div>
                     )}
 
