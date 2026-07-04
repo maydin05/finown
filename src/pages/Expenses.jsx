@@ -25,8 +25,8 @@ export default function Expenses({ viewDate, prevMonth, nextMonth, onOpenModal, 
     // 2b. Generate Placeholder Card Payments
     const cardPlaceholders = useMemo(() => {
         if (!products) return [];
-        // Filter for credit cards
-        const cards = products.filter(p => p.type === 'card' && p.paymentDueDay);
+        // Filter for credit cards (excluding virtual cards linked to a parent)
+        const cards = products.filter(p => p.type === 'card' && p.paymentDueDay && !p.parentCardId);
 
         const placeholders = [];
         cards.forEach(card => {

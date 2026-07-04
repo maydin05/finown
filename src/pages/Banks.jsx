@@ -74,6 +74,11 @@ export default function Banks({ onOpenModal }) {
             Number(p.paymentDueDay) > 0
         );
 
+        const getSafeDateForMonth = (yr, mon, dy) => {
+            const lastDay = new Date(yr, mon + 1, 0).getDate();
+            return new Date(yr, mon, Math.min(dy, lastDay));
+        };
+
         const calculateCardAdvantage = (card) => {
             const cutoffDay = Number(card.cutoffDay);
             const dueDay = Number(card.paymentDueDay);
@@ -86,25 +91,25 @@ export default function Banks({ onOpenModal }) {
 
             if (todayDay < cutoffDay) {
                 // Kesim tarihi henuz gelmedi - bu ayin ekstresine girecek
-                cutoffDate = new Date(year, month, cutoffDay);
+                cutoffDate = getSafeDateForMonth(year, month, cutoffDay);
                 // Odeme genellikle kesimden sonraki ayin dueDay'inde
                 // Ama bazi bankalar ayni ay icinde odeme aliyor, kontrol edelim
                 if (dueDay > cutoffDay) {
                     // Ayni ay icinde odeme (orn: kesim 10, odeme 20)
-                    paymentDate = new Date(year, month, dueDay);
+                    paymentDate = getSafeDateForMonth(year, month, dueDay);
                 } else {
                     // Sonraki ay odeme (orn: kesim 25, odeme 5)
-                    paymentDate = new Date(year, month + 1, dueDay);
+                    paymentDate = getSafeDateForMonth(year, month + 1, dueDay);
                 }
             } else {
                 // Kesim tarihi gecti - gelecek ayin ekstresine girecek (AVANTAJLI!)
                 isNextPeriod = true;
-                cutoffDate = new Date(year, month + 1, cutoffDay);
+                cutoffDate = getSafeDateForMonth(year, month + 1, cutoffDay);
                 // Odeme gelecek kesimden sonra
                 if (dueDay > cutoffDay) {
-                    paymentDate = new Date(year, month + 1, dueDay);
+                    paymentDate = getSafeDateForMonth(year, month + 1, dueDay);
                 } else {
-                    paymentDate = new Date(year, month + 2, dueDay);
+                    paymentDate = getSafeDateForMonth(year, month + 2, dueDay);
                 }
             }
 

@@ -222,7 +222,33 @@ function AppContent() {
       console.log('Saving source:', type, editingItem?.id, payload);
 
       if (editingItem) {
-        await updateSource(type, editingItem.id, payload);
+        if (updateScope === 'future' && effectiveDate) {
+          // 1. Calculate end date for old source (effectiveDate - 1 day)
+          const prevDay = new Date(effectiveDate);
+          prevDay.setDate(prevDay.getDate() - 1);
+          const prevDayStr = prevDay.toISOString().split('T')[0];
+
+          // 2. Update old source to end on prevDayStr
+          await updateSource(type, editingItem.id, { endDate: prevDayStr });
+
+          // 3. Insert new source starting on effectiveDate
+          const newPayload = {
+            ...payload,
+            startDate: effectiveDate,
+            date: effectiveDate,
+            endDate: payload.endDate || null
+          };
+          if (type === 'subscription') {
+            const parsed = new Date(effectiveDate);
+            if (!isNaN(parsed.getTime())) {
+              newPayload.startDate = effectiveDate;
+              newPayload.dayOfMonth = parsed.getDate();
+            }
+          }
+          await addSource(type, newPayload);
+        } else {
+          await updateSource(type, editingItem.id, payload);
+        }
       } else {
         await addSource(type, payload);
       }
@@ -439,7 +465,12 @@ function AppContent() {
             onClose={closeModal}
             onConfirm={async (payment) => {
               try {
-                await editPayment(payment.id, { isPaid: true });
+                if (payment.isVirtual) {
+                  const { id, isVirtual, subtitle, isManual, ...payload } = payment;
+                  await upsertPayment({ ...payload, isPaid: true });
+                } else {
+                  await editPayment(payment.id, { isPaid: true });
+                }
                 closeModal();
               } catch (error) {
                 console.error('Error confirming payment:', error);

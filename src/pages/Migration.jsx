@@ -135,13 +135,14 @@ export default function Migration() {
             }
 
             // 5. Trackers
-            const trackers = [];
+            const trackersMap = {};
             if (data.statusTracker) {
-                Object.entries(data.statusTracker).forEach(([k, v]) => trackers.push({ key: k, value: v }));
+                Object.entries(data.statusTracker).forEach(([k, v]) => { trackersMap[k] = v; });
             }
             if (data.subscriptionTracker) {
-                Object.entries(data.subscriptionTracker).forEach(([k, v]) => trackers.push({ key: k, value: v }));
+                Object.entries(data.subscriptionTracker).forEach(([k, v]) => { trackersMap[k] = v; });
             }
+            const trackers = Object.entries(trackersMap).map(([k, v]) => ({ key: k, value: v }));
             if (trackers.length) {
                 addLog(`Tracker ayarları yükleniyor (${trackers.length} adet)...`);
                 await bulkUpsert('trackers', trackers);
