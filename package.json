@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --experimental-vm-modules --test tests/*.test.mjs",
-    "test:mobile": "playwright test tests/e2e/mobile.spec.js --reporter=line",
+    "test:mobile": "playwright test tests/e2e/mobile.spec.js tests/e2e/forms-mobile.spec.js --reporter=line",
     "test:live": "playwright test tests/e2e/live.spec.js --reporter=line"
   },
   "dependencies": {

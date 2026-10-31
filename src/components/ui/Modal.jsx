@@ -1,14 +1,23 @@
 import React, { useEffect, useRef } from "react";
 
-export function ModalShell({ children, onClose, label = "İşlem ayrıntıları" }) {
+export function ModalShell({
+  children,
+  onClose,
+  label = "İşlem ayrıntıları",
+  className = "",
+}) {
   const panel = useRef(null);
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  }, [onClose]);
   useEffect(() => {
     const previous = document.activeElement;
     const overflow = document.body.style.overflow;
     const frame = requestAnimationFrame(() => panel.current?.focus());
     document.body.style.overflow = "hidden";
     const onKeyDown = (event) => {
-      if (event.key === "Escape") onClose?.();
+      if (event.key === "Escape") closeRef.current?.();
       if (event.key !== "Tab") return;
       const items = [
         ...(panel.current?.querySelectorAll(
@@ -44,7 +53,7 @@ export function ModalShell({ children, onClose, label = "İşlem ayrıntıları"
       document.body.style.overflow = overflow;
       if (previous?.isConnected) previous.focus();
     };
-  }, [onClose]);
+  }, []);
   return (
     <div className="modal-backdrop" onClick={() => onClose?.()}>
       <section
@@ -53,7 +62,7 @@ export function ModalShell({ children, onClose, label = "İşlem ayrıntıları"
         aria-modal="true"
         aria-label={label}
         tabIndex={-1}
-        className="calm-modal"
+        className={`calm-modal ${className}`}
         onClick={(event) => event.stopPropagation()}
       >
         {children}

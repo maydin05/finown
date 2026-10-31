@@ -965,28 +965,422 @@ button:disabled {
 }
 
 /* A soft accent for each area; labels and icons still carry the meaning. */
-.tone-overview { --accent: #365eab; --tint: #eaf0fc; --accent-line: #d5e1f8; }
-.tone-payments { --accent: #a34e32; --tint: #fff0e7; --accent-line: #f3dccc; }
-.tone-income { --accent: #21705b; --tint: #e8f5ee; --accent-line: #cce5d9; }
-.tone-subscriptions { --accent: #7455a6; --tint: #f2edfb; --accent-line: #e3d9f3; }
-.tone-banks { --accent: #326a91; --tint: #eaf3fa; --accent-line: #d2e4f2; }
-body { background: #e9edf3; }
-.app-shell { background: #fafaf8; }
-.summary-card { background: linear-gradient(145deg, #edf3ff 0%, #f8faff 55%, #fff 100%); border-color: #d6e2f5; }
-.summary-card .summary-figure:not(.negative) { color: #294d87; }
-.summary-metrics { border-top: 0; gap: 10px; padding-top: 0; }
-.summary-metrics > div { padding: 12px; border-radius: 13px; background: #e6f3eb; }
-.summary-metrics > div + div { padding-left: 12px; border-left: 0; background: #fff0e5; }
-.summary-metrics > div:first-child strong, .summary-metrics > div:first-child p { color: #246650; }
-.summary-metrics > div + div strong, .summary-metrics > div + div p { color: #98482d; }
-.movement-icon { background: #fff0e7; color: #a34e32; border-color: #f3dccc; }
-.movement-icon.income { background: #e8f5ee; color: #21705b; border-color: #cce5d9; }
-.calm-page[class*="tone-"] .monthly-summary { background: linear-gradient(135deg, var(--tint), #fff 90%); border-color: var(--accent-line); }
-.calm-page[class*="tone-"] .monthly-summary > strong { color: var(--accent); }
-.calm-page[class*="tone-"] .movement-icon { background: var(--tint); color: var(--accent); border-color: var(--accent-line); }
-.calm-page[class*="tone-"] .line-tabs button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
-.calm-page[class*="tone-"] .tab-count { color: var(--accent); background: var(--tint); }
-.bottom-nav button[class*="tone-"] svg { color: var(--accent); }
-.bottom-nav button.active { background: var(--tint); color: var(--accent); }
-.best-card-feature { background: linear-gradient(140deg, #eaf4ec, #f4f0ff); border-color: #d9e5da; }
-.best-card-rank:not(.recommended) { background: #f1edfa; color: #7455a6; }
+.tone-overview {
+  --accent: #365eab;
+  --tint: #eaf0fc;
+  --accent-line: #d5e1f8;
+}
+.tone-payments {
+  --accent: #a34e32;
+  --tint: #fff0e7;
+  --accent-line: #f3dccc;
+}
+.tone-income {
+  --accent: #21705b;
+  --tint: #e8f5ee;
+  --accent-line: #cce5d9;
+}
+.tone-subscriptions {
+  --accent: #7455a6;
+  --tint: #f2edfb;
+  --accent-line: #e3d9f3;
+}
+.tone-banks {
+  --accent: #326a91;
+  --tint: #eaf3fa;
+  --accent-line: #d2e4f2;
+}
+body {
+  background: #e9edf3;
+}
+.app-shell {
+  background: #fafaf8;
+}
+.summary-card {
+  background: linear-gradient(145deg, #edf3ff 0%, #f8faff 55%, #fff 100%);
+  border-color: #d6e2f5;
+}
+.summary-card .summary-figure:not(.negative) {
+  color: #294d87;
+}
+.summary-metrics {
+  border-top: 0;
+  gap: 10px;
+  padding-top: 0;
+}
+.summary-metrics > div {
+  padding: 12px;
+  border-radius: 13px;
+  background: #e6f3eb;
+}
+.summary-metrics > div + div {
+  padding-left: 12px;
+  border-left: 0;
+  background: #fff0e5;
+}
+.summary-metrics > div:first-child strong,
+.summary-metrics > div:first-child p {
+  color: #246650;
+}
+.summary-metrics > div + div strong,
+.summary-metrics > div + div p {
+  color: #98482d;
+}
+.movement-icon {
+  background: #fff0e7;
+  color: #a34e32;
+  border-color: #f3dccc;
+}
+.movement-icon.income {
+  background: #e8f5ee;
+  color: #21705b;
+  border-color: #cce5d9;
+}
+.calm-page[class*="tone-"] .monthly-summary {
+  background: linear-gradient(135deg, var(--tint), #fff 90%);
+  border-color: var(--accent-line);
+}
+.calm-page[class*="tone-"] .monthly-summary > strong {
+  color: var(--accent);
+}
+.calm-page[class*="tone-"] .movement-icon {
+  background: var(--tint);
+  color: var(--accent);
+  border-color: var(--accent-line);
+}
+.calm-page[class*="tone-"] .line-tabs button[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.calm-page[class*="tone-"] .tab-count {
+  color: var(--accent);
+  background: var(--tint);
+}
+.bottom-nav button[class*="tone-"] svg {
+  color: var(--accent);
+}
+.bottom-nav button.active {
+  background: var(--tint);
+  color: var(--accent);
+}
+.best-card-feature {
+  background: linear-gradient(140deg, #eaf4ec, #f4f0ff);
+  border-color: #d9e5da;
+}
+.best-card-rank:not(.recommended) {
+  background: #f1edfa;
+  color: #7455a6;
+}
+
+/* Shared entry/edit sheets. Header and actions remain outside the scrolling fields. */
+.calm-modal.form-dialog {
+  max-height: 92dvh;
+  overflow: hidden;
+  background: #fafaf8;
+}
+.form-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 22px 19px;
+  border-bottom: 1px solid var(--accent-line);
+  background: linear-gradient(120deg, var(--tint), #fafaf8);
+  flex-shrink: 0;
+}
+.form-header > div {
+  min-width: 0;
+  flex: 1;
+}
+.form-header h2 {
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.6px;
+  overflow-wrap: anywhere;
+}
+.form-header p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+.form-emblem {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background: var(--tint);
+  border: 1px solid var(--accent-line);
+  flex-shrink: 0;
+}
+.form-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  padding: 22px;
+}
+.form-fieldset {
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.form-fields > * + * {
+  margin-top: 20px;
+}
+.form-fields label,
+.auth-fields label,
+.bank-colors legend {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.form-dialog input,
+.form-dialog select,
+.form-dialog textarea,
+.auth-fields input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid #d9dfdf;
+  border-radius: 12px;
+  background: white;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ink);
+  outline: none;
+}
+.form-dialog textarea {
+  resize: vertical;
+}
+.form-dialog input:focus,
+.form-dialog select:focus,
+.form-dialog textarea:focus,
+.auth-fields input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--tint);
+}
+.form-dialog .form-fields button {
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.form-dialog .form-fields button.text-white {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.form-dialog .form-fields button:not(.text-white):not(.bank-color-swatch) {
+  background: #fff;
+  color: var(--muted);
+}
+.form-dialog .form-fields [class*="font-bold"] {
+  font-weight: 600;
+}
+.form-footer {
+  border-top: 1px solid var(--line);
+  background: #fafaf8;
+  padding: 14px 22px calc(18px + env(safe-area-inset-bottom));
+  flex-shrink: 0;
+}
+.form-footer > div {
+  display: flex;
+  gap: 10px;
+}
+.form-footer .secondary-button {
+  flex: 1;
+  margin: 0;
+}
+.form-footer .primary-button {
+  flex: 1.8;
+  margin: 0;
+  background: var(--accent);
+}
+.form-footer .form-error {
+  margin: 0 0 12px;
+}
+.form-error {
+  color: #9e3b34;
+  background: #fff0ed;
+  padding: 12px;
+  border: 1px solid #f0d4cf;
+  border-radius: 11px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 16px;
+}
+.form-context {
+  border: 1px solid var(--accent-line);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--tint);
+  color: var(--accent);
+}
+.form-context p {
+  font-size: 12px;
+}
+.form-context strong {
+  display: block;
+  font-size: 25px;
+  margin-top: 5px;
+}
+.form-hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.form-increase {
+  color: #a34639;
+}
+.bank-colors {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.bank-colors > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 4px;
+}
+.form-dialog .bank-color-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+  background-color: transparent;
+  border: 3px solid transparent;
+}
+.bank-color-swatch[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.auth-page {
+  min-height: 100dvh;
+  display: grid;
+  align-items: center;
+  padding: 40px 22px;
+  background:
+    radial-gradient(ellipse at 10% 0%, #e6edff 0%, transparent 48%),
+    radial-gradient(ellipse at 100% 100%, #f0eafb 0%, transparent 45%), #fafaf8;
+}
+.auth-content {
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+}
+.auth-content .wordmark {
+  margin-bottom: 45px;
+}
+.auth-intro {
+  margin-bottom: 25px;
+}
+.auth-eyebrow {
+  font-size: 12px;
+  color: #365eab;
+  font-weight: 650;
+}
+.auth-intro h2 {
+  font-size: 32px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -1.1px;
+  margin: 12px 0;
+}
+.auth-intro > p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 290px;
+}
+.auth-card {
+  padding: 24px;
+  border: 1px solid #dce3ee;
+  border-radius: 22px;
+  background: #ffffffeb;
+}
+.auth-fields > div + div {
+  margin-top: 20px;
+}
+.password-field {
+  position: relative;
+}
+.password-field input {
+  padding-right: 48px;
+}
+.password-field .icon-button {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  color: var(--muted);
+}
+.auth-card .primary-button {
+  background: #365eab;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.auth-switch {
+  font-size: 12px;
+  text-align: center;
+  color: var(--muted);
+  margin-top: 22px;
+  line-height: 1.8;
+}
+.auth-switch button {
+  color: #365eab;
+  font-weight: 650;
+  padding: 4px;
+}
+.auth-success {
+  border: 1px solid #cce5d9;
+  padding: 12px;
+  margin-top: 16px;
+  background: #e8f5ee;
+  color: #21705b;
+  font-size: 13px;
+  border-radius: 11px;
+}
+.auth-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 28px;
+}
+.auth-highlights span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #21705b;
+}
+.auth-highlights span:nth-child(2) {
+  color: #a34e32;
+}
+.auth-highlights span:nth-child(3) {
+  color: #7455a6;
+}
+@media (max-width: 350px) {
+  .form-header,
+  .form-body,
+  .form-footer {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+  .auth-card {
+    padding: 20px;
+  }
+  .auth-intro h2 {
+    font-size: 29px;
+  }
+}
