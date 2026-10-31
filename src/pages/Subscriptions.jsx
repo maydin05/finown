@@ -139,7 +139,7 @@ export default function Subscriptions({
   );
 
   return (
-    <div className="calm-page">
+    <div className="calm-page tone-subscriptions">
       <MonthHeader
         title="Abonelikler"
         viewDate={viewDate}

@@ -963,3 +963,30 @@ button:disabled {
   font-weight: 700;
   margin-bottom: 8px;
 }
+
+/* A soft accent for each area; labels and icons still carry the meaning. */
+.tone-overview { --accent: #365eab; --tint: #eaf0fc; --accent-line: #d5e1f8; }
+.tone-payments { --accent: #a34e32; --tint: #fff0e7; --accent-line: #f3dccc; }
+.tone-income { --accent: #21705b; --tint: #e8f5ee; --accent-line: #cce5d9; }
+.tone-subscriptions { --accent: #7455a6; --tint: #f2edfb; --accent-line: #e3d9f3; }
+.tone-banks { --accent: #326a91; --tint: #eaf3fa; --accent-line: #d2e4f2; }
+body { background: #e9edf3; }
+.app-shell { background: #fafaf8; }
+.summary-card { background: linear-gradient(145deg, #edf3ff 0%, #f8faff 55%, #fff 100%); border-color: #d6e2f5; }
+.summary-card .summary-figure:not(.negative) { color: #294d87; }
+.summary-metrics { border-top: 0; gap: 10px; padding-top: 0; }
+.summary-metrics > div { padding: 12px; border-radius: 13px; background: #e6f3eb; }
+.summary-metrics > div + div { padding-left: 12px; border-left: 0; background: #fff0e5; }
+.summary-metrics > div:first-child strong, .summary-metrics > div:first-child p { color: #246650; }
+.summary-metrics > div + div strong, .summary-metrics > div + div p { color: #98482d; }
+.movement-icon { background: #fff0e7; color: #a34e32; border-color: #f3dccc; }
+.movement-icon.income { background: #e8f5ee; color: #21705b; border-color: #cce5d9; }
+.calm-page[class*="tone-"] .monthly-summary { background: linear-gradient(135deg, var(--tint), #fff 90%); border-color: var(--accent-line); }
+.calm-page[class*="tone-"] .monthly-summary > strong { color: var(--accent); }
+.calm-page[class*="tone-"] .movement-icon { background: var(--tint); color: var(--accent); border-color: var(--accent-line); }
+.calm-page[class*="tone-"] .line-tabs button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.calm-page[class*="tone-"] .tab-count { color: var(--accent); background: var(--tint); }
+.bottom-nav button[class*="tone-"] svg { color: var(--accent); }
+.bottom-nav button.active { background: var(--tint); color: var(--accent); }
+.best-card-feature { background: linear-gradient(140deg, #eaf4ec, #f4f0ff); border-color: #d9e5da; }
+.best-card-rank:not(.recommended) { background: #f1edfa; color: #7455a6; }

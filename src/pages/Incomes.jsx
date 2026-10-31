@@ -36,7 +36,7 @@ export default function Incomes({
   };
 
   return (
-    <div className="calm-page">
+    <div className="calm-page tone-income">
       <MonthHeader
         title="Gelirler"
         viewDate={viewDate}

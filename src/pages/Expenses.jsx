@@ -85,7 +85,7 @@ export default function Expenses({
   };
 
   return (
-    <div className="calm-page">
+    <div className="calm-page tone-payments">
       <MonthHeader
         title="Ödemeler"
         viewDate={viewDate}

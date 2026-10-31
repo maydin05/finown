@@ -6,20 +6,20 @@ export const BottomNav = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const links = [
-    ["/", "layout-grid", "Özet"],
-    ["/expenses", "receipt", "Ödemeler"],
-    ["/incomes", "arrow-up-right", "Gelir"],
-    ["/subscriptions", "repeat", "Abonelik"],
-    ["/banks", "landmark", "Bankalar"],
+    ["/", "layout-grid", "Özet", "overview"],
+    ["/expenses", "receipt", "Ödemeler", "payments"],
+    ["/incomes", "arrow-up-right", "Gelir", "income"],
+    ["/subscriptions", "repeat", "Abonelik", "subscriptions"],
+    ["/banks", "landmark", "Bankalar", "banks"],
   ];
   return (
     <nav className="bottom-nav" aria-label="Ana gezinme">
-      {links.map(([path, icon, label]) => (
+      {links.map(([path, icon, label, tone]) => (
         <button
           key={path}
           onClick={() => navigate(path)}
           aria-current={pathname === path ? "page" : undefined}
-          className={pathname === path ? "active" : ""}
+          className={`tone-${tone} ${pathname === path ? "active" : ""}`}
         >
           <Icon name={icon} size={20} />
           <span>{label}</span>
