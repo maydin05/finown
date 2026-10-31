@@ -34,3 +34,9 @@ python3 scripts/supabase-health.py
 ```
 
 Profil `supabase/cli-profile.toml`, token macOS Anahtar Zinciri'ndedir. Kurulum ve yeniden giriş için erişim rehberine bak. `supabase/config.toml` yerel geliştirme ayarıdır; üretim yapılandırmasının kopyası değildir. Kökteki SQL ve bakım scriptleri canlı şemanın güncel kaynağı sayılmaz; otomatik çalıştırılmaz.
+
+Canlı mobil smoke kontrolü (oturumsuz, salt okunur):
+
+```sh
+FINOWN_TEST_URL=https://finown.netlify.app npm run test:live
+```

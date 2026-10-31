@@ -52,3 +52,7 @@ Ana dosyalar: `src/components/CashFlowSummary.jsx`, `src/pages/Expenses.jsx`, `s
 ## Sonraki kapı
 
 Kod yerelde hazırdır. Yayın yetkisi verilirse remote/Netlify hedefi yeniden doğrulanıp yayın ve canlı readback yapılmalı; bunlar yerel test başarısından ayrı durumlar olarak kaydedilmeli. Gerçek cihaz/mobil ve gerçek kullanıcı kabulü ayrıca tamamlanmalıdır.
+
+## 31 Ekim — Yayın güncellemesi
+
+Yukarıdaki yerel aşama tarihsel kayıttır. Kullanıcı onayıyla mobil kontroller tamamlandı ve üretime yayınlandı. Güncel commit/deploy/canlı kanıt: [Yayın kaydı](2026-10-31_yayin.md).
