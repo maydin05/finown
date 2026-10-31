@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { dateKey } from '../domain/finance';
+import React, { useState } from 'react';
 import { ModalShell } from '../components/ui/Modal';
 import { Icon } from '../components/ui/Icon';
 import { formatMoneyTR } from '../utils';
@@ -11,7 +12,7 @@ export const PaymentEntryModal = ({
     const expected = Number(item.expectedAmount || item.amount || 0);
     
     const [amount, setAmount] = useState(item.actualAmount !== null && item.actualAmount !== undefined ? String(item.actualAmount) : String(expected));
-    const [paidDate, setPaidDate] = useState(item.paidDate || new Date().toISOString().split('T')[0]);
+    const [paidDate, setPaidDate] = useState(item.paidDate || dateKey());
     const [note, setNote] = useState(item.note || '');
 
     const typedAmount = parseFloat(amount.replace(',', '.')) || 0;

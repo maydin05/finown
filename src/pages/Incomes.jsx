@@ -1,12 +1,12 @@
 import React from 'react';
-import { useData } from '../context/DataContext';
+import { useData } from '../context/store';
 import { useViewData } from '../hooks/useViewData';
 import { IncomeItem } from '../components/items/IncomeItem';
 import { Icon } from '../components/ui/Icon';
 import { formatMoneyTR } from '../utils';
 
 export default function Incomes({ viewDate, prevMonth, nextMonth, onOpenModal, incomeTab, setIncomeTab }) {
-    const { incomeSources, statusTracker, toggleTracker, onOpenNote } = useData();
+    const { incomeSources, statusTracker, toggleTracker } = useData();
 
     // 1. Generate items
     const incomes = useViewData(incomeSources, statusTracker, viewDate, "income");
@@ -19,10 +19,7 @@ export default function Incomes({ viewDate, prevMonth, nextMonth, onOpenModal, i
     const filteredList = incomes.filter((i) => (incomeTab === "expected" ? !i.isReceived : i.isReceived));
 
     const handleToggle = (item) => {
-        const currentMonth = viewDate.getMonth();
-        const currentYear = viewDate.getFullYear();
-        const key = `${item.id}_${currentMonth}_${currentYear}`;
-        toggleTracker(key, item.isReceived);
+        toggleTracker(item.trackerKey, item.isReceived).catch(() => {});
     };
 
     return (

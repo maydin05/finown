@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { bulkUpsert, createPaymentsBulk } from '../api/finown';
+import { bulkUpsert } from '../api/finown';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useData } from '../context/store';
 
 export default function Migration() {
     const [jsonInput, setJsonInput] = useState("");
@@ -20,7 +20,7 @@ export default function Migration() {
             let data;
             try {
                 data = JSON.parse(jsonInput);
-            } catch (e) {
+            } catch {
                 throw new Error("Geçersiz JSON formatı. Lütfen kopyaladığınız veriyi kontrol edin.");
             }
 

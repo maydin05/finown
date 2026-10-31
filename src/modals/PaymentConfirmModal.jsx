@@ -88,6 +88,7 @@ export const PaymentConfirmModal = ({ payment, banks, products, onClose, onConfi
                 </div>
 
                 {/* Buttons */}
+                <p className="text-xs text-gray-500 relative z-10 mt-3">Bu işlem bankadan ödeme yapmaz; yalnızca ödeme durumunu kaydeder.</p>
                 <div className="relative z-10 flex gap-3 mt-4">
                     <button
                         onClick={onClose}
@@ -100,7 +101,7 @@ export const PaymentConfirmModal = ({ payment, banks, products, onClose, onConfi
                         className="flex-[1.8] flex bg-gradient-to-r from-green-500 to-emerald-600 shadow-md shadow-green-500/20 text-white py-4 rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 hover:shadow-green-500/30 hover:shadow-lg transition-all items-center justify-center gap-2 active:scale-[0.98]"
                     >
                         <Icon name="check-circle" size={20} className="text-white" />
-                        İşlemi Onayla
+                        Ödendi olarak kaydet
                     </button>
                 </div>
             </div>

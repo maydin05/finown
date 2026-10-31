@@ -1,3 +1,4 @@
+import { calendarDate } from './domain/finance';
 export const formatMoneyTR = (amount) => {
     if (amount === undefined || amount === null) return "0.00";
     return Number(amount).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -5,8 +6,8 @@ export const formatMoneyTR = (amount) => {
 
 export const formatDateTR = (date) => {
     if (!date) return "";
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return "";
+    const d = calendarDate(date);
+    if (!d || isNaN(d.getTime())) return "";
     return d.toLocaleDateString("tr-TR", {
         day: "numeric",
         month: "long",
@@ -22,8 +23,9 @@ export const monthKey = (id, dateStr) => {
 };
 
 export const getDaysDifference = (d1, d2) => {
-    const date1 = new Date(d1);
-    const date2 = new Date(d2);
+    const date1 = calendarDate(d1);
+    const date2 = calendarDate(d2);
+    if (!date1 || !date2) return NaN;
     date1.setHours(0, 0, 0, 0);
     date2.setHours(0, 0, 0, 0);
 

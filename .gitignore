@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Yerel erişim ve bağlantı metadatası
+.env
+.env.*
+!.env.example
+.netlify/
+__pycache__/
+
+# Playwright local test artifacts
+playwright-report/
+test-results/

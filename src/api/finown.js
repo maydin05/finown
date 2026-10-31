@@ -151,16 +151,12 @@ export const getAllData = async () => {
         fetchTable('income_sources'),
         fetchTable('expense_sources'),
         fetchTable('subscription_sources'),
-        fetchTable('subscription_payments').catch(err => {
-            console.warn("Could not fetch subscription_payments (table may not exist yet):", err.message);
-            return [];
-        }),
+        fetchTable('subscription_payments'),
         fetchTable('trackers', 'key') // Trackers doesn't have created_at
     ]);
 
     // Trackers table: key, value -> Object map
     const statusTracker = {};
-    const subscriptionTracker = {};
 
     trackers.forEach(t => {
         // Tracker logic: keys usually "monthKey"
@@ -263,15 +259,12 @@ export const bulkUpsert = async (table, items) => {
 };
 
 
-// Trackers (Upsert logic mostly)
+// Trackers have a composite primary key, not an id column.
 export const upsertTracker = async (key, value) => {
     const user = await getUser();
-    // Check if exists
-    const { data: existing } = await supabase.from('trackers').select('id').eq('key', key).single();
-
-    if (existing) {
-        return updateItem('trackers', existing.id, { value });
-    } else {
-        return insertItem('trackers', { key, value });
-    }
+    const { data, error } = await supabase.from('trackers')
+        .upsert({ user_id: user.id, key, value }, { onConflict: 'user_id,key' })
+        .select('key,value').single();
+    if (error) throw error;
+    return data;
 };

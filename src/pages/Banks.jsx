@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useData } from '../context/DataContext';
+import { useData } from '../context/store';
 import { Icon } from '../components/ui/Icon';
 import { formatMoneyTR, getDaysDifference } from '../utils';
 
@@ -21,7 +21,7 @@ export default function Banks({ onOpenModal }) {
                 if (data?.rates?.TRY) {
                     setUsdRate(data.rates.TRY);
                 }
-            } catch (error) {
+            } catch {
                 console.log('Could not fetch exchange rate, using default');
             }
         };

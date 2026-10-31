@@ -1,66 +1,25 @@
 import React, { useMemo } from 'react';
-import { useData } from '../context/DataContext';
+import { useData } from '../context/store';
 import { useViewData } from '../hooks/useViewData';
 import { PaymentItem } from '../components/items/PaymentItem';
 import { Icon } from '../components/ui/Icon';
 import { formatMoneyTR } from '../utils';
+import CashFlowSummary from '../components/CashFlowSummary';
+import { deletionType, sourceIssue, isSourceExcluded, paymentItemsForMonth } from '../domain/finance';
 
 export default function Expenses({ viewDate, prevMonth, nextMonth, onOpenModal, paymentTab, setPaymentTab }) {
-    const { payments, expenseSources, statusTracker, toggleTracker, editPayment, addPayment, products } = useData();
+    const { payments, expenseSources, statusTracker, toggleTracker, editPayment, products } = useData();
 
     // 1. Generate recurring/one-time items from Sources
     const expenseItems = useViewData(expenseSources, statusTracker, viewDate, "expense");
 
-    // 2. Filter actual Payment rows (Loans, Card Payments, Manual additions)
-    const currentMonth = viewDate.getMonth();
-    const currentYear = viewDate.getFullYear();
-
-    const paymentRows = useMemo(() => {
-        return (payments || []).filter((p) => {
-            const d = new Date(p.dueDate || p.date);
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
-    }, [payments, currentMonth, currentYear]);
-
-    // 2b. Generate Placeholder Card Payments
-    const cardPlaceholders = useMemo(() => {
-        if (!products) return [];
-        // Filter for credit cards (excluding virtual cards linked to a parent)
-        const cards = products.filter(p => p.type === 'card' && p.paymentDueDay && !p.parentCardId);
-
-        const placeholders = [];
-        cards.forEach(card => {
-            // Check if we already have a payment for this card in this month
-            // Match by productId (or title match?) productId is safer.
-            const exists = paymentRows.find(p => p.productId === card.id || p.productId === String(card.id));
-
-            if (!exists) {
-                // Generate a placeholder
-                // Date: currentYear, currentMonth, card.paymentDueDay
-                const d = new Date(currentYear, currentMonth, card.paymentDueDay);
-                d.setHours(12, 0, 0, 0); // Noon to avoid timezone edge cases
-
-                placeholders.push({
-                    id: `virtual_${card.id}`, // Virtual ID
-                    productId: card.id,
-                    title: card.name,
-                    subtitle: "Kredi Kartı Ödemesi",
-                    amount: 0,
-                    dueDate: d.toISOString(),
-                    isPaid: false,
-                    type: "card", // Identify as card payment
-                    isVirtual: true,
-                    isManual: true // Treat as payment row
-                });
-            }
-        });
-        return placeholders;
-    }, [products, paymentRows, currentMonth, currentYear]);
+    const paymentRows = useMemo(() => paymentItemsForMonth(payments, products, viewDate),
+        [payments, products, viewDate]);
 
     // 3. Merge
     const allItems = useMemo(() => {
-        return [...expenseItems, ...paymentRows, ...cardPlaceholders].sort((a, b) => new Date(a.dueDate || a.date) - new Date(b.dueDate || b.date));
-    }, [expenseItems, paymentRows, cardPlaceholders]);
+        return [...expenseItems, ...paymentRows].sort((a, b) => new Date(a.dueDate || a.date) - new Date(b.dueDate || b.date));
+    }, [expenseItems, paymentRows]);
 
     // 4. Calculate Totals
     const totalRemaining = allItems.filter(i => !i.isPaid).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
@@ -69,26 +28,18 @@ export default function Expenses({ viewDate, prevMonth, nextMonth, onOpenModal, 
     // 5. Filter for Tab
     const filteredList = allItems.filter((item) => (paymentTab === "pending" ? !item.isPaid : item.isPaid));
 
-    const handleToggle = (item) => {
-        // If item is already paid, just toggle back (Geri Al)
-        if (item.isPaid) {
-            if (item.type === "loan" || item.productId || item.isManual === undefined) {
-                editPayment(item.id, { isPaid: false });
+    const incompleteSources = expenseSources.filter(source => !isSourceExcluded(source, 'expense', statusTracker) && sourceIssue(source, 'expense'));
+    const cardTrackedSources = expenseSources.filter(source => isSourceExcluded(source, 'expense', statusTracker));
+    const handleToggle = async (item) => {
+        try {
+            if (item.recordType === 'payment') {
+                if (item.isPaid) await editPayment(item.id, { isPaid: false });
+                else onOpenModal('payment_confirm', item);
             } else {
-                const key = `${item.id}_${currentMonth}_${currentYear}`;
-                toggleTracker(key, item.isPaid);
+                await toggleTracker(item.trackerKey, item.isPaid);
             }
-            return;
-        }
-
-        // Item is not paid - show confirmation modal for payments
-        if (item.type === "loan" || item.productId || item.isManual === undefined || item.type === 'card') {
-            // It's a payment row - show confirmation modal
-            onOpenModal("payment_confirm", item);
-        } else {
-            // It's a source item (recurring/one-time expense) - direct toggle
-            const key = `${item.id}_${currentMonth}_${currentYear}`;
-            toggleTracker(key, item.isPaid);
+        } catch (error) {
+            if (item.recordType === 'payment') alert('Ödeme durumu kaydedilemedi: ' + error.message);
         }
     };
 
@@ -115,7 +66,7 @@ export default function Expenses({ viewDate, prevMonth, nextMonth, onOpenModal, 
                         </div>
                         <div className="relative z-10 flex items-end justify-between">
                             <div>
-                                <p className="text-red-200 text-[10px] font-bold tracking-widest uppercase mb-0.5">Ödenecek</p>
+                                <p className="text-red-200 text-[10px] font-bold tracking-widest uppercase mb-0.5">Bilinen ödemeler</p>
                                 <h3 className="text-3xl font-extrabold tracking-tight">₺{formatMoneyTR(totalRemaining)}</h3>
                             </div>
                             <div className="bg-emerald-600 rounded-xl px-3 py-2 shadow-lg shadow-emerald-900/30 border border-emerald-500/50">
@@ -124,9 +75,30 @@ export default function Expenses({ viewDate, prevMonth, nextMonth, onOpenModal, 
                             </div>
                         </div>
                     </div>
+                    {paymentRows.filter(item => item.needsCardAmount).length > 0 && <p className="text-xs text-amber-200 mt-3" role="status">
+                        {paymentRows.filter(item => item.needsCardAmount).length} kartın ekstre tutarı girilmedi; aylık toplam kesinleşmedi.
+                    </p>}
                 </div>
             </div>
 
+            <CashFlowSummary onOpenModal={onOpenModal} />
+            {incompleteSources.length > 0 && (
+                <section className="mx-1 p-4 rounded-2xl border border-amber-200 bg-amber-50" aria-label="Bilgisi tamamlanmalı">
+                    <h3 className="font-bold text-amber-900">Bilgisi tamamlanmalı ({incompleteSources.length})</h3>
+                    <p className="text-xs text-amber-800 mt-1">Bu kayıtlar doğrulanana kadar ödeme toplamına dahil değil. Mevcut kayıtlar değiştirilmedi.</p>
+                    <ul className="mt-3 space-y-2 text-sm">
+                        {incompleteSources.map(source => <li key={source.id}>
+                            <strong>{source.title}</strong> · ₺{formatMoneyTR(source.amount)}
+                            <p className="text-xs text-amber-800">{sourceIssue(source, 'expense')}</p>
+                        </li>)}
+                    </ul>
+                </section>
+            )}
+            {cardTrackedSources.length > 0 && <details className="mx-1 p-3 border border-gray-200 rounded-xl text-sm text-gray-600">
+                <summary>Kart ekstresinden takip edilen giderler ({cardTrackedSources.length})</summary>
+                <p className="text-xs mt-2">Ayrı gider olarak toplanmaz; eski kayıtlar korunur.</p>
+                <ul className="mt-2">{cardTrackedSources.map(source => <li key={source.id}>{source.title}</li>)}</ul>
+            </details>}
             {/* Tabs */}
             <div className="px-1">
                 <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
@@ -170,7 +142,10 @@ export default function Expenses({ viewDate, prevMonth, nextMonth, onOpenModal, 
                                 onOpenModal("expense", { ...itm, sourceType: 'expense' });
                             }
                         }}
-                        onDelete={(itm) => onOpenModal("delete_expense", itm)}
+                        onDelete={!item.isVirtual ? (itm) => {
+                            const type = deletionType(itm);
+                            if (type) onOpenModal(`delete_${type}`, itm);
+                        } : null}
                         onCardNeedAmount={(row) => onOpenModal("card_amount", row)}
                     />
                 ))}

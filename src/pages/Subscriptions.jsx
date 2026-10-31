@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useData } from '../context/DataContext';
+import { useData } from '../context/store';
 import { useViewData } from '../hooks/useViewData';
 import { SubscriptionItem } from '../components/items/SubscriptionItem';
 import { Icon } from '../components/ui/Icon';
@@ -12,16 +12,6 @@ const cycleMultiplier = (cycle) => {
         case 'semi-annual': return 2;
         case 'annual': return 1;
         default: return 12; // monthly
-    }
-};
-
-// Helper: billing cycle interval in months
-const cycleInterval = (cycle) => {
-    switch (cycle) {
-        case 'quarterly': return 3;
-        case 'semi-annual': return 6;
-        case 'annual': return 12;
-        default: return 1;
     }
 };
 

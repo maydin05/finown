@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import * as api from '../api/finown';
+import { legacyOwners, monthDate, dateKey } from '../domain/finance';
 
-const DataContext = createContext();
-
-export const useData = () => useContext(DataContext);
+import { DataContext } from './store';
 
 export const DataProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
@@ -19,79 +18,13 @@ export const DataProvider = ({ children }) => {
     // Veri yüklendi mi?
     const loadedRef = useRef(false);
 
-    const migrateLegacyTrackers = useCallback(async (sources, payments, trackers) => {
-        if (!sources || !sources.length || !trackers) return;
-
-        const legacyPaidKeys = Object.keys(trackers).filter(key => {
-            if (!trackers[key]) return false;
-            const parts = key.split('_');
-            if (parts.length !== 3) return false;
-            const subId = parseInt(parts[0]);
-            const month = parseInt(parts[1]);
-            const year = parseInt(parts[2]);
-            return !isNaN(subId) && !isNaN(month) && !isNaN(year) && sources.some(s => s.id === subId);
-        });
-
-        if (!legacyPaidKeys.length) return;
-
-        const paymentsToCreate = [];
-
-        legacyPaidKeys.forEach(key => {
-            const parts = key.split('_');
-            const subId = parseInt(parts[0]);
-            const monthIndex = parseInt(parts[1]); // 0-11
-            const year = parseInt(parts[2]);
-            const sub = sources.find(s => s.id === subId);
-            const periodMonth = monthIndex + 1; // 1-12
-
-            const exists = (payments || []).some(
-                p => p.subscriptionId === subId && 
-                p.periodYear === year && 
-                p.periodMonth === periodMonth
-            );
-
-            if (!exists && sub) {
-                const dueDay = sub.dayOfMonth || 1;
-                const dueDate = `${year}-${String(periodMonth).padStart(2, '0')}-${String(dueDay).padStart(2, '0')}`;
-                paymentsToCreate.push({
-                    subscriptionId: subId,
-                    periodYear: year,
-                    periodMonth,
-                    expectedAmount: sub.amount,
-                    actualAmount: sub.amount,
-                    dueDate,
-                    paidDate: dueDate,
-                    isPaid: true,
-                    note: 'Eski sistemden otomatik aktarıldı'
-                });
-            }
-        });
-
-        if (paymentsToCreate.length > 0) {
-            console.log(`Migrating ${paymentsToCreate.length} legacy trackers inside client...`);
-            try {
-                const promises = paymentsToCreate.map(p => api.upsertSubscriptionPayment(p));
-                const results = await Promise.all(promises);
-                
-                setSubscriptionPayments(prev => {
-                    const next = [...prev];
-                    results.forEach(saved => {
-                        const exists = next.some(p => p.id === saved.id || (p.subscriptionId === saved.subscriptionId && p.periodYear === saved.periodYear && p.periodMonth === saved.periodMonth));
-                        if (!exists) {
-                            next.push(saved);
-                        }
-                    });
-                    return next;
-                });
-                console.log("Legacy trackers migrated successfully!");
-            } catch (err) {
-                console.error("Failed to migrate legacy trackers on client:", err);
-            }
-        }
-    }, []);
+    const [loadError, setLoadError] = useState(null);
+    const trackerOwners = useMemo(() => legacyOwners({ incomeSources, expenseSources, subscriptionSources }),
+        [incomeSources, expenseSources, subscriptionSources]);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
+        setLoadError(null);
         try {
             const data = await api.getAllData();
             setBanks(data.banks);
@@ -104,15 +37,14 @@ export const DataProvider = ({ children }) => {
             setStatusTracker(data.statusTracker); // merging status & sub trackers
             loadedRef.current = true;
 
-            // Trigger client-side legacy migration
-            migrateLegacyTrackers(data.subscriptionSources, data.subscriptionPayments || [], data.statusTracker);
+            // Reading data never creates or migrates payment records.
         } catch (error) {
             console.error("Data fetch failed:", error);
-            // alert?
+            setLoadError("Veriler alınamadı. Toplamlar doğrulanamadı; lütfen tekrar deneyin.");
         } finally {
             setLoading(false);
         }
-    }, [migrateLegacyTrackers]);
+    }, []);
 
     // --- BANKS ---
     const addBank = async (bank) => {
@@ -173,6 +105,10 @@ export const DataProvider = ({ children }) => {
         const updated = await api.updatePayment(id, updates);
         setPayments(prev => prev.map(p => p.id === id ? updated : p));
         return updated;
+    };
+    const removePayment = async (id) => {
+        await api.deletePayment(id);
+        setPayments(prev => prev.filter(p => p.id !== id));
     };
     const addPaymentsBulk = async (items) => {
         if (!items.length) return;
@@ -240,6 +176,8 @@ export const DataProvider = ({ children }) => {
             // Rollback
             setStatusTracker(prev => ({ ...prev, [key]: currentValue }));
             console.error('Tracker update failed', err);
+            alert('Durum kaydedilemedi. Önceki durum korundu; lütfen tekrar deneyin.');
+            throw err;
         }
     };
 
@@ -269,8 +207,8 @@ export const DataProvider = ({ children }) => {
             periodMonth: month,
             expectedAmount: sub.amount,
             actualAmount: actualAmount !== undefined && actualAmount !== null ? Number(actualAmount) : sub.amount,
-            dueDate: existing?.dueDate || (sub.startDate ? `${year}-${String(month).padStart(2, '0')}-${String(sub.dayOfMonth || 1).padStart(2, '0')}` : null),
-            paidDate: paidDate || new Date().toISOString().split('T')[0],
+            dueDate: existing?.dueDate || dateKey(monthDate(year, month - 1, sub.dayOfMonth || Number((sub.startDate || sub.date || '').slice(8, 10)) || 1)),
+            paidDate: paidDate || dateKey(),
             isPaid,
             note: note !== undefined ? note : (existing?.note || '')
         };
@@ -292,8 +230,8 @@ export const DataProvider = ({ children }) => {
             periodMonth: month,
             expectedAmount: sub.amount,
             actualAmount: nextIsPaid ? sub.amount : null,
-            dueDate: existing?.dueDate || (sub.startDate ? `${year}-${String(month).padStart(2, '0')}-${String(sub.dayOfMonth || 1).padStart(2, '0')}` : null),
-            paidDate: nextIsPaid ? new Date().toISOString().split('T')[0] : null,
+            dueDate: existing?.dueDate || dateKey(monthDate(year, month - 1, sub.dayOfMonth || Number((sub.startDate || sub.date || '').slice(8, 10)) || 1)),
+            paidDate: nextIsPaid ? dateKey() : null,
             isPaid: nextIsPaid
         };
 
@@ -311,10 +249,11 @@ export const DataProvider = ({ children }) => {
         setSubscriptionPayments([]);
         setStatusTracker({});
         loadedRef.current = false;
+        setLoadError(null);
     };
 
     const value = {
-        loading,
+        loading, loadError, trackerOwners,
         fetchData,
         resetData,
 
@@ -329,7 +268,7 @@ export const DataProvider = ({ children }) => {
 
         addBank, editBank, removeBank,
         addProduct, editProduct, removeProduct,
-        addPayment, editPayment, upsertPayment, addPaymentsBulk, cleanPaymentsForProduct,
+        addPayment, editPayment, removePayment, upsertPayment, addPaymentsBulk, cleanPaymentsForProduct,
 
         addSource, updateSource, deleteSource,
 

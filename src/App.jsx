@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
-import { DataProvider, useData } from './context/DataContext';
+import { dateKey } from './domain/finance';
+import { DataProvider } from './context/DataContext';
+import { useData } from './context/store';
 
 // Pages
 import Login from './pages/Login';
@@ -29,13 +31,13 @@ import { QuickMenu } from './modals/QuickMenu';
 
 function AppContent() {
   const {
-    loading, fetchData,
+    loading, loadError, fetchData,
     banks, products,
     statusTracker, toggleTracker,
     addBank, editBank, removeBank,
     addProduct, editProduct, removeProduct,
     addSource, updateSource, deleteSource,
-    addPayment, upsertPayment, editPayment,
+    upsertPayment, editPayment, removePayment,
     markSubscriptionPaid
   } = useData();
 
@@ -49,7 +51,7 @@ function AppContent() {
   // Modal State
   const [activeModal, setActiveModal] = useState("none");
   const [editingItem, setEditingItem] = useState(null);
-  const [modalCallback, setModalCallback] = useState(null); // For custom modal actions
+  const [, setModalCallback] = useState(null); // For custom modal actions
 
   // Forms State (Lifted up)
   const [updateScope, setUpdateScope] = useState("all");
@@ -116,13 +118,13 @@ function AppContent() {
     } else if (["income", "expense", "subscription"].includes(type)) {
       // Map item to form
       // Important: Handle date/dueDate mapping
-      const d = item ? (item._originalDate || item.startDate || item.date || item.dueDate) : new Date().toISOString().split('T')[0];
+      const d = item ? (item._originalDate || item.startDate || item.date || item.dueDate) : dateKey();
       // eslint-disable-next-line no-unused-vars
       const { id: existingId, ...itemWithoutId } = item || {};
       const mapped = item ? { ...itemWithoutId, date: d.split('T')[0] } : {
         ...initialSource,
         category: type === 'income' ? 'salary' : 'bills',
-        date: new Date().toISOString().split('T')[0]
+        date: dateKey()
       };
 
       // Special fields for subscription
@@ -263,6 +265,7 @@ function AppContent() {
     const { type, data } = editingItem;
     if (type === 'bank') await removeBank(data.id);
     else if (type === 'product') await removeProduct(data.id);
+    else if (type === 'payment') await removePayment(data.id);
     else {
       // Hard delete: also clean up archive tracker if exists
       if (type === 'subscription') {
@@ -323,7 +326,11 @@ function AppContent() {
     if (editingItem) {
       try {
         const parsedAmount = parseFloat(String(amount).replace(',', '.')) || 0;
-        const dueDateISO = dueDate ? new Date(dueDate).toISOString() : editingItem.dueDate;
+        const dueDateISO = dueDate || editingItem.dueDate;
+        if (String(amount).trim() === '' || !Number.isFinite(Number(String(amount).replace(',', '.'))) || parsedAmount < 0) {
+          alert('Geçerli bir ekstre tutarı girin. Borç yoksa 0 girebilirsiniz.');
+          return;
+        }
 
         if (editingItem.isVirtual) {
           // It's a placeholder. We need to CREATE a new payment.
@@ -347,6 +354,7 @@ function AppContent() {
       } catch (error) {
         console.error('Error saving card amount:', error);
         alert('Kaydetme hatası: ' + error.message);
+        return;
       }
     }
     closeModal();
@@ -362,6 +370,12 @@ function AppContent() {
 
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Yükleniyor...</div>;
+  }
+
+  if (loadError) {
+    return <div role="alert" className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <p>{loadError}</p><button onClick={fetchData} className="bg-blue-600 text-white p-3 rounded-xl">Tekrar dene</button>
+    </div>;
   }
 
   return (
@@ -466,6 +480,7 @@ function AppContent() {
             onConfirm={async (payment) => {
               try {
                 if (payment.isVirtual) {
+                  // eslint-disable-next-line no-unused-vars
                   const { id, isVirtual, subtitle, isManual, ...payload } = payment;
                   await upsertPayment({ ...payload, isPaid: true });
                 } else {
