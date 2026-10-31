@@ -1,6 +1,6 @@
 # Sade arayüz uygulaması — 31 Ekim 2026
 
-Durum: yerel uygulama ve test tamamlandı. Kullanıcı bu paket için GitHub gönderimi, Netlify üretim yayını ve canlı hesap kontrolünü açıkça istedi. Yayın sonucu ayrı kayda eklenecek.
+Durum: uygulama GitHub’a gönderildi ve Netlify’da yayımlandı. [Yayın kaydı](2026-10-31_sade-arayuz-yayin.md). Kullanıcı son talimatıyla canlı hesap testini kendisi üstlendi.
 
 ## Uygulanan tasarım
 

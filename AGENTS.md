@@ -1,7 +1,7 @@
 # Finown çalışma talimatları
 
 1. Önce `/Users/mehmetaydin/Documents/claude-global/CLAUDE.md` dosyasını oku.
-2. `README.md` ve `docs/erisim.md` başlangıç kaynaklarıdır. Güncel yayın kaydı `docs/2026-10-31_yayin.md`. Son uygulama ve test kaydı `docs/2026-10-31_ilk-paket-uygulama.md`, ilk bağlantı kontrolü `docs/2026-10-31_baglanti-ve-saglik.md` içindedir; değişken durumu canlı doğrula.
+2. `README.md` ve `docs/erisim.md` başlangıç kaynaklarıdır. Güncel arayüz yayın kaydı `docs/2026-10-31_sade-arayuz-yayin.md`, uygulama/test ayrıntıları `docs/2026-10-31_sade-arayuz-uygulama.md` içindedir. Önceki yayın `docs/2026-10-31_yayin.md`, hesaplama düzeltmeleri `docs/2026-10-31_ilk-paket-uygulama.md`, ilk bağlantı kontrolü `docs/2026-10-31_baglanti-ve-saglik.md` içindedir; değişken durumu canlı doğrula.
 3. Repo `maydin05/finown`, Supabase ref `zowlpzmvwiszwhtvsagj`, Netlify site ID `2bed4a00-a1b4-4f59-9989-5ad9b580baf0`. Benzer isimli Derslig/Kidabu projelerini hedefleme.
 4. CLI için `./scripts/supabase.sh` kullan. Makinenin varsayılan hesabı farklıdır. `--profile finown` kullanma; bu CLI profil dosyasının tam yolunu bekler.
 5. İnceleme varsayılan olarak salt okunur. Üretim veri/şema/ayar değişikliği, restart, migration, deploy ve erişim genişletme göreve özel açık yetki ister. Bağlantı kurma onayı bunları kapsamaz.

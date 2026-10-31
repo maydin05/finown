@@ -4,6 +4,8 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Sade arayüz canlı yayın kaydı](docs/2026-10-31_sade-arayuz-yayin.md)
+
 - [Sade arayüz uygulaması ve mobil test kaydı (yerel)](docs/2026-10-31_sade-arayuz-uygulama.md)
 
 - [Mobil kontrol ve yayın kaydı](docs/2026-10-31_yayin.md)
