@@ -1,235 +1,235 @@
-import React, { useState, useMemo } from 'react';
-import { useData } from '../context/store';
-import { useViewData } from '../hooks/useViewData';
-import { SubscriptionItem } from '../components/items/SubscriptionItem';
-import { Icon } from '../components/ui/Icon';
-import { formatMoneyTR } from '../utils';
+import { MonthHeader, FilterTabs } from "../components/ui/MonthHeader";
+import React, { useState, useMemo } from "react";
+import { useData } from "../context/store";
+import { useViewData } from "../hooks/useViewData";
+import { SubscriptionItem } from "../components/items/SubscriptionItem";
+import { Icon } from "../components/ui/Icon";
 
 // Helper: how many times per year a billing cycle pays
 const cycleMultiplier = (cycle) => {
-    switch (cycle) {
-        case 'quarterly': return 4;
-        case 'semi-annual': return 2;
-        case 'annual': return 1;
-        default: return 12; // monthly
-    }
+  switch (cycle) {
+    case "quarterly":
+      return 4;
+    case "semi-annual":
+      return 2;
+    case "annual":
+      return 1;
+    default:
+      return 12; // monthly
+  }
 };
 
-export default function Subscriptions({ viewDate, prevMonth, nextMonth, onOpenModal }) {
-    const { 
-        subscriptionSources, 
-        subscriptionPayments, 
-        statusTracker, 
-        banks, 
-        products, 
-        toggleSubscriptionPaid 
-    } = useData();
-    const [showArchived, setShowArchived] = useState(false);
-    const [tab, setTab] = useState("pending"); // "pending" | "paid"
+export default function Subscriptions({
+  viewDate,
+  prevMonth,
+  nextMonth,
+  onOpenModal,
+}) {
+  const {
+    subscriptionSources,
+    subscriptionPayments,
+    statusTracker,
+    banks,
+    products,
+    toggleSubscriptionPaid,
+  } = useData();
+  const [showArchived, setShowArchived] = useState(false);
+  const [tab, setTab] = useState("pending"); // "pending" | "paid"
 
-    const currentYear = viewDate.getFullYear();
-    const currentMonth = viewDate.getMonth() + 1; // 1-12
+  const currentYear = viewDate.getFullYear();
+  const currentMonth = viewDate.getMonth() + 1; // 1-12
 
-    // 1. Generate items for current view month
-    const allSubs = useViewData(subscriptionSources, statusTracker, viewDate, "subscription", subscriptionPayments);
+  // 1. Generate items for current view month
+  const allSubs = useViewData(
+    subscriptionSources,
+    statusTracker,
+    viewDate,
+    "subscription",
+    subscriptionPayments,
+  );
 
-    // 2. Split active vs archived
-    const activeSubs = allSubs.filter(s => !statusTracker[`sub_archived_${s.id}`]);
-    const archivedSubs = allSubs.filter(s => !!statusTracker[`sub_archived_${s.id}`]);
+  // 2. Split active vs archived
+  const activeSubs = allSubs.filter(
+    (s) => !statusTracker[`sub_archived_${s.id}`],
+  );
+  const archivedSubs = allSubs.filter(
+    (s) => !!statusTracker[`sub_archived_${s.id}`],
+  );
 
-    // 3. Split by paid status
-    const pendingSubs = activeSubs.filter(s => !s.isPaid);
-    const paidSubs = activeSubs.filter(s => s.isPaid);
-    const displaySubs = tab === "pending" ? pendingSubs : paidSubs;
+  // 3. Split by paid status
+  const pendingSubs = activeSubs.filter((s) => !s.isPaid);
+  const paidSubs = activeSubs.filter((s) => s.isPaid);
+  const displaySubs = tab === "pending" ? pendingSubs : paidSubs;
 
-    // 4. Totals - use ALL active sources (not just current month view) for projections
-    const allActiveSources = (subscriptionSources || []).filter(s => 
-        !statusTracker[`sub_archived_${s.id}`]
-    );
+  // 4. Totals - use ALL active sources (not just current month view) for projections
+  const allActiveSources = (subscriptionSources || []).filter(
+    (s) => !statusTracker[`sub_archived_${s.id}`],
+  );
 
-    // This month's cost: paid actual amounts + unpaid expected amounts
-    const monthCost = activeSubs.reduce((acc, curr) => {
-        if (curr.isPaid && curr.actualAmount !== null && curr.actualAmount !== undefined) {
-            return acc + Number(curr.actualAmount);
-        }
-        return acc + Number(curr.expectedAmount || curr.amount || 0);
-    }, 0);
+  // This month's cost: paid actual amounts + unpaid expected amounts
+  const monthCost = activeSubs.reduce((acc, curr) => {
+    if (
+      curr.isPaid &&
+      curr.actualAmount !== null &&
+      curr.actualAmount !== undefined
+    ) {
+      return acc + Number(curr.actualAmount);
+    }
+    return acc + Number(curr.expectedAmount || curr.amount || 0);
+  }, 0);
 
-    // Smart annual projection
-    const annualProjection = allActiveSources.reduce((acc, s) => {
-        return acc + Number(s.amount || 0) * cycleMultiplier(s.billingCycle);
-    }, 0);
+  // Smart annual projection
+  const annualProjection = allActiveSources.reduce((acc, s) => {
+    return acc + Number(s.amount || 0) * cycleMultiplier(s.billingCycle);
+  }, 0);
 
-    // Historical total spending: exact sum of all actual paid subscription payments
-    const totalSpent = useMemo(() => {
-        return (subscriptionPayments || [])
-            .filter(p => p.isPaid)
-            .reduce((sum, p) => sum + Number(p.actualAmount !== null && p.actualAmount !== undefined ? p.actualAmount : p.expectedAmount || 0), 0);
-    }, [subscriptionPayments]);
+  // Historical total spending: exact sum of all actual paid subscription payments
+  const totalSpent = useMemo(() => {
+    return (subscriptionPayments || [])
+      .filter((p) => p.isPaid)
+      .reduce(
+        (sum, p) =>
+          sum +
+          Number(
+            p.actualAmount !== null && p.actualAmount !== undefined
+              ? p.actualAmount
+              : p.expectedAmount || 0,
+          ),
+        0,
+      );
+  }, [subscriptionPayments]);
 
-    const paidTotal = paidSubs.reduce((acc, curr) => acc + Number(curr.actualAmount !== null && curr.actualAmount !== undefined ? curr.actualAmount : curr.expectedAmount || curr.amount || 0), 0);
-    const pendingTotal = pendingSubs.reduce((acc, curr) => acc + Number(curr.expectedAmount || curr.amount || 0), 0);
+  const paidTotal = paidSubs.reduce(
+    (acc, curr) =>
+      acc +
+      Number(
+        curr.actualAmount !== null && curr.actualAmount !== undefined
+          ? curr.actualAmount
+          : curr.expectedAmount || curr.amount || 0,
+      ),
+    0,
+  );
+  const pendingTotal = pendingSubs.reduce(
+    (acc, curr) => acc + Number(curr.expectedAmount || curr.amount || 0),
+    0,
+  );
 
-    const handleTogglePaid = (item) => {
-        if (item.isVariable && !item.isPaid) {
-            onOpenModal("payment_entry", item);
-        } else {
-            toggleSubscriptionPaid(item.id, currentYear, currentMonth, item.isPaid);
-        }
-    };
+  const handleTogglePaid = (item) => {
+    if (item.isVariable && !item.isPaid) {
+      onOpenModal("payment_entry", item);
+    } else {
+      toggleSubscriptionPaid(item.id, currentYear, currentMonth, item.isPaid);
+    }
+  };
 
-    const renderItem = (item, idx, prefix = "") => (
-        <SubscriptionItem
-            key={`${prefix}${item.id}-${idx}`}
-            item={item}
-            banks={banks}
-            products={products}
-            onTogglePaid={() => handleTogglePaid(item)}
-            onOpenPaymentEntry={(itm) => onOpenModal("payment_entry", itm)}
-            onOpenNote={(itm) => onOpenModal("note", { ...itm, sourceType: 'subscription' })}
-            onEdit={(itm) => onOpenModal("subscription", itm)}
-            onDelete={(itm) => onOpenModal("delete_subscription", itm)}
-        />
-    );
+  const renderItem = (item, idx, prefix = "") => (
+    <SubscriptionItem
+      key={`${prefix}${item.id}-${idx}`}
+      item={item}
+      banks={banks}
+      products={products}
+      onTogglePaid={() => handleTogglePaid(item)}
+      onOpenPaymentEntry={(itm) => onOpenModal("payment_entry", itm)}
+      onOpenNote={(itm) =>
+        onOpenModal("note", { ...itm, sourceType: "subscription" })
+      }
+      onEdit={(itm) => onOpenModal("subscription", itm)}
+      onDelete={(itm) => onOpenModal("delete_subscription", itm)}
+    />
+  );
 
-    return (
-        <div className="space-y-6 pb-24">
-            <div className="bg-purple-900 text-white p-5 rounded-b-3xl shadow-lg -mx-4 -mt-4 pt-10 relative overflow-hidden">
-                <div className="relative z-10">
-                    <div className="flex justify-between items-center mb-4">
-                        <button onClick={prevMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
-                            <Icon name="chevron-left" size={20} className="text-white" />
-                        </button>
-                        <div className="text-center">
-                            <h2 className="text-xl font-bold">{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
-                            <span className="text-[11px] text-purple-200 font-medium">{viewDate.getFullYear()} Abonelikler</span>
-                        </div>
-                        <button onClick={nextMonth} className="p-2 bg-white/10 rounded-full hover:bg-white/20">
-                            <Icon name="chevron-right" size={20} className="text-white" />
-                        </button>
-                    </div>
+  return (
+    <div className="calm-page">
+      <MonthHeader
+        title="Abonelikler"
+        viewDate={viewDate}
+        prevMonth={prevMonth}
+        nextMonth={nextMonth}
+        label="Bu ay"
+        amount={monthCost}
+        secondary={[
+          { label: "Yıllık tahmin", amount: annualProjection },
+          { label: "Kaydedilen ödemeler", amount: totalSpent },
+        ]}
+      />
+      <FilterTabs
+        value={tab}
+        onChange={setTab}
+        items={[
+          {
+            value: "pending",
+            label: "Ödenecek",
+            count: pendingSubs.length,
+            amount: pendingTotal,
+          },
+          {
+            value: "paid",
+            label: "Ödendi",
+            count: paidSubs.length,
+            amount: paidTotal,
+          },
+        ]}
+      />
+      <div className="record-list">
+        {displaySubs.map((item, idx) => renderItem(item, idx))}
 
-                    <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-2xl shadow-lg shadow-purple-900/30 relative overflow-hidden">
-                        <div className="absolute -right-3 -bottom-4 opacity-15">
-                            <Icon name="monitor" size={80} className="text-white" />
-                        </div>
-                        <div className="relative z-10">
-                            {/* Main amount */}
-                            <div className="flex items-end justify-between mb-3">
-                                <div>
-                                    <p className="text-purple-200 text-[10px] font-bold tracking-widest uppercase mb-0.5">Bu Ay</p>
-                                    <h3 className="text-3xl font-extrabold tracking-tight">₺{formatMoneyTR(monthCost)}</h3>
-                                </div>
-                            </div>
-                            {/* Sub metrics */}
-                            <div className="flex gap-2">
-                                <div className="flex-1 bg-white/10 rounded-xl px-2.5 py-1.5 border border-white/10">
-                                    <p className="text-[8px] text-purple-200 uppercase tracking-widest font-bold">Yıllık Proje.</p>
-                                    <p className="text-sm font-bold text-white">₺{formatMoneyTR(annualProjection)}</p>
-                                </div>
-                                <div className="flex-1 bg-white/10 rounded-xl px-2.5 py-1.5 border border-white/10">
-                                    <p className="text-[8px] text-purple-200 uppercase tracking-widest font-bold">Top. Harcama</p>
-                                    <p className="text-sm font-bold text-white">₺{formatMoneyTR(totalSpent)}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        {displaySubs.length === 0 && (
+          <div className="text-center py-12 text-gray-400">
+            <Icon
+              name={tab === "pending" ? "party-popper" : "clock"}
+              size={48}
+              className="mx-auto mb-3 opacity-20"
+            />
+            <p className="text-sm">
+              {tab === "pending"
+                ? activeSubs.length
+                  ? "Bu ayın abonelikleri ödendi."
+                  : "Bu ay vadesi gelen abonelik yok."
+                : "Henüz ödenen abonelik yok."}
+            </p>
+          </div>
+        )}
 
-            {/* Tabs */}
-            <div className="px-1">
-                <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-                    <button
-                        onClick={() => setTab("pending")}
-                        className={`flex-1 py-2 rounded-lg transition-all flex flex-col items-center justify-center ${
-                            tab === "pending"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                        <div className="flex items-center gap-1.5">
-                            <Icon name="clock" size={13} className="text-current" />
-                            <span className="text-sm font-bold">Ödenecek</span>
-                            {pendingSubs.length > 0 && (
-                                <span className="bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                                    {pendingSubs.length}
-                                </span>
-                            )}
-                        </div>
-                        <span className={`text-[11px] font-bold mt-0.5 ${tab === "pending" ? "text-purple-600" : "text-gray-400"}`}>
-                            ₺{formatMoneyTR(pendingTotal)}
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => setTab("paid")}
-                        className={`flex-1 py-2 rounded-lg transition-all flex flex-col items-center justify-center ${
-                            tab === "paid"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                        <div className="flex items-center gap-1.5">
-                            <Icon name="check-circle" size={13} className="text-current" />
-                            <span className="text-sm font-bold">Ödendi</span>
-                            {paidSubs.length > 0 && (
-                                <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                                    {paidSubs.length}
-                                </span>
-                            )}
-                        </div>
-                        <span className={`text-[11px] font-bold mt-0.5 ${tab === "paid" ? "text-emerald-600" : "text-gray-400"}`}>
-                            ₺{formatMoneyTR(paidTotal)}
-                        </span>
-                    </button>
-                </div>
-            </div>
+        {/* Archived Toggle - Compact */}
+        {tab === "pending" && archivedSubs.length > 0 && (
+          <div className="mt-6">
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors mx-auto"
+            >
+              <Icon name="archive" size={14} className="text-current" />
+              <span>{archivedSubs.length} Arşivlenmiş Abonelik</span>
+              <Icon
+                name={showArchived ? "chevron-up" : "chevron-down"}
+                size={14}
+                className="text-current"
+              />
+            </button>
 
-            <div className="px-1 min-h-[200px]">
-                {displaySubs.map((item, idx) => renderItem(item, idx))}
-
-                {displaySubs.length === 0 && (
-                    <div className="text-center py-12 text-gray-400">
-                        <Icon name={tab === "pending" ? "party-popper" : "clock"} size={48} className="mx-auto mb-3 opacity-20" />
-                        <p className="text-sm">
-                            {tab === "pending" 
-                                ? "Tüm abonelikler ödendi! 🎉" 
-                                : "Henüz ödenen abonelik yok."}
-                        </p>
-                    </div>
-                )}
-
-                {/* Archived Toggle - Compact */}
-                {tab === "pending" && archivedSubs.length > 0 && (
-                    <div className="mt-6">
-                        <button
-                            onClick={() => setShowArchived(!showArchived)}
-                            className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors mx-auto"
-                        >
-                            <Icon name="archive" size={14} className="text-current" />
-                            <span>{archivedSubs.length} Arşivlenmiş Abonelik</span>
-                            <Icon name={showArchived ? "chevron-up" : "chevron-down"} size={14} className="text-current" />
-                        </button>
-
-                        {showArchived && (
-                            <div className="mt-3 opacity-60">
-                                {archivedSubs.map((item, idx) => (
-                                    <SubscriptionItem
-                                        key={`archived-${item.id}-${idx}`}
-                                        item={{ ...item, isArchived: true }}
-                                        banks={banks}
-                                        products={products}
-                                        onTogglePaid={() => {}}
-                                        onOpenNote={(itm) => onOpenModal("note", { ...itm, sourceType: 'subscription' })}
-                                        onEdit={(itm) => onOpenModal("subscription", itm)}
-                                        onDelete={(itm) => onOpenModal("delete_subscription", itm)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+            {showArchived && (
+              <div className="mt-3 opacity-60">
+                {archivedSubs.map((item, idx) => (
+                  <SubscriptionItem
+                    key={`archived-${item.id}-${idx}`}
+                    item={{ ...item, isArchived: true }}
+                    banks={banks}
+                    products={products}
+                    onTogglePaid={() => {}}
+                    onOpenNote={(itm) =>
+                      onOpenModal("note", {
+                        ...itm,
+                        sourceType: "subscription",
+                      })
+                    }
+                    onEdit={(itm) => onOpenModal("subscription", itm)}
+                    onDelete={(itm) => onOpenModal("delete_subscription", itm)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

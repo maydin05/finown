@@ -32,7 +32,7 @@ export const CardAmountModal = ({ target, onClose, onSave }) => {
                             <Icon name="credit-card" size={24} className="text-amber-600" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900 tracking-tight">Kredi Kartı Ödemesi</h3>
+                            <h3 className="text-xl font-bold text-gray-900 tracking-tight">{target?.type === 'loan' ? 'Taksit Ödemesi' : 'Kredi Kartı Ödemesi'}</h3>
                             <p className="text-sm text-gray-500 font-medium mt-0.5">Ödeme detaylarını güncelleyin</p>
                         </div>
                     </div>

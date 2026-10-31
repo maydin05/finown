@@ -8,6 +8,7 @@ import { useData } from './context/store';
 // Pages
 import Login from './pages/Login';
 import Expenses from './pages/Expenses';
+import Overview from './pages/Overview';
 import Incomes from './pages/Incomes';
 import Subscriptions from './pages/Subscriptions';
 import Banks from './pages/Banks';
@@ -380,14 +381,15 @@ function AppContent() {
 
   return (
     <BrowserRouter>
-      <div className="bg-gray-50 min-h-screen font-sans text-gray-900 max-w-md mx-auto border-x border-gray-200 shadow-2xl overflow-hidden relative">
+      <div className="app-shell">
 
         {/* Header always visible */}
-        <Header />
+        <Header onOpenQuickMenu={() => setActiveModal("quickMenu")} />
 
-        <div className="h-full overflow-y-auto custom-scrollbar">
+        <div className="app-content">
           <Routes>
-            <Route path="/" element={
+            <Route path="/" element={<Overview onOpenModal={openModal} />} />
+            <Route path="/expenses" element={
               <Expenses
                 viewDate={viewDate} prevMonth={prevMonth} nextMonth={nextMonth}
                 onOpenModal={openModal}

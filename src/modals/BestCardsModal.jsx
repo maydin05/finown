@@ -1,211 +1,138 @@
-import React from 'react';
-import { ModalShell } from '../components/ui/Modal';
-import { Icon } from '../components/ui/Icon';
-import { formatDateTR, formatMoneyTR } from '../utils';
+import React from "react";
+import { ModalShell } from "../components/ui/Modal";
+import { Icon } from "../components/ui/Icon";
+import { formatDateTR, formatMoneyTR } from "../utils";
 
-export const BestCardsModal = ({ bestCards, banks, onClose }) => {
-    const today = new Date();
-    const todayFormatted = today.toLocaleDateString('tr-TR', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
-
-    // Get the best card (first in the sorted list - longest payment term)
-    const topCard = bestCards && bestCards.length > 0 ? bestCards[0] : null;
-
-    // Find the card with the nearest payment date (for quick payment option)
-    const nearestPaymentCard = bestCards && bestCards.length > 0
-        ? bestCards.reduce((min, curr) => curr.daysToPayment < min.daysToPayment ? curr : min, bestCards[0])
-        : null;
-
-    const getBankName = (card) => {
-        const bank = banks.find(b => Number(b.id) === Number(card.bankId));
-        return bank ? bank.name : "Bilinmeyen Banka";
-    };
-
-    return (
-        <ModalShell onClose={onClose}>
-            {/* Fixed Header */}
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 flex-shrink-0">
+export const BestCardsModal = ({ bestCards = [], banks = [], onClose }) => {
+  const top = bestCards[0];
+  const nearest = bestCards.length
+    ? bestCards.reduce((a, b) => (b.daysToPayment < a.daysToPayment ? b : a))
+    : null;
+  const bankName = (card) =>
+    banks.find((bank) => Number(bank.id) === Number(card.bankId))?.name ||
+    "Bilinmeyen banka";
+  return (
+    <ModalShell onClose={onClose} label="Avantajlı kartlar">
+      <div className="sheet-content best-cards-sheet">
+        <div className="sheet-heading">
+          <div>
+            <p className="muted text-xs">
+              {new Date().toLocaleDateString("tr-TR", {
+                day: "numeric",
+                month: "long",
+              })}
+            </p>
+            <h2>Avantajlı kartlar</h2>
+          </div>
+          <button className="icon-button" onClick={onClose} aria-label="Kapat">
+            <Icon name="x" />
+          </button>
+        </div>
+        {top ? (
+          <>
+            <p className="muted text-sm">
+              Bugün yapacağın alışveriş için ödeme tarihine en çok süre kalan
+              kart.
+            </p>
+            <section
+              className="best-card-feature"
+              aria-label="En uzun vadeli kart"
+            >
+              <p className="best-card-caption">En uzun vade</p>
+              <div className="best-card-title">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">Avantajlı Kart Önerisi</h3>
-                    <p className="text-xs text-gray-500">{todayFormatted}</p>
+                  <p className="muted text-xs">{bankName(top.card)}</p>
+                  <h3>{top.card.name}</h3>
+                  {top.card.last4Digits && (
+                    <p className="muted text-xs">•••• {top.card.last4Digits}</p>
+                  )}
                 </div>
-                <button
-                    onClick={onClose}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors -mr-2"
-                >
-                    <Icon name="x" size={20} className="text-gray-500" />
-                </button>
-            </div>
-
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-                {topCard ? (
-                    <>
-                        {/* Top Recommendation - Compact Hero Card */}
-                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 mb-4 text-white relative overflow-hidden">
-                            {/* Background decoration */}
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-
-                            <div className="relative z-10">
-                                {/* Badge */}
-                                <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full text-[10px] font-medium mb-2">
-                                    <span className="text-yellow-300">⭐</span>
-                                    <span>En Uzun Vade</span>
-                                </div>
-
-                                {/* Card Info - Compact */}
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-white/70 text-xs">{getBankName(topCard.card)}</p>
-                                        <h4 className="text-lg font-bold leading-tight">{topCard.card.name}</h4>
-                                        {topCard.card.last4Digits && (
-                                            <p className="text-white/60 text-xs font-mono">**** {topCard.card.last4Digits}</p>
-                                        )}
-                                        {Number(topCard.card.limit) > 0 && (
-                                            <p className="text-emerald-100 text-[11px] font-bold mt-1 bg-black/10 inline-block px-1.5 py-0.5 rounded">Limit: ₺{formatMoneyTR(topCard.card.limit)}</p>
-                                        )}
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-3xl font-bold">{topCard.daysToPayment}</p>
-                                        <p className="text-white/70 text-xs">gün vade</p>
-                                    </div>
-                                </div>
-
-                                {/* Compact Info Row */}
-                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/20 text-xs">
-                                    <div>
-                                        <span className="text-white/60">Kesim: </span>
-                                        <span className="font-medium">{topCard.card.cutoffDay}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-white/60">Son Ödeme: </span>
-                                        <span className="font-medium">{formatDateTR(topCard.pay)}</span>
-                                    </div>
-                                    {topCard.isNextPeriod && (
-                                        <div className="flex items-center gap-1">
-                                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                                            <span className="text-green-300">Gelecek ay</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Nearest Payment Card - Highlighted if different from top card */}
-                        {nearestPaymentCard && nearestPaymentCard.card.id !== topCard.card.id && (
-                            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-3 mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                                        <Icon name="clock" size={16} className="text-amber-600" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs text-amber-700 font-medium">En Yakın Ödeme</p>
-                                        <p className="text-sm font-semibold text-gray-800">
-                                            {getBankName(nearestPaymentCard.card)} - {nearestPaymentCard.card.name}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-lg font-bold text-amber-600">{nearestPaymentCard.daysToPayment}</p>
-                                        <p className="text-[10px] text-amber-500">gün</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* All Cards List */}
-                        <div className="space-y-2">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1 mb-2">
-                                Tüm Kartlar ({bestCards.length})
-                            </p>
-
-                            {bestCards.map((x, i) => {
-                                const isTop = i === 0;
-                                const isNearest = nearestPaymentCard && x.card.id === nearestPaymentCard.card.id && !isTop;
-
-                                return (
-                                    <div
-                                        key={`${x.card.id}-${i}`}
-                                        className={`flex items-center gap-3 p-3 rounded-xl border transition-colors
-                                            ${isTop ? 'bg-emerald-50 border-emerald-200' :
-                                                isNearest ? 'bg-amber-50 border-amber-200' :
-                                                    'bg-gray-50 border-gray-100 hover:border-gray-200'}`}
-                                    >
-                                        {/* Rank */}
-                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs
-                                            ${isTop ? 'bg-emerald-500 text-white' :
-                                                isNearest ? 'bg-amber-500 text-white' :
-                                                    'bg-gray-200 text-gray-600'}`}
-                                        >
-                                            {i + 1}
-                                        </div>
-
-                                        {/* Card Details */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <p className="font-semibold text-gray-800 text-sm truncate pr-2">
-                                                    {getBankName(x.card)} - {x.card.name}
-                                                </p>
-                                                {Number(x.card.limit) > 0 && (
-                                                    <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded font-bold text-gray-600 mt-0.5 text-right flex-shrink-0">
-                                                        ₺{formatMoneyTR(x.card.limit)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-[10px] text-gray-500 mt-0.5">
-                                                Kesim: {x.card.cutoffDay} • Ödeme: {x.card.paymentDueDay}
-                                                {x.isNextPeriod && <span className="text-emerald-600 ml-1">• Gelecek ay</span>}
-                                            </p>
-                                        </div>
-
-                                        {/* Days Badge */}
-                                        <div className="text-right flex-shrink-0">
-                                            <p className={`text-lg font-bold ${isTop ? 'text-emerald-600' : isNearest ? 'text-amber-600' : 'text-gray-700'}`}>
-                                                {x.daysToPayment}
-                                            </p>
-                                            <p className="text-[9px] text-gray-400 uppercase">gün</p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Info Box */}
-                        <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-3">
-                            <div className="flex gap-2">
-                                <Icon name="info" size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                                <p className="text-[11px] text-blue-600">
-                                    <b>İpucu:</b> Kesim tarihi geçmiş kartlar en avantajlıdır çünkü harcama gelecek ayın ekstresine girer.
-                                </p>
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    /* Empty State */
-                    <div className="text-center py-8">
-                        <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Icon name="credit-card" size={28} className="text-gray-400" />
-                        </div>
-                        <h4 className="font-semibold text-gray-700 mb-2">Kart Bulunamadı</h4>
-                        <p className="text-sm text-gray-500 max-w-xs mx-auto">
-                            Avantaj hesabı için kartlarınızda <b>Kesim Günü</b> ve{" "}
-                            <b>Son Ödeme Günü</b> bilgilerinin dolu olması gerekiyor.
-                        </p>
-                    </div>
+                <div className="best-card-days">
+                  <strong>{top.daysToPayment}</strong>
+                  <span>gün</span>
+                </div>
+              </div>
+              <dl className="detail-list">
+                <div>
+                  <dt>Tahmini ödeme</dt>
+                  <dd>{formatDateTR(top.pay)}</dd>
+                </div>
+                <div>
+                  <dt>Kesim günü</dt>
+                  <dd>Her ayın {top.card.cutoffDay}’i</dd>
+                </div>
+                {Number(top.card.limit) > 0 && (
+                  <div>
+                    <dt>Tanımlı limit</dt>
+                    <dd>₺{formatMoneyTR(top.card.limit)}</dd>
+                  </div>
                 )}
+              </dl>
+            </section>
+            {nearest && nearest.card.id !== top.card.id && (
+              <p className="best-card-nearest">
+                <Icon name="clock" size={16} />
+                <span>
+                  En yakın ödeme: <strong>{nearest.card.name}</strong> ·{" "}
+                  {nearest.daysToPayment} gün
+                </span>
+              </p>
+            )}
+            <div className="section-heading">
+              <h3>Kartları karşılaştır</h3>
+              <span className="muted text-xs">{bestCards.length} kart</span>
             </div>
-
-            {/* Fixed Footer - Close Button for Mobile */}
-            <div className="p-4 border-t border-gray-100 flex-shrink-0 sm:hidden">
-                <button
-                    onClick={onClose}
-                    className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
-                >
-                    Kapat
-                </button>
-            </div>
-        </ModalShell>
-    );
+            <ol className="best-card-list">
+              {bestCards.map((item, index) => (
+                <li key={item.card.id}>
+                  <span
+                    className={`best-card-rank ${index === 0 ? "recommended" : ""}`}
+                  >
+                    {index + 1}
+                  </span>
+                  <div className="best-card-copy">
+                    <h4>{item.card.name}</h4>
+                    <p>
+                      {bankName(item.card)}
+                      {item.card.last4Digits
+                        ? ` · •••• ${item.card.last4Digits}`
+                        : ""}
+                    </p>
+                    <p>
+                      Ödeme {formatDateTR(item.pay)}
+                      {item.isNextPeriod ? " · Sonraki ekstre" : ""}
+                    </p>
+                    {Number(item.card.limit) > 0 && (
+                      <p>Tanımlı limit ₺{formatMoneyTR(item.card.limit)}</p>
+                    )}
+                  </div>
+                  <div className="best-card-term">
+                    <strong>{item.daysToPayment}</strong>
+                    <span>gün</span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <p className="footnote">
+              Sıralama, kayıtlı kesim ve son ödeme günlerine göre hesaplanır.
+              İşlemin ekstreye yansıma tarihi bankaya göre değişebilir. Tanımlı
+              limit, kullanılabilir limit değildir.
+            </p>
+          </>
+        ) : (
+          <div className="best-card-empty">
+            <Icon name="credit-card" size={28} />
+            <h3>Karşılaştırılacak kart yok</h3>
+            <p>
+              Kesim ve son ödeme günü kayıtlı bir kart eklediğinde burada
+              görebilirsin.
+            </p>
+          </div>
+        )}
+        <button className="secondary-button" onClick={onClose}>
+          Tamam
+        </button>
+      </div>
+    </ModalShell>
+  );
 };

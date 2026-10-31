@@ -1,17 +1,58 @@
-import React from 'react';
-import { supabase } from '../../lib/supabase';
-import { Icon } from '../ui/Icon';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
+import { Icon } from "../ui/Icon";
+import { ModalShell } from "../ui/Modal";
 
-export const Header = () => {
-    return (
-        <div className="bg-white p-4 shadow-sm sticky top-0 z-10 flex justify-between items-center">
-            <span className="font-bold text-lg text-blue-600 tracking-tight">FinOwn</span>
-            <button
-                onClick={() => supabase.auth.signOut()}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-            >
-                <Icon name="log-out" size={20} className="text-gray-400" />
-            </button>
+export const Header = ({ onOpenQuickMenu, onSignOut }) => {
+  const [accountOpen, setAccountOpen] = useState(false);
+  return (
+    <>
+      <header className="app-header">
+        <Link to="/" className="wordmark" aria-label="Finown ana ekran">
+          <span className="brand-symbol">f</span>finown
+        </Link>
+        <div className="header-actions">
+          <button
+            className="icon-button add-action"
+            aria-label="Yeni kayıt ekle"
+            onClick={onOpenQuickMenu}
+          >
+            <Icon name="plus" />
+          </button>
+          <button
+            className="account-button"
+            onClick={() => setAccountOpen(true)}
+            aria-label="Hesap menüsü"
+          >
+            <Icon name="user-round" size={18} />
+          </button>
         </div>
-    );
+      </header>
+      {accountOpen && (
+        <ModalShell onClose={() => setAccountOpen(false)} label="Hesap menüsü">
+          <div className="sheet-content">
+            <div className="sheet-heading">
+              <h2>Hesabım</h2>
+              <button
+                className="icon-button"
+                aria-label="Kapat"
+                onClick={() => setAccountOpen(false)}
+              >
+                <Icon name="x" />
+              </button>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={() =>
+                onSignOut ? onSignOut() : supabase.auth.signOut()
+              }
+            >
+              Çıkış yap
+            </button>
+          </div>
+        </ModalShell>
+      )}
+    </>
+  );
 };

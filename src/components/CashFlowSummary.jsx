@@ -1,58 +1,305 @@
-import React, { useMemo, useState } from 'react';
-import { useData } from '../context/store';
-import { cashFlow } from '../domain/finance';
-import { formatDateTR, formatMoneyTR } from '../utils';
+import React, { useMemo, useState } from "react";
+import { useData } from "../context/store";
+import { cashFlow } from "../domain/finance";
+import { formatDateTR, formatMoneyTR } from "../utils";
+import { Icon } from "./ui/Icon";
+import { ModalShell } from "./ui/Modal";
 
-export function CashFlowPanel({ data, today = new Date(), onEnterStatement }) {
-    const [days, setDays] = useState(7);
-    const summary = useMemo(() => cashFlow(data, today, days), [data, today, days]);
-    return (
-        <section className="mx-1 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm" aria-label="Yaklaşan ödeme ve gelir özeti">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-bold text-gray-900">Önümüzdeki günler</h3>
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-xl" aria-label="Özet dönemi">
-                    {[7, 30].map(value => <button key={value} aria-pressed={days === value} onClick={() => setDays(value)}
-                        className={`px-3 py-2 rounded-lg text-sm font-bold ${days === value ? 'bg-gray-900 text-white' : 'text-gray-600'}`}>{value} gün</button>)}
-                </div>
+export function CashFlowPanel({
+  data,
+  today = new Date(),
+  onEnterStatement,
+  onOpenItem,
+}) {
+  const [days, setDays] = useState(7);
+  const [filter, setFilter] = useState("all");
+  const [expanded, setExpanded] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const summary = useMemo(
+    () => cashFlow(data, today, days),
+    [data, today, days],
+  );
+  const cashRows = summary.rows.filter((item) => item.direction !== "card");
+  const filtered = cashRows.filter(
+    (item) => filter === "all" || item.direction === filter,
+  );
+  const visible = expanded ? filtered : filtered.slice(0, 3);
+  return (
+    <section className="cashflow" aria-label="Yaklaşan ödeme ve gelir özeti">
+      <div className="period-row">
+        <h2>Önümüzdeki günler</h2>
+        <div className="segmented" aria-label="Özet dönemi">
+          {[7, 30].map((value) => (
+            <button
+              key={value}
+              aria-pressed={days === value}
+              onClick={() => {
+                setDays(value);
+                setExpanded(false);
+              }}
+            >
+              {value} gün
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="summary-card">
+        <div className="summary-label">
+          <span>Beklenen gelir − ödeme</span>
+          <button
+            className="icon-button"
+            aria-label="Dönem farkı hakkında bilgi"
+            onClick={() => setInfoOpen(true)}
+          >
+            <Icon name="info" size={17} />
+          </button>
+        </div>
+        <p
+          className={`summary-figure ${summary.difference < 0 ? "negative" : ""}`}
+          data-testid="period-difference"
+        >
+          {summary.difference < 0 ? "−" : "+"}
+          <span className="currency">₺</span>
+          {formatMoneyTR(Math.abs(summary.difference))}
+        </p>
+        <p className="muted text-xs mt-2">
+          {formatDateTR(summary.start)} – {formatDateTR(summary.end)}
+        </p>
+        <div className="summary-metrics">
+          <div>
+            <p>
+              <Icon name="arrow-up-right" size={14} />
+              Beklenen gelir
+            </p>
+            <strong data-testid="expected-income">
+              ₺{formatMoneyTR(summary.income)}
+            </strong>
+          </div>
+          <div>
+            <p>
+              <Icon name="arrow-down-right" size={14} />
+              Bilinen ödemeler
+            </p>
+            <strong data-testid="known-payments">
+              ₺{formatMoneyTR(summary.expense)}
+            </strong>
+          </div>
+        </div>
+      </div>
+      {summary.missing.length > 0 && (
+        <div className="notice compact" role="status">
+          <span>
+            <Icon name="alert-circle" size={16} />
+            {summary.missing.length} kart ekstresinin tutarı eksik
+          </span>
+          <button
+            onClick={() => onEnterStatement?.(summary.missing[0])}
+            disabled={!onEnterStatement}
+          >
+            Ekstre tutarı gir <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      )}
+      {(summary.incomplete.length > 0 ||
+        summary.ambiguous > 0 ||
+        summary.unlinkedCardSubscriptions > 0) && (
+        <details className="notice">
+          <summary>
+            Bilgisi doğrulanmalı (
+            {summary.incomplete.length +
+              summary.ambiguous +
+              summary.unlinkedCardSubscriptions}
+            )
+          </summary>
+          {summary.incomplete.length > 0 && (
+            <p>
+              {summary.incomplete.length} kaydın tarih, tür veya tutarı eksik;
+              toplam dışında tutuldu.
+            </p>
+          )}
+          {summary.ambiguous > 0 && (
+            <p>
+              {summary.ambiguous} eski ödeme durumu doğrulanmalı; ödenmemiş
+              olarak listeleniyor.
+            </p>
+          )}
+          {summary.unlinkedCardSubscriptions > 0 && (
+            <p>
+              {summary.unlinkedCardSubscriptions} aboneliğin ana kart bağlantısı
+              doğrulanmalı; ayrıca toplamda sayılmıyor.
+            </p>
+          )}
+        </details>
+      )}
+      {summary.overdueCount > 0 && (
+        <details className="notice">
+          <summary>
+            Önceki tarihlerden {summary.overdueCount} bekleyen ödeme
+          </summary>
+          <p>
+            ₺{formatMoneyTR(summary.overdueTotal)} bu dönem farkına dahil değil.
+          </p>
+        </details>
+      )}
+      <div className="section-title">
+        <h2>Yaklaşan hareketler</h2>
+        {filtered.length > 3 && (
+          <button onClick={() => setExpanded(!expanded)}>
+            {expanded ? "Kısalt" : "Tümünü gör"}
+          </button>
+        )}
+      </div>
+      <div className="line-tabs" aria-label="Hareket filtresi">
+        {[
+          ["all", "Tümü"],
+          ["out", "Ödemeler"],
+          ["in", "Gelirler"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            aria-pressed={filter === value}
+            onClick={() => {
+              setFilter(value);
+              setExpanded(false);
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <ul className="movement-list">
+        {visible.map((item) => (
+          <li
+            key={`${item.recordType}:${item.id}:${item.dueDate}`}
+            className="movement-row"
+          >
+            <button
+              className="movement-main"
+              onClick={() =>
+                item.needsCardAmount && onEnterStatement
+                  ? onEnterStatement(item)
+                  : onOpenItem
+                    ? onOpenItem(item)
+                    : setInfoOpen(true)
+              }
+              aria-label={`${item.title} ayrıntısı`}
+            >
+              <span
+                className={`movement-icon ${item.direction === "in" ? "income" : ""}`}
+              >
+                <Icon
+                  name={
+                    item.direction === "in"
+                      ? "arrow-up-right"
+                      : item.type === "card"
+                        ? "credit-card"
+                        : item.type === "loan"
+                          ? "landmark"
+                          : "receipt"
+                  }
+                  size={19}
+                />
+              </span>
+              <span className="movement-copy">
+                <strong>{item.title}</strong>
+                <span>
+                  {formatDateTR(item.dueDate)} ·{" "}
+                  {item.direction === "in" ? "Gelir" : "Ödeme"}
+                </span>
+              </span>
+              <span
+                className={`movement-amount ${item.direction === "in" ? "income" : ""}`}
+              >
+                {item.needsCardAmount ? (
+                  <span className="unknown-amount">Tutar girilmedi</span>
+                ) : (
+                  `${item.direction === "in" ? "+" : ""}₺${formatMoneyTR(item.amount)}`
+                )}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {filtered.length === 0 && (
+        <p className="empty-state">
+          Bu aralıkta bekleyen {filter === "in" ? "gelir" : "hareket"} yok.
+        </p>
+      )}
+      {filtered.length > 3 && (
+        <button className="more-button" onClick={() => setExpanded(!expanded)}>
+          {expanded
+            ? "Daha az göster"
+            : `${filtered.length - visible.length} hareket daha`}{" "}
+          <Icon name={expanded ? "chevron-up" : "chevron-down"} size={14} />
+        </button>
+      )}
+      <p className="footnote">Dönem farkı, mevcut hesap bakiyen değildir.</p>
+      {infoOpen && (
+        <ModalShell
+          onClose={() => setInfoOpen(false)}
+          label="Dönem farkı açıklaması"
+        >
+          <div className="sheet-content">
+            <div className="sheet-heading">
+              <h2>Bu fark neyi gösteriyor?</h2>
+              <button
+                className="icon-button"
+                aria-label="Kapat"
+                onClick={() => setInfoOpen(false)}
+              >
+                <Icon name="x" />
+              </button>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Bugünden itibaren · {formatDateTR(summary.start)} – {formatDateTR(summary.end)} · Ay seçiminden bağımsız</p>
-            <div className="grid grid-cols-2 gap-2 mt-4">
-                <div className="bg-emerald-50 p-3 rounded-xl"><p className="text-xs text-emerald-800">Beklenen gelir</p><p className="font-bold text-emerald-900 break-words">₺{formatMoneyTR(summary.income)}</p></div>
-                <div className="bg-rose-50 p-3 rounded-xl"><p className="text-xs text-rose-800">Bilinen ödemeler</p><p className="font-bold text-rose-900 break-words">₺{formatMoneyTR(summary.expense)}</p></div>
-            </div>
-            <div className="mt-2 p-3 bg-gray-50 rounded-xl">
-                <p className="text-xs text-gray-600">Beklenen gelir − bilinen ödemeler</p>
-                <p className={`text-xl font-bold ${summary.difference < 0 ? 'text-rose-700' : 'text-gray-900'}`}>{summary.difference > 0 ? '+' : ''}₺{formatMoneyTR(summary.difference)}</p>
-                <p className="text-xs text-gray-500 mt-1">Bu fark mevcut bakiye veya harcanabilir para değildir. Alınmış gelir ve ödenmiş kayıtlar dahil değil.</p>
-            </div>
-            {(summary.missing.length > 0 || summary.incomplete.length > 0 || summary.ambiguous > 0) && (
-                <div role="status" className="mt-3 p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs space-y-1">
-                    {summary.missing.length > 0 && <p>{summary.missing.length} kart ekstresinin tutarı eksik. Toplam kesinleşmedi.</p>}
-                    {summary.incomplete.length > 0 && <p>{summary.incomplete.length} kaydın tarih / tür / tutar bilgisi doğrulanmalı; toplam dışında tutuldu.</p>}
-                    {summary.ambiguous > 0 && <p>{summary.ambiguous} kaydın eski ödeme durumu doğrulanmalı; ödenmemiş olarak listeleniyor.</p>}
-                </div>
-            )}
-            {summary.overdueCount > 0 && <p className="mt-3 text-xs text-rose-800">Ayrıca önceki tarihlerden {summary.overdueCount} ödenmemiş ödeme kaydı var (₺{formatMoneyTR(summary.overdueTotal)}). Bu tutar yukarıdaki dönem farkına dahil değil.</p>}
-            <p className="mt-3 text-xs text-gray-500">Bağlı kartı bulunan abonelikler ekstre üzerinden takip edilir; ödeme toplamına ayrıca eklenmez{summary.cardSubscriptions ? ` (${summary.cardSubscriptions} kayıt)` : ''}.</p>
-            {summary.unlinkedCardSubscriptions > 0 && <p className="mt-2 text-xs text-amber-800">{summary.unlinkedCardSubscriptions} aboneliğin bağlı kartı / ana kartı doğrulanmalı. Bu abonelikler ayrıca toplamda sayılmıyor.</p>}
-            <h4 className="font-semibold text-sm mt-4">Yaklaşan vadeler</h4>
-            {summary.rows.length === 0 ? <p className="text-sm text-gray-500 mt-2">Bu aralıkta kayıtlı bekleyen gelir veya ödeme yok.</p> : (
-                <ul className="mt-2 divide-y divide-gray-100 max-h-80 overflow-auto">
-                    {summary.rows.map(item => <li key={`${item.recordType}:${item.id}:${item.dueDate}`} className="py-3 flex items-start justify-between gap-3">
-                        <div className="min-w-0"><p className="text-sm font-semibold break-words">{item.title}</p>
-                            <p className="text-xs text-gray-500">{formatDateTR(item.dueDate)} · {item.direction === 'in' ? 'Beklenen gelir' : item.direction === 'card' ? 'Karttan · ayrı toplanmadı' : 'Ödeme'}</p></div>
-                        <div className="text-right shrink-0">
-                            {item.needsCardAmount ? <><p className="text-xs text-amber-800">Tutar girilmedi</p>{onEnterStatement && <button className="text-xs text-blue-700 underline py-1" onClick={() => onEnterStatement(item)}>Ekstre tutarı gir</button>}</>
-                                : <p className={`font-semibold text-sm ${item.direction === 'in' ? 'text-emerald-700' : 'text-gray-800'}`}>₺{formatMoneyTR(item.amount)}</p>}
-                        </div>
-                    </li>)}
+            <p>
+              Beklenen gelirlerden bilinen ve henüz ödenmemiş tutarları
+              çıkarıyoruz. Bu fark mevcut bakiye veya harcanabilir para
+              değildir.
+            </p>
+            <p>
+              Alınmış gelir, ödenmiş kayıtlar ve önceki tarihlerden gecikmiş
+              ödemeler bu dönem farkına dahil değil. Eksik ekstreler
+              tamamlandığında toplam değişebilir.
+            </p>
+            {summary.cardSubscriptions > 0 && (
+              <details>
+                <summary>
+                  Kart üzerinden takip edilen abonelikler (
+                  {summary.cardSubscriptions})
+                </summary>
+                <p>Kart abonelikleri ekstreye ikinci kez eklenmez.</p>
+                <ul>
+                  {summary.rows
+                    .filter((item) => item.direction === "card")
+                    .map((item) => (
+                      <li key={`${item.id}:${item.dueDate}`}>
+                        {item.title} · ₺{formatMoneyTR(item.amount)}
+                      </li>
+                    ))}
                 </ul>
+              </details>
             )}
-        </section>
-    );
+            <button
+              className="primary-button"
+              onClick={() => setInfoOpen(false)}
+            >
+              Anladım
+            </button>
+          </div>
+        </ModalShell>
+      )}
+    </section>
+  );
 }
 
-export default function CashFlowSummary({ onOpenModal }) {
-    const data = useData();
-    return <CashFlowPanel data={data} onEnterStatement={item => onOpenModal('card_amount', item)} />;
+export default function CashFlowSummary({ onOpenModal, onOpenItem }) {
+  const data = useData();
+  return (
+    <CashFlowPanel
+      data={data}
+      onEnterStatement={
+        onOpenModal ? (item) => onOpenModal("card_amount", item) : undefined
+      }
+      onOpenItem={onOpenItem}
+    />
+  );
 }
