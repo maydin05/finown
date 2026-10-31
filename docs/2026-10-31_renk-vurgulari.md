@@ -13,3 +13,12 @@ Hesaplama ve veri katmanında değişiklik yok. Yerel 320/375/430 px mobil kontr
 
 - [Ana ekran](preview/2026-10-31_renkli-ana-ekran.png)
 - [Abonelik](preview/2026-10-31_renkli-abonelik.png)
+
+## Yayın doğrulaması
+
+- Uygulama commit’i `be301bca635ecbb190401650c6976e659568ab6e`; GitHub `main` ucu ayrı `git ls-remote` okumasıyla eşleşti.
+- Netlify üretim deploy’u `6ae5f4c29370fb3d8a09695f`, durum `ready`; yayın `2026-10-31T14:01:53.543Z` (Türkiye saati 17:01). Site https://finown.netlify.app.
+- `/`, `/expenses`, `/incomes`, `/subscriptions`, `/banks` HTTP 200 ve yeni JS paketini döndürdü.
+- Canlı JS `index-BJoIAUBs.js` ve CSS `index-7OwhHKj0.css`, yerel üretim derlemesiyle byte düzeyinde aynı. SHA-256: JS `f463795fa6a6c7da6395610647bf6cf371a84fed0990a9d2e7e627d72056d485`; CSS `06eaadcba5c2103e857357167b4fbebdf3b89795649078d86fe54f67aab610b6`.
+- Canlı oturumsuz mobil smoke 320/375/430 px’de 3/3 başarılı: giriş ekranı, SPA rotaları, JS hatası ve yatay taşma kontrolü. Hesap içi test ve gerçek cihaz kabulü yerine geçmez.
+- Bu yayın doğrulamasını ekleyen belge commit’i uygulama dosyalarını değiştirmez. Bu turda üretim verisine yazılmadı.
