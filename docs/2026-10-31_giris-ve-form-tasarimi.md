@@ -1,6 +1,6 @@
 # Giriş ve kayıt formları — 31 Ekim 2026
 
-Durum: uygulama ve yerel testler tamamlandı; kullanıcı GitHub gönderimi ve Netlify üretim yayınına açık yetki verdi. Kullanıcı giriş ekranı ve ekleme/düzenleme formlarının renkli, sade tasarıma uyarlanmasını istedi.
+Durum: GitHub’a gönderildi, Netlify’da yayımlandı ve oturumsuz canlı mobil kontrol tamamlandı. Kullanıcı giriş ekranı ve ekleme/düzenleme formlarının renkli, sade tasarıma uyarlanmasını, ardından GitHub gönderimi ve Netlify üretim yayınını açıkça istedi.
 
 ## Değişiklikler
 
@@ -30,3 +30,13 @@ Hesaplama, veri sağlayıcısı, API ve üretim kayıtları değiştirilmedi. On
 Önizlemede gerçek bileşenler örnek verilerle çalışır. Kaydet işlemleri yalnız sayfa belleğine yazılır; giriş/kayıt için örnek auth sağlayıcısı kullanılır, gerçek hesap çağrısı yapılmaz. Üretim uygulamasının kaydetme/giriş hizmeti bundan ayrıdır. `npm run test:mobile` iki mobil test dosyasını da çalıştırır.
 
 Görsel kayıtlar: [Giriş](preview/2026-10-31_renkli-giris.png), [gider](preview/2026-10-31_renkli-gider-formu.png), [abonelik](preview/2026-10-31_renkli-abonelik-formu.png), [banka](preview/2026-10-31_renkli-banka-formu.png), [kart](preview/2026-10-31_renkli-kart-formu.png). Tamamı örnek veridir.
+
+## Yayın sonucu
+
+- Uygulama commit’i `50406c696801edd1b794563e2fe6843fff935844`. GitHub `main` ucu ayrı `git ls-remote` okumasıyla eşleşti.
+- Netlify üretim deploy’u `6ae5f886eb22b81a74262142`, durum `ready`, yayın zamanı `2026-10-31T14:17:56.641Z` (Türkiye saati 17:17). Site https://finown.netlify.app.
+- Canlı JS `index-DQw9Qy1z.js` ve CSS `index-DP0U0Mqa.css`, yerel üretim derlemesiyle byte düzeyinde aynı. SHA-256: JS `061fa5fe5bb3f40f4fafb02d42463340ab89a229cf108057a641849051d1124a`; CSS `f2453b4d8b08409681e21137d93042e150dfdf8fd5d57699233bd91404ac3e3c`.
+- Canlı Chromium mobil kontrolleri 320/375/430 px’de 6/6 başarılı: beş SPA rotası, yeni giriş ekranı, JS hatası/yatay taşma, giriş/kayıt geçişi, şifre göster/gizle, otomatik doldurma türleri ve boş zorunlu alanın tarayıcı doğrulaması.
+- Canlı testlerde gerçek giriş/kayıt isteği gönderilmedi; yeni hesap veya finansal kayıt oluşturulmadı. Hesap içi form kaydı, gerçek cihaz ve kullanıcı kabulü doğrulanmadı. Kullanıcının önceki hesap içi testi kendisinin yapma tercihi korundu.
+- [Canlı giriş ekranı görüntüsü](preview/2026-10-31_canli-giris.png) 375 px’de alınıp görsel olarak kontrol edildi; kişisel veri içermez.
+- Bu sonuçları kaydeden sonraki belge commit’i uygulama dosyalarını değiştirmez.
