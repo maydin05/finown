@@ -23,6 +23,7 @@ const products = [
   { id: 9001, type: "card", name: "Örnek kart", paymentDueDay: 5 },
 ];
 export function Preview() {
+  const [incomeReceipts, setIncomeReceipts] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(null);
   const [payments, setPayments] = useState([
     {
@@ -46,7 +47,13 @@ export function Preview() {
   const [bestCards, setBestCards] = useState(null);
   const appMode = new URLSearchParams(window.location.search).has("app");
   const data = {
-    userId: 'fixture-user', availableBalance,
+    userId: 'fixture-user', availableBalance, incomeReceipts,
+    saveIncomeReceipt: async (receipt) => {
+      if (new URLSearchParams(window.location.search).has('incomeFail')) throw new Error('Synthetic receipt failure');
+      const saved = { ...receipt, id: `${receipt.incomeId}:${receipt.periodYear}:${receipt.periodMonth}`, userId: 'fixture-user' };
+      setIncomeReceipts(prev => [...prev.filter(r => r.id !== saved.id),saved]);
+      return saved;
+    },
     saveAvailableBalance: async (snapshot) => {
       if (new URLSearchParams(window.location.search).has('balanceFail') && availableBalance !== null) throw new Error('Synthetic balance failure');
       const saved = { ...snapshot, userId: 'fixture-user', capturedAt: new Date().toISOString() };
@@ -115,7 +122,7 @@ export function Preview() {
         type: "recurring",
         startDate: "2026-01-03",
         dayOfMonth: 3,
-        amount: 15000,
+        amount: new URLSearchParams(window.location.search).has("salary") ? 120000 : 15000,
       },
     ],
     subscriptionSources: [

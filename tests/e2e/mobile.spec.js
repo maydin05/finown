@@ -100,6 +100,7 @@ test("approved home layout supports details, status, statement entry and keyboar
   await region.getByRole("button", { name: "Gelirler", exact: true }).click();
   await region.getByRole("button", { name: "Örnek gelir ayrıntısı" }).click();
   await page.getByRole("button", { name: "Alındı olarak işaretle" }).click();
+  await page.getByRole("button", { name: "Alınan tutarı kaydet", exact: true }).click();
   await expect(page.getByTestId("expected-income")).toHaveText("₺0,00");
   await expect(region).toContainText("Bu aralıkta bekleyen gelir yok.");
   await region.getByRole("button", { name: "Ekstre tutarı gir" }).click();
@@ -384,6 +385,7 @@ test('manual balance calculates gaps, preserves cancel/failed validation and bec
   await summary.getByRole('button',{name:'Gelirler',exact:true}).click();
   await summary.getByRole('button',{name:'Örnek gelir ayrıntısı',exact:true}).click();
   await page.getByRole('button',{name:'Alındı olarak işaretle',exact:true}).click();
+  await page.getByRole('button',{name:'Alınan tutarı kaydet',exact:true}).click();
   await expect(card).toContainText('Bakiyeni yeniden doğrula');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
@@ -418,6 +420,7 @@ test('compact monthly pages keep summaries, month controls and first records wit
   const nav = page.getByRole('navigation', { name: 'Ana gezinme' });
   for (const name of ['Ödemeler', 'Gelir', 'Abonelik', 'Bankalar']) {
     await nav.getByRole('button', { name, exact: true }).click();
+    await expect(page.locator('.compact-list-page')).toBeVisible();
     const layout = await page.evaluate(() => {
       const content = document.querySelector('.compact-list-page');
       const first = content.querySelector('.record-row');
@@ -446,4 +449,60 @@ test('compact monthly pages keep summaries, month controls and first records wit
       await expect(page.getByText('Kart borcu bu toplamın kapsamında değil.')).toBeVisible();
     }
   }
+});
+
+test('salary actual amounts belong only to the selected month and can be corrected or undone without editing the plan', async ({ page }) => {
+  await page.setViewportSize({width:page.viewportSize().width,height:667});
+  await page.goto('/tests/ui-preview.html?app=1&salary=1');
+  await page.getByRole('navigation',{name:'Ana gezinme'}).getByRole('button',{name:'Gelir',exact:true}).click();
+  const summary=page.getByRole('region',{name:'Gelirler aylık özeti'});
+  await expect(summary).toContainText('₺120.000,00');
+  await page.getByRole('button',{name:'Örnek gelir ayrıntısı'}).click();
+  await page.getByRole('button',{name:'Alındı olarak işaretle',exact:true}).click();
+  await expect(page.getByRole('dialog')).toContainText('Kasım 2026');
+  await page.getByLabel('Alınan tutar (₺)',{exact:true}).fill('115000');
+  await page.getByRole('button',{name:'Vazgeç',exact:true}).click();
+  await expect(summary).toContainText('₺120.000,00');
+  await page.getByRole('button',{name:'Örnek gelir ayrıntısı'}).click();
+  await page.getByRole('button',{name:'Alındı olarak işaretle',exact:true}).click();
+  await page.getByLabel('Alınan tutar (₺)',{exact:true}).fill('115000');
+  await page.getByLabel('Kesinti / ek mesai notu (isteğe bağlı)',{exact:true}).fill('Kesinti');
+  await page.getByRole('button',{name:'Alınan tutarı kaydet',exact:true}).click();
+  await expect(summary).toContainText('₺115.000,00');
+  await expect(page.getByRole('button',{name:'Alınan',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('button',{name:'Sonraki ay',exact:true}).click();
+  await expect(summary).toContainText('₺120.000,00');
+  await page.getByRole('button',{name:'Önceki ay',exact:true}).click();
+  await page.getByRole('button',{name:'Alınan',exact:true}).click();
+  await page.getByRole('button',{name:'Örnek gelir ayrıntısı'}).click();
+  await expect(page.getByRole('dialog')).toContainText('Planlanan: ₺120.000,00');
+  await expect(page.getByRole('dialog')).toContainText('Gerçek alınan: ₺115.000,00');
+  await page.getByRole('button',{name:'Bu ay alınan tutarı düzenle',exact:true}).click();
+  await page.getByLabel('Alınan tutar (₺)',{exact:true}).fill('140000');
+  await page.getByRole('button',{name:'Bu ayın tutarını kaydet',exact:true}).click();
+  await expect(summary).toContainText('₺140.000,00');
+  await page.getByRole('button',{name:'Örnek gelir ayrıntısı'}).click();
+  await page.getByRole('button',{name:'Alındı işaretini geri al',exact:true}).click();
+  await page.getByRole('button',{name:'Beklenen',exact:true}).click();
+  await expect(summary).toContainText('₺120.000,00');
+  await page.getByRole('button',{name:'Örnek gelir ayrıntısı'}).click();
+  await page.getByRole('button',{name:'Gelir planını düzenle',exact:true}).click();
+  await expect(page.getByTestId('last-action')).toHaveText('income');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('salary receipt validation and failed save keep the expected income unchanged', async ({page}) => {
+  await page.goto('/tests/ui-preview.html?app=1&salary=1&incomeFail=1');
+  const summary=page.getByRole('region',{name:'Yaklaşan ödeme ve gelir özeti'});
+  await summary.getByRole('button',{name:'Gelirler',exact:true}).click();
+  await page.getByRole('button',{name:'Örnek gelir ayrıntısı'}).click();
+  await page.getByRole('button',{name:'Alındı olarak işaretle',exact:true}).click();
+  await page.getByLabel('Alınan tutar (₺)',{exact:true}).fill('');
+  await page.getByRole('button',{name:'Alınan tutarı kaydet',exact:true}).click();
+  await expect(page.getByRole('alert')).toContainText('Alınan tutarı');
+  await page.getByLabel('Alınan tutar (₺)',{exact:true}).fill('115000');
+  await page.getByRole('button',{name:'Alınan tutarı kaydet',exact:true}).click();
+  await expect(page.getByRole('alert')).toContainText('Kaydedilemedi');
+  await page.getByRole('button',{name:'Vazgeç',exact:true}).click();
+  await expect(page.getByTestId('expected-income')).toHaveText('₺120.000,00');
 });

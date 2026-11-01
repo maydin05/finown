@@ -1,9 +1,12 @@
 import { MonthHeader, FilterTabs } from "../components/ui/MonthHeader";
-import React from "react";
+import React, { useState } from "react";
 import { useData } from "../context/store";
 import { useViewData } from "../hooks/useViewData";
 import { IncomeItem } from "../components/items/IncomeItem";
 import { Icon } from "../components/ui/Icon";
+
+import IncomeReceiptModal from "../modals/IncomeReceiptModal";
+import { incomeReceiptInput } from "../domain/incomeReceipts";
 
 export default function Incomes({
   viewDate,
@@ -14,7 +17,9 @@ export default function Incomes({
   incomeTab,
   setIncomeTab,
 }) {
-  const { incomeSources, statusTracker, toggleTracker } = useData();
+  const { incomeSources, statusTracker, saveIncomeReceipt } = useData();
+
+  const [receiptItem, setReceiptItem] = useState(null);
 
   // 1. Generate items
   const incomes = useViewData(incomeSources, statusTracker, viewDate, "income");
@@ -33,7 +38,8 @@ export default function Incomes({
   );
 
   const handleToggle = (item) => {
-    toggleTracker(item.trackerKey, item.isReceived).catch(() => {});
+    if (!item.isReceived) { setReceiptItem(item); return; }
+    return saveIncomeReceipt(incomeReceiptInput(item, item.actualAmount ?? item.amount, item.receiptNote || "", false)).then(() => setIncomeTab("expected"));
   };
 
   return (
@@ -48,6 +54,7 @@ export default function Incomes({
         amount={totalExpected}
         secondary={[{ label: "Alınan", amount: totalReceived }]}
       />
+      {incomes.some(i => i.isReceived && i.actualAmount == null) && <p className="notice">Bazı eski alınan gelirlerde gerçek tutar kaydedilmemiş; planlanan tutar gösteriliyor. İlgili ayın tutarını düzenleyebilirsin.</p>}
       <FilterTabs
         value={incomeTab}
         onChange={setIncomeTab}
@@ -62,7 +69,8 @@ export default function Incomes({
             key={`${item.id}-${idx}`}
             item={item}
             onToggle={() => handleToggle(item)}
-            onEdit={(itm) => onOpenModal("income", itm)}
+            onEdit={(itm) => onOpenModal("income", { ...itm, amount: itm.planAmount ?? itm.expectedAmount ?? itm.amount })}
+            onEditReceipt={setReceiptItem}
             onDelete={(itm) => onOpenModal("delete_income", itm)}
             onOpenNote={(itm) =>
               onOpenModal("note", { ...itm, sourceType: "income" })
@@ -80,6 +88,7 @@ export default function Incomes({
           </div>
         )}
       </div>
+      {receiptItem && <IncomeReceiptModal item={receiptItem} onSaved={() => setIncomeTab("received")} onClose={() => setReceiptItem(null)} />}
     </div>
   );
 }

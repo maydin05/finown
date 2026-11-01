@@ -209,6 +209,7 @@ export const getAllData = async () => {
     subscriptionPayments,
     trackers,
     availableBalances,
+    incomeReceipts,
   ] = await Promise.all([
     fetchTable("banks"),
     fetchTable("products"),
@@ -219,6 +220,7 @@ export const getAllData = async () => {
     fetchTable("subscription_payments"),
     fetchTable("trackers", "key"), // Trackers doesn't have created_at
     fetchTable("available_balances"),
+    fetchTable("income_receipts"),
   ]);
 
   // Trackers table: key, value -> Object map
@@ -237,6 +239,7 @@ export const getAllData = async () => {
   });
 
   return {
+    incomeReceipts: incomeReceipts.filter(r => r.userId === owner.id),
     userId: owner.id,
     availableBalance: availableBalances.find(row => row.userId === owner.id) || null,
     banks,
@@ -395,5 +398,19 @@ export const saveAvailableBalance = async (snapshot, expectedUserId) => {
   if (error) throw error;
   const saved = keysToCamel(data);
   if (!saved || saved.userId !== owner.id) throw new Error("Bakiye sahibi doğrulanamadı.");
+  return saved;
+};
+
+export const saveIncomeReceipt = async (receipt, expectedUserId) => {
+  const owner = await getUser();
+  if (!expectedUserId || owner.id !== expectedUserId) throw new Error("Oturum değişti; verileri yenile.");
+  const { data, error } = await supabase.rpc("save_income_receipt", {
+    p_income_id: receipt.incomeId, p_period_year: receipt.periodYear, p_period_month: receipt.periodMonth,
+    p_due_date: receipt.dueDate, p_expected_amount: receipt.expectedAmount, p_actual_amount: receipt.actualAmount,
+    p_is_received: receipt.isReceived, p_note: receipt.note, p_expected_user_id: expectedUserId,
+  });
+  if (error) throw error;
+  const saved = keysToCamel(data);
+  if (!saved || saved.userId !== owner.id) throw new Error("Gelir kaydının sahibi doğrulanamadı.");
   return saved;
 };

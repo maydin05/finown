@@ -165,3 +165,12 @@ test('balance reads stay scoped to the authenticated owner and never create a sn
   const api=await loadApi({auth,from(table){return {select(){return {order:async()=>({data:table==='available_balances'?[{user_id:'other-user',amount:999},{user_id:'fixture-user',amount:0}]:[],error:null})};}};}});
   const result=await api.getAllData();assert.equal(result.userId,'fixture-user');assert.equal(result.availableBalance.amount,0);assert.equal(result.availableBalance.userId,'fixture-user');
 });
+
+test('monthly income receipt uses one owned RPC; failure never falls back to editing sources or trackers', async () => {
+  const calls=[];
+  const api=await loadApi({auth,rpc:async(name,args)=>{calls.push({name,args});return {data:{user_id:'fixture-user',income_id:1,actual_amount:115000},error:null};}});
+  const receipt={incomeId:1,periodYear:2026,periodMonth:11,dueDate:'2026-11-05',expectedAmount:120000,actualAmount:115000,isReceived:true,note:'Deduction'};
+  const result=await api.saveIncomeReceipt(receipt,'fixture-user');assert.equal(result.actualAmount,115000);assert.equal(calls.length,1);assert.equal(calls[0].name,'save_income_receipt');assert.equal(calls[0].args.p_expected_user_id,'fixture-user');assert.equal(calls[0].args.p_period_month,11);
+  await assert.rejects(()=>api.saveIncomeReceipt(receipt,'another-owner'));assert.equal(calls.length,1);
+  const failed=await loadApi({auth,rpc:async()=>({data:null,error:new Error('receipt save failed')})});await assert.rejects(()=>failed.saveIncomeReceipt(receipt,'fixture-user'),/receipt save failed/);
+});

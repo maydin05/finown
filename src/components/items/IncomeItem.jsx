@@ -1,11 +1,12 @@
 import React from "react";
 import { RecordRow } from "./RecordRow";
-import { formatDateTR } from "../../utils";
+import { formatDateTR, formatMoneyTR } from "../../utils";
 
 export const IncomeItem = ({
   item,
   onToggle,
   onEdit,
+  onEditReceipt,
   onDelete,
   onOpenNote,
 }) => (
@@ -18,6 +19,9 @@ export const IncomeItem = ({
     status={item.isReceived ? "Alındı" : "Bekleniyor"}
     detail={
       <>
+        <p>Planlanan: ₺{formatMoneyTR(item.expectedAmount ?? item.amount)}</p>
+        {item.isReceived && <p>{item.actualAmount != null ? `Gerçek alınan: ₺${formatMoneyTR(item.actualAmount)}` : "Gerçek alınan tutar ayrıca kaydedilmedi; planlanan tutar gösteriliyor."}</p>}
+        {item.receiptNote && <p>{item.receiptNote}</p>}
         {item.note && <p>{item.note}</p>}
         {item.hasAmbiguousStatus && <p>Eski tahsilat durumu doğrulanmalı.</p>}
       </>
@@ -28,8 +32,10 @@ export const IncomeItem = ({
           ? "Alındı işaretini geri al"
           : "Alındı olarak işaretle",
         onClick: () => onToggle(item),
+        opensModal: !item.isReceived,
       },
-      { label: "Düzenle", onClick: () => onEdit(item), opensModal: true },
+      ...(item.isReceived ? [{ label: "Bu ay alınan tutarı düzenle", onClick: () => onEditReceipt(item), opensModal: true }] : []),
+      { label: "Gelir planını düzenle", onClick: () => onEdit(item), opensModal: true },
       { label: "Notlarım", onClick: () => onOpenNote(item), opensModal: true },
       {
         label: "Sil",

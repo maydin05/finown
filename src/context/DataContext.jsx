@@ -11,6 +11,7 @@ export const DataProvider = ({ children }) => {
   const [banks, setBanks] = useState([]);
   const [products, setProducts] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [incomeReceipts, setIncomeReceipts] = useState([]);
   const [incomeSources, setIncomeSources] = useState([]);
   const [expenseSources, setExpenseSources] = useState([]);
   const [subscriptionSources, setSubscriptionSources] = useState([]);
@@ -37,6 +38,7 @@ export const DataProvider = ({ children }) => {
       setProducts(data.products);
       setPayments(data.payments);
       setIncomeSources(data.incomeSources);
+      setIncomeReceipts(data.incomeReceipts || []);
       setExpenseSources(data.expenseSources);
       setSubscriptionSources(data.subscriptionSources);
       setSubscriptionPayments(data.subscriptionPayments || []);
@@ -57,6 +59,12 @@ export const DataProvider = ({ children }) => {
   const saveAvailableBalance = async (snapshot) => {
     const saved = await api.saveAvailableBalance(snapshot, userId);
     setAvailableBalance(saved);
+    return saved;
+  };
+
+  const saveIncomeReceipt = async (receipt) => {
+    const saved = await api.saveIncomeReceipt(receipt, userId);
+    setIncomeReceipts(prev => [...prev.filter(r => !(String(r.incomeId) === String(saved.incomeId) && r.periodYear === saved.periodYear && r.periodMonth === saved.periodMonth)), saved]);
     return saved;
   };
 
@@ -337,6 +345,7 @@ export const DataProvider = ({ children }) => {
     setProducts([]);
     setPayments([]);
     setIncomeSources([]);
+    setIncomeReceipts([]);
     setExpenseSources([]);
     setSubscriptionSources([]);
     setSubscriptionPayments([]);
@@ -357,6 +366,7 @@ export const DataProvider = ({ children }) => {
     products,
     payments,
     incomeSources,
+    incomeReceipts, saveIncomeReceipt,
     expenseSources,
     subscriptionSources,
     subscriptionPayments,

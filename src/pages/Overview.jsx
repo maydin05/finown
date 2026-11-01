@@ -5,8 +5,11 @@ import { ModalShell } from "../components/ui/Modal";
 import { Icon } from "../components/ui/Icon";
 import { formatDateTR, formatMoneyTR } from "../utils";
 
+import IncomeReceiptModal from "../modals/IncomeReceiptModal";
+
 export default function Overview({ onOpenModal, ownerId }) {
   const { toggleTracker } = useData();
+  const [receiptItem, setReceiptItem] = useState(null);
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -16,6 +19,11 @@ export default function Overview({ onOpenModal, ownerId }) {
   };
   const complete = async () => {
     if (saving || !selected) return;
+    if (selected.direction === "in") {
+      setReceiptItem(selected);
+      setSelected(null);
+      return;
+    }
     if (selected.recordType === "payment") {
       onOpenModal("payment_confirm", selected);
       setSelected(null);
@@ -34,6 +42,7 @@ export default function Overview({ onOpenModal, ownerId }) {
   return (
     <div className="calm-page overview-page">
       <CashFlowSummary ownerId={ownerId} onOpenModal={onOpenModal} onOpenItem={openItem} />
+      {receiptItem && <IncomeReceiptModal item={receiptItem} onClose={() => setReceiptItem(null)} />}
       {selected && (
         <ModalShell
           onClose={() => {

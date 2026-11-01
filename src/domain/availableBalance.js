@@ -14,6 +14,7 @@ export function balanceBasis(data) {
   const fields = {
     payments: ['id','productId','type','amount','dueDate','isPaid'],
     products: ['id','type','cardType','parentCardId','paymentDueDay'],
+    incomeReceipts: ['id','incomeId','periodYear','periodMonth','dueDate','expectedAmount','actualAmount','isReceived'],
     incomeSources: ['id','type','amount','date','startDate','endDate','dayOfMonth'],
     expenseSources: ['id','type','amount','date','startDate','endDate','dayOfMonth'],
     subscriptionSources: ['id','type','amount','date','startDate','endDate','dayOfMonth','billingCycle','relatedCardId','isVariable'],

@@ -64,7 +64,7 @@ export function sourceIssue(source, type) {
     return null;
 }
 
-export function sourceItems(sources, tracker, viewDate, type, subscriptionPayments = [], owners = {}) {
+export function sourceItems(sources, tracker, viewDate, type, subscriptionPayments = [], owners = {}, incomeReceipts = []) {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const items = [];
@@ -81,16 +81,26 @@ export function sourceItems(sources, tracker, viewDate, type, subscriptionPaymen
             && dueDate >= start && (!end || dueDate <= end)
             && (oneTime || (monthsSinceStart >= 0 && monthsSinceStart % interval === 0));
         const payment = type === 'subscription' ? subscriptionPayments.find(p => String(p.subscriptionId) === String(source.id) && Number(p.periodYear) === year && Number(p.periodMonth) === month + 1) : null;
+        const receipt = type === 'income' ? incomeReceipts.find(r => String(r.incomeId) === String(source.id) && Number(r.periodYear) === year && Number(r.periodMonth) === month + 1) : null;
         // Preserve recorded history even when it lies outside the current source schedule.
-        if (!scheduled && !payment) continue;
+        if (!scheduled && !payment && !receipt) continue;
         const status = sourceStatus(type, source.id, viewDate, tracker || {}, owners);
         const item = {
             ...source, recordType: type, trackerKey: status.key,
-            dueDate: dateKey(payment?.dueDate || dueDate), date: dateKey(payment?.dueDate || dueDate),
+            dueDate: dateKey(payment?.dueDate || receipt?.dueDate || dueDate), date: dateKey(payment?.dueDate || receipt?.dueDate || dueDate),
             _originalDate: source.startDate || source.date,
             isPaid: status.done, isReceived: status.done, hasAmbiguousStatus: status.ambiguous,
             isRecurring: !oneTime, subtitle: oneTime ? 'Tek Seferlik' : 'Tekrarlanan', isManual: true,
         };
+        if (type === 'income') {
+            Object.assign(item, {
+                planAmount: source.amount, expectedAmount: receipt?.expectedAmount ?? source.amount, actualAmount: receipt?.actualAmount ?? null,
+                receiptNote: receipt?.note ?? '', receiptId: receipt?.id ?? null,
+                isReceived: receipt ? receipt.isReceived : status.done,
+                hasAmbiguousStatus: receipt ? false : status.ambiguous,
+                amount: receipt?.isReceived ? receipt.actualAmount : (receipt?.expectedAmount ?? source.amount),
+            });
+        }
         if (type === 'subscription') {
             Object.assign(item, {
                 paymentId: payment?.id ?? null,
@@ -148,7 +158,7 @@ export function cashFlow(data, today = new Date(), days = 7) {
     // Generate each calendar month touched by the interval, including December -> January.
     for (let month = new Date(start.getFullYear(), start.getMonth(), 1); month < end; month = new Date(month.getFullYear(), month.getMonth() + 1, 1)) {
         const expenses = sourceItems(data.expenseSources, tracker, month, 'expense', [], owners);
-        const incomes = sourceItems(data.incomeSources, tracker, month, 'income', [], owners);
+        const incomes = sourceItems(data.incomeSources, tracker, month, 'income', [], owners, data.incomeReceipts);
         const payments = paymentItemsForMonth(data.payments, data.products, month);
         const subscriptions = sourceItems(data.subscriptionSources, tracker, month, 'subscription', data.subscriptionPayments, owners)
             .filter(source => !tracker[`sub_archived_${source.id}`]);
