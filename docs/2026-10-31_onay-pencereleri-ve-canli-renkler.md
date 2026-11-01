@@ -1,6 +1,6 @@
 # Onay pencereleri ve daha canlı renkler — 31 Ekim 2026
 
-Durum: uygulama ve yerel testler tamamlandı. Kullanıcı 1 Kasım 2026’da GitHub gönderimi ve Netlify üretim yayınına açık yetki verdi. Kullanıcı ödeme onay ve silme pencerelerini sade, renkli tasarıma uyarlamayı ve kırmızı/mor gibi daha canlı vurgular eklemeyi istedi.
+Durum: GitHub’a gönderildi ve Netlify’da yayımlandı. [1 Kasım yayın doğrulaması](2026-11-01_onay-pencereleri-yayin.md). Kullanıcı ödeme onay ve silme pencerelerini sade, renkli tasarıma uyarlamayı ve kırmızı/mor gibi daha canlı vurgular eklemeyi istedi; yayın için de açık yetki verdi.
 
 - Ödeme onayı: mor başlık/simge, açık mor tutar alanı, sade tarih/limit ayrıntıları ve belirgin onay düğmesi. Bankadan gerçek ödeme yapılmadığı açıklaması korunuyor.
 - Silme onayı: kırmızı başlık/simge ve silme düğmesi. Banka silme etkilerinin bağlı ürün/ödeme/abonelik sayıları korunuyor.
