@@ -4,6 +4,8 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Gün gün bakiye akışı: canlı yayın ve mobil kontrol](docs/2026-11-01_bakiye-akisi-yayin.md)
+
 - [Gün gün bakiye akışı ve gecikenleri dahil etme (yerel uygulama)](docs/2026-11-01_bakiye-akisi-uygulama.md)
 
 - [Aylık gerçek maaş/gelir tutarı: canlı yayın ve mobil kontrol](docs/2026-11-01_aylik-gercek-gelir-yayin.md)
