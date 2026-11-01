@@ -1,6 +1,6 @@
 # Kredi, bağlı borç ve vade paketi
 
-1 Kasım 2026. Durum: uygulama kodu yerelde hazır; eklemeli veritabanı değişikliği Finown Supabase projesine uygulandı ve geri okundu. Bu paket için commit, push veya Netlify yayını yapılmadı.
+1 Kasım 2026. Bu belge yayın öncesi uygulama ve test kaydıdır. Eklemeli veritabanı değişikliği Finown Supabase projesine uygulandı ve geri okundu. Sonraki GitHub/Netlify yayını ve gerçek hesap doğrulaması [yayın kaydında](2026-11-01_kredi-borc-ve-vade-yayin.md) yer alır.
 
 ## Davranış
 
@@ -41,4 +41,4 @@ Migration, Management API üzerinden korumalı tek işlemle uygulandı; CLI ile 
 - Üretimde tam satır karşılaştırması: mevcut ödeme satırları, durum işaretleri, ürünlerin önceki alanları ve gider kaynaklarının önceki alanları korundu. Yalnız onaylı mevcut borç kaynağı işaretlendi; yeni ödeme veya durum satırı oluşturulmadı. Fonksiyonların `security invoker` ve anon erişimine kapalı olduğu geri okundu.
 - `git diff --check`: başarılı.
 
-Yerel önizleme: `http://127.0.0.1:5175/tests/ui-preview.html?app=1`; form önizlemesi: `http://127.0.0.1:5175/tests/forms-preview.html`. Önizlemeler sentetik veriler içerir. Yeni arayüzün gerçek hesapla canlı kabulü, frontend yayını sonrasında yapılmalıdır.
+Yerel önizleme: `http://127.0.0.1:5175/tests/ui-preview.html?app=1`; form önizlemesi: `http://127.0.0.1:5175/tests/forms-preview.html`. Önizlemeler sentetik veriler içerir. Sonraki gerçek hesap kontrolünün kapsamı ve sınırları yayın kaydında yer alır.
