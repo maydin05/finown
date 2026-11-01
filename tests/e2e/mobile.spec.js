@@ -341,12 +341,12 @@ test("arrival preparation separates pending dates, unknown statements and same-d
   await expect(card).toContainText('Önce bakiyeni gir');
 
   await page.goto('/tests/ui-preview.html?app=1&bridge=same-day');
-  await expect(card).toContainText('₺1.000,00 ödeme');
+  await expect(card).toContainText('₺3.500,00 ödeme');
   await card.click();
-  await expect(dialog).toContainText('hesaba geçiş saati bilinmediğinden');
+  await expect(dialog).toContainText('saat sırası bilinmediğinden');
   await page.getByRole('button', { name: 'Anladım', exact: true }).click();
   await page.goto('/tests/ui-preview.html?app=1&bridge=none');
-  await expect(page.getByRole('region',{name:'Bakiye ve ödeme açığı',exact:true})).toContainText('Seçili dönemde ödeme açığı');
+  await expect(page.getByRole('region',{name:'Bakiye ve ödeme açığı',exact:true})).toContainText('7 günlük bakiye akışı');
   await expect(card).toContainText('En az ₺3.500,00');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
@@ -381,7 +381,7 @@ test('manual balance calculates gaps, preserves cancel/failed validation and bec
   await expect(card).toContainText('Bakiye güncel değil');
   await edit.click();
   await page.getByRole('button',{name:'Bakiyeyi kaydet',exact:true}).click();
-  await expect(card).toContainText('Açık yok');
+  await expect(card).toContainText('Açık henüz netleşmedi');
   await summary.getByRole('button',{name:'Gelirler',exact:true}).click();
   await summary.getByRole('button',{name:'Örnek gelir ayrıntısı',exact:true}).click();
   await page.getByRole('button',{name:'Alındı olarak işaretle',exact:true}).click();
@@ -404,7 +404,7 @@ test('failed balance save preserves the previous snapshot and same-day/unknown o
   await page.goto('/tests/ui-preview.html?app=1&bridge=same-day');
   await edit.click();await page.getByLabel('Kullanılabilir para (₺)',{exact:true}).fill('2000');
   await page.getByRole('button',{name:'Bakiyeyi kaydet',exact:true}).click();
-  await expect(card).toContainText('Açık yok');await expect(card).toContainText('Önce ödeme çekilirse ₺1.500,00 açık');
+  await expect(card).toContainText('₺1.500,00');await expect(card).toContainText('Ödemeler gelirden önce çekilirse');
   await page.goto('/tests/ui-preview.html?app=1&bridge=none');
   await edit.click();await page.getByLabel('Kullanılabilir para (₺)',{exact:true}).fill('5000');
   await page.getByRole('button',{name:'Bakiyeyi kaydet',exact:true}).click();
@@ -505,4 +505,46 @@ test('salary receipt validation and failed save keep the expected income unchang
   await expect(page.getByRole('alert')).toContainText('Kaydedilemedi');
   await page.getByRole('button',{name:'Vazgeç',exact:true}).click();
   await expect(page.getByTestId('expected-income')).toHaveText('₺120.000,00');
+});
+
+test('date-ordered flow reveals a later gap, toggles recorded arrears without changing period totals or source dates', async ({page}) => {
+  await page.clock.setFixedTime(new Date('2026-11-01T12:00:00+03:00'));
+  await page.setViewportSize({width:page.viewportSize().width,height:667});
+  await page.goto('/tests/ui-preview.html?app=1&flow=timing');
+  const summary=page.getByRole('region',{name:'Yaklaşan ödeme ve gelir özeti'});
+  const card=page.getByRole('button',{name:'Bakiye ve ödeme açığının ayrıntısı',exact:true});
+  await summary.getByRole('button',{name:'30 gün',exact:true}).click();
+  await page.getByRole('button',{name:'Kullanılabilir bakiyeyi düzenle',exact:true}).click();
+  await page.getByLabel('Kullanılabilir para (₺)',{exact:true}).fill('5000');
+  await page.getByRole('button',{name:'Bakiyeyi kaydet',exact:true}).click();
+  await expect(card).toContainText('10 Kas');await expect(card).toContainText('₺3.000,00 açık');
+  expect(await page.evaluate(()=>[...document.querySelectorAll('.movement-row')].slice(0,2).every(r=>r.getBoundingClientRect().bottom<=document.querySelector('.bottom-nav').getBoundingClientRect().top))).toBe(true);
+  const period=await page.getByTestId('period-difference').textContent();
+  await card.click();const dialog=page.getByRole('dialog');
+  await expect(dialog).toContainText('En yüksek ödeme açığı');await expect(dialog).toContainText('+₺7.000,00');
+  await dialog.getByRole('button',{name:/10 Kas Örnek ödeme 9103/}).click();
+  await expect(dialog).toContainText('Başlangıç: +₺22.000,00');await expect(dialog).toContainText('Gün sonu: −₺3.000,00');
+  await page.getByRole('button',{name:'Kapat',exact:true}).click();
+  await page.getByLabel('Geciken ödemeleri açığa kat',{exact:true}).check();
+  await expect(card).toContainText('2 Kas');await expect(card).toContainText('₺2.000,00');
+  await expect(page.getByTestId('period-difference')).toHaveText(period);
+  await card.click();await expect(dialog).toContainText('₺7.000,00');await expect(dialog).toContainText('Asıl vade: 31 Ekim');
+  await page.getByRole('button',{name:'Kapat',exact:true}).click();
+  await page.getByLabel('Geciken ödemeleri açığa kat',{exact:true}).uncheck();
+  await expect(card).toContainText('10 Kas');await expect(card).not.toContainText('Bakiyeni yeniden doğrula');
+  await summary.getByRole('button',{name:'7 gün',exact:true}).click();await expect(card).toContainText('7 günde açık görünmüyor');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('recorded overdue inclusion changes coverage and missing statements never become a no-gap guarantee', async ({page})=>{
+  await page.clock.setFixedTime(new Date('2026-11-01T12:00:00+03:00'));
+  await page.goto('/tests/ui-preview.html?app=1&flow=overdue');
+  const card=page.getByRole('button',{name:'Bakiye ve ödeme açığının ayrıntısı',exact:true});
+  const save=async amount=>{await page.getByRole('button',{name:'Kullanılabilir bakiyeyi düzenle',exact:true}).click();await page.getByLabel('Kullanılabilir para (₺)',{exact:true}).fill(amount);await page.getByRole('button',{name:'Bakiyeyi kaydet',exact:true}).click();};
+  await page.getByRole('button',{name:'30 gün',exact:true}).click();await save('12000');
+  await expect(card).toContainText('30 günde açık görünmüyor');await page.getByLabel('Geciken ödemeleri açığa kat',{exact:true}).check();
+  await expect(card).toContainText('12 Kas');await expect(card).toContainText('₺2.000,00');
+  await page.goto('/tests/ui-preview.html?app=1&flow=missing');await page.getByRole('button',{name:'30 gün',exact:true}).click();await save('50000');
+  await expect(card).toContainText('Açık henüz netleşmedi');await card.click();await expect(page.getByRole('dialog')).toContainText('1 ödeme tutarı eksik');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

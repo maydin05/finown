@@ -144,6 +144,16 @@ export function Preview() {
       ...source, dayOfMonth: arrivalScenario === "late" ? 7 : 4,
     }));
   }
+  const flowScenario = new URLSearchParams(window.location.search).get('flow');
+  if (flowScenario) {
+    data.products = []; data.expenseSources = []; data.subscriptionSources = []; data.incomeSources = [];
+    const pay = (id,date,amount) => ({id,title:'Örnek ödeme '+id,type:'loan',dueDate:date,amount,isPaid:false});
+    const income = (id,date,amount) => ({id,title:'Örnek gelir '+id,type:'one-time',date,amount});
+    data.payments = [pay(9101,'2026-11-02',3000),pay(9103,'2026-11-10',25000),pay(9105,'2026-10-31',4000)];
+    data.incomeSources = [income(9102,'2026-11-05',20000),income(9104,'2026-11-20',10000)];
+    if (flowScenario === 'overdue') { data.payments = [pay(9101,'2026-11-06',6000),pay(9103,'2026-11-12',4000),pay(9105,'2026-10-31',4000)]; data.incomeSources = [income(9104,'2026-11-20',8000)]; }
+    if (flowScenario === 'missing') data.products = [{id:9110,type:'card',name:'Eksik ekstre',paymentDueDay:15}];
+  }
   data.trackerOwners = legacyOwners(data);
   const card = paymentItemsForMonth(
     payments,

@@ -190,6 +190,6 @@ export function cashFlow(data, today = new Date(), days = 7) {
     }).length;
     return { start: dateKey(start), end: dateKey(new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1)),
         rows: upcoming, income, expense, difference: income - expense, missing, incomplete,
-        ambiguous, overdueCount: overdue.length, overdueTotal: overdue.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+        ambiguous, overdueRows: overdue.map(row => ({ ...row, recordType: 'payment', direction: 'out', dueDate: dateKey(row.dueDate || row.date) })), overdueCount: overdue.length, overdueTotal: overdue.filter(p => p.amount != null && Number.isFinite(Number(p.amount)) && Number(p.amount) >= 0).reduce((sum, item) => sum + Number(item.amount || 0), 0),
         unlinkedCardSubscriptions, cardSubscriptions: upcoming.filter(item => item.direction === 'card').length };
 }

@@ -151,16 +151,6 @@ export function CashFlowPanel({
           )}
         </details>
       )}
-      {summary.overdueCount > 0 && (
-        <details className="notice">
-          <summary>
-            Önceki tarihlerden {summary.overdueCount} bekleyen ödeme
-          </summary>
-          <p>
-            ₺{formatMoneyTR(summary.overdueTotal)} bu dönem farkına dahil değil.
-          </p>
-        </details>
-      )}
       <div className="section-title">
         <h2>
           {filter === "out" ? "Yaklaşan ödemeler" : filter === "in" ? "Yaklaşan gelirler" : "Yaklaşan hareketler"}

@@ -1763,3 +1763,32 @@ body {
   .compact-month-summary dd { font-size: 13px; }
   .compact-list-page .tab-amount { width: 100%; }
 }
+
+/* Date-ordered balance projection; controls never save financial records. */
+.flow-overdue-toggle { display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid #e9dbbf; border-radius:12px; padding:6px 10px; margin-top:7px; background:#fff9ef; color:#896324; cursor:pointer; }
+.flow-overdue-toggle b { display:block; font-size:10px; font-weight:600; }
+.flow-overdue-toggle small { display:block; font-size:9px; color:#857358; margin-top:1px; }
+.flow-overdue-toggle input { width:20px; height:20px; min-height:20px; accent-color:var(--purple,#7352ad); flex-shrink:0; }
+.flow-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
+.flow-stats > div { border:1px solid var(--line); background:white; border-radius:13px; padding:11px; min-width:0; }
+.flow-stats small { display:block; font-size:10px; color:var(--muted); }
+.flow-stats strong { display:block; font-size:18px; margin-top:4px; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.flow-negative { color:#ad3049; }
+.balance-flow-chart { padding:8px; border:1px solid var(--line); background:white; border-radius:14px; margin:12px 0; }
+.balance-flow-chart svg { display:block; width:100%; height:auto; }
+.balance-flow-chart svg text { fill:var(--muted); font-size:9px; }
+.balance-flow-chart p { font-size:10px; color:var(--muted); margin:4px 0; }
+.flow-day-calculation { padding:11px 12px; border-radius:12px; background:#f0ebf8; color:#624686; font-size:11px; margin:12px 0 4px; }
+.flow-day-calculation p { margin-top:3px; font-size:11px; }
+.flow-days { list-style:none; padding:0; margin:0; }
+.flow-day { display:flex; align-items:center; gap:8px; text-align:left; width:100%; padding:12px 0; border-bottom:1px solid var(--line); min-height:54px; }
+.flow-day[aria-pressed="true"] { background:#f0ebf8; border-radius:10px; padding-left:6px; padding-right:6px; }
+.flow-date { width:38px; flex-shrink:0; font-size:11px; font-weight:600; }
+.flow-events { min-width:0; flex:1; }
+.flow-events > span { display:block; }
+.flow-events b { display:block; font-size:12px; overflow-wrap:anywhere; }
+.flow-events small { display:block; font-size:10px; color:var(--muted); margin-top:2px; }
+.flow-day > strong { max-width:35%; font-size:12px; text-align:right; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.flow-help { font-size:11px; color:var(--muted); margin:14px 0; }
+.flow-help summary { cursor:pointer; min-height:36px; padding:8px 0; }
+.flow-help p { font-size:11px; line-height:1.6; margin-top:8px; }
