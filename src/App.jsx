@@ -492,7 +492,7 @@ function AppContent() {
 
         <div className="app-content">
           <Routes>
-            <Route path="/" element={<Overview onOpenModal={openModal} />} />
+            <Route path="/" element={<Overview ownerId={session.user.id} onOpenModal={openModal} />} />
             <Route
               path="/expenses"
               element={

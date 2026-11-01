@@ -23,6 +23,7 @@ const products = [
   { id: 9001, type: "card", name: "Örnek kart", paymentDueDay: 5 },
 ];
 export function Preview() {
+  const [availableBalance, setAvailableBalance] = useState(null);
   const [payments, setPayments] = useState([
     {
       id: 9002,
@@ -45,6 +46,13 @@ export function Preview() {
   const [bestCards, setBestCards] = useState(null);
   const appMode = new URLSearchParams(window.location.search).has("app");
   const data = {
+    userId: 'fixture-user', availableBalance,
+    saveAvailableBalance: async (snapshot) => {
+      if (new URLSearchParams(window.location.search).has('balanceFail') && availableBalance !== null) throw new Error('Synthetic balance failure');
+      const saved = { ...snapshot, userId: 'fixture-user', capturedAt: new Date().toISOString() };
+      setAvailableBalance(saved);
+      return saved;
+    },
     banks: [
       { id: 1, name: "Örnek Banka", color: "from-green-600 to-green-800" },
     ],

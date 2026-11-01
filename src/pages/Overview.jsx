@@ -5,7 +5,7 @@ import { ModalShell } from "../components/ui/Modal";
 import { Icon } from "../components/ui/Icon";
 import { formatDateTR, formatMoneyTR } from "../utils";
 
-export default function Overview({ onOpenModal }) {
+export default function Overview({ onOpenModal, ownerId }) {
   const { toggleTracker } = useData();
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -33,7 +33,7 @@ export default function Overview({ onOpenModal }) {
   };
   return (
     <div className="calm-page overview-page">
-      <CashFlowSummary onOpenModal={onOpenModal} onOpenItem={openItem} />
+      <CashFlowSummary ownerId={ownerId} onOpenModal={onOpenModal} onOpenItem={openItem} />
       {selected && (
         <ModalShell
           onClose={() => {

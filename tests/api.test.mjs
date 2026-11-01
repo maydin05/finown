@@ -150,3 +150,18 @@ test("existing loan edits send no schedule, dates, paid flags or stale remaining
     },
   ]);
 });
+
+test('balance save uses only the owner snapshot RPC, accepts explicit zero and propagates errors', async () => {
+  const calls=[];
+  const api=await loadApi({auth,rpc:async(name,args)=>{calls.push({name,args});return {data:{amount:args.p_amount,user_id:'fixture-user',as_of_date:args.p_as_of_date,basis_fingerprint:args.p_basis_fingerprint},error:null};}});
+  const saved=await api.saveAvailableBalance({amount:0,asOfDate:'2026-11-01',basisFingerprint:'a'.repeat(64)},'fixture-user');
+  assert.equal(saved.amount,0);assert.equal(saved.userId,'fixture-user');assert.equal(calls.length,1);assert.equal(calls[0].name,'save_available_balance');assert.equal(calls[0].args.p_expected_user_id,'fixture-user');
+  await assert.rejects(api.saveAvailableBalance({amount:100},'other-user'));assert.equal(calls.length,1);
+  const failure=await loadApi({auth,rpc:async()=>({data:null,error:new Error('fixture failed')})});
+  await assert.rejects(failure.saveAvailableBalance({amount:100},'fixture-user'),/fixture failed/);
+});
+
+test('balance reads stay scoped to the authenticated owner and never create a snapshot', async () => {
+  const api=await loadApi({auth,from(table){return {select(){return {order:async()=>({data:table==='available_balances'?[{user_id:'other-user',amount:999},{user_id:'fixture-user',amount:0}]:[],error:null})};}};}});
+  const result=await api.getAllData();assert.equal(result.userId,'fixture-user');assert.equal(result.availableBalance.amount,0);assert.equal(result.availableBalance.userId,'fixture-user');
+});

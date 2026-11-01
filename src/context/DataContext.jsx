@@ -5,6 +5,8 @@ import { legacyOwners, monthDate, dateKey } from "../domain/finance";
 import { DataContext } from "./store";
 
 export const DataProvider = ({ children }) => {
+  const [userId, setUserId] = useState(null);
+  const [availableBalance, setAvailableBalance] = useState(null);
   const [loading, setLoading] = useState(false);
   const [banks, setBanks] = useState([]);
   const [products, setProducts] = useState([]);
@@ -29,6 +31,8 @@ export const DataProvider = ({ children }) => {
     setLoadError(null);
     try {
       const data = await api.getAllData();
+      setUserId(data.userId);
+      setAvailableBalance(data.availableBalance);
       setBanks(data.banks);
       setProducts(data.products);
       setPayments(data.payments);
@@ -49,6 +53,12 @@ export const DataProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
+  const saveAvailableBalance = async (snapshot) => {
+    const saved = await api.saveAvailableBalance(snapshot, userId);
+    setAvailableBalance(saved);
+    return saved;
+  };
 
   // --- BANKS ---
   const addBank = async (bank) => {
@@ -321,6 +331,8 @@ export const DataProvider = ({ children }) => {
 
   // --- RESET ---
   const resetData = () => {
+    setUserId(null);
+    setAvailableBalance(null);
     setBanks([]);
     setProducts([]);
     setPayments([]);
@@ -334,6 +346,7 @@ export const DataProvider = ({ children }) => {
   };
 
   const value = {
+    userId, availableBalance, saveAvailableBalance,
     loading,
     loadError,
     trackerOwners,

@@ -197,7 +197,7 @@ const deleteItem = async (table, id) => {
 
 // --- Initial Bulk Fetch ---
 export const getAllData = async () => {
-  await getUser(); // Ensure logged in
+  const owner = await getUser(); // Ensure logged in
 
   const [
     banks,
@@ -208,6 +208,7 @@ export const getAllData = async () => {
     subscriptionSources,
     subscriptionPayments,
     trackers,
+    availableBalances,
   ] = await Promise.all([
     fetchTable("banks"),
     fetchTable("products"),
@@ -217,6 +218,7 @@ export const getAllData = async () => {
     fetchTable("subscription_sources"),
     fetchTable("subscription_payments"),
     fetchTable("trackers", "key"), // Trackers doesn't have created_at
+    fetchTable("available_balances"),
   ]);
 
   // Trackers table: key, value -> Object map
@@ -235,6 +237,8 @@ export const getAllData = async () => {
   });
 
   return {
+    userId: owner.id,
+    availableBalance: availableBalances.find(row => row.userId === owner.id) || null,
     banks,
     products,
     payments,
@@ -379,4 +383,17 @@ export const upsertTracker = async (key, value) => {
     .single();
   if (error) throw error;
   return data;
+};
+
+// A balance save changes only the owner's manual snapshot, never financial records.
+export const saveAvailableBalance = async (snapshot, expectedUserId) => {
+  const owner = await getUser();
+  if (!expectedUserId || owner.id !== expectedUserId) throw new Error("Oturum değişti; verileri yenile.");
+  const { data, error } = await supabase.rpc("save_available_balance", {
+    p_amount: snapshot.amount, p_as_of_date: snapshot.asOfDate, p_basis_fingerprint: snapshot.basisFingerprint, p_expected_user_id: expectedUserId,
+  });
+  if (error) throw error;
+  const saved = keysToCamel(data);
+  if (!saved || saved.userId !== owner.id) throw new Error("Bakiye sahibi doğrulanamadı.");
+  return saved;
 };

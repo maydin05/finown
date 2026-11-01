@@ -1706,3 +1706,25 @@ body {
 .bridge-detail-copy { font-size: 13px; line-height: 1.65; color: var(--muted); margin-top: 10px; }
 .bridge-same-day { background: #f3eef9; border-color: #e3d8f0; color: #6e508d; }
 .cashflow-with-bridge .summary-metrics strong { font-size: clamp(18px,5.3vw,21px); }
+
+/* Manual balance is separate from payments; the card explains its exact scope. */
+.funding-card { margin-top: 8px; padding: 4px 11px 6px; border: 1px solid #f0cdd3; border-radius: 15px; background: linear-gradient(120deg,#fff0f2,#fff9f8); color: #a83046; }
+.funding-card.covered { border-color: #d1e4d7; background: linear-gradient(120deg,#eaf5ee,#f8fbf7); color: #286149; }
+.funding-card.uncertain { border-color: #ecd6b1; background: linear-gradient(120deg,#fff5e6,#fffaf3); color: #896122; }
+.funding-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 30px; }
+.funding-header > span { font-size: 10px; font-weight: 650; }
+.balance-edit { display: flex; align-items: center; justify-content: flex-end; gap: 5px; min-height: 32px; max-width: 65%; color: #5e6d64; font-size: 10px; overflow-wrap: anywhere; }
+.balance-edit svg { flex-shrink: 0; }
+.funding-card .income-bridge { border: 0; margin: 0; padding: 0; background: transparent; color: inherit; }
+.funding-card .bridge-head { gap: 0 8px; }
+.funding-card .bridge-next { margin-top: 1px; }
+.funding-card .bridge-foot { margin-top: 2px; color: #8b6b29; }
+.balance-calculation { margin: 12px 0; padding: 4px 12px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+.balance-calculation > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; font-size: 13px; }
+.balance-calculation > div + div { border-top: 1px solid var(--line); }
+.balance-calculation dt { color: var(--muted); }
+.balance-calculation dd { margin: 0; font-weight: 650; text-align: right; }
+.balance-subheading { margin-top: 18px; font-size: 14px; font-weight: 650; }
+.form-fields .balance-disable { display: flex; align-items: center; gap: 10px; }
+.form-fields .balance-disable input { width: 20px; height: 20px; min-height: 20px; }
+@media(max-width:350px) { .funding-card { padding-left:9px; padding-right:9px; } .balance-edit { font-size:9px; } .funding-header > span { font-size:9px; } }

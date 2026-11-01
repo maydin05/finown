@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useData } from "../context/store";
+import { useBalanceFingerprint } from "../hooks/useBalanceFingerprint";
 import IncomeBridge from "./IncomeBridge";
 import { shortBridgeDate } from "../domain/incomeBridge";
 import { cashFlow } from "../domain/finance";
@@ -13,6 +14,7 @@ export function CashFlowPanel({
   onEnterStatement,
   onOpenItem,
 }) {
+  const fingerprint = useBalanceFingerprint(data);
   const [days, setDays] = useState(7);
   const [filter, setFilter] = useState("out");
   const [expanded, setExpanded] = useState(false);
@@ -117,7 +119,7 @@ export function CashFlowPanel({
           </div>
         )}
       </div>
-      <IncomeBridge summary={summary} />
+      <IncomeBridge summary={summary} snapshot={data.availableBalance} fingerprint={fingerprint} today={today} onSaveBalance={data.saveAvailableBalance} />
       {(summary.incomplete.length > 0 ||
         summary.ambiguous > 0 ||
         summary.unlinkedCardSubscriptions > 0) && (
@@ -309,11 +311,11 @@ export function CashFlowPanel({
   );
 }
 
-export default function CashFlowSummary({ onOpenModal, onOpenItem }) {
+export default function CashFlowSummary({ onOpenModal, onOpenItem, ownerId }) {
   const data = useData();
   return (
     <CashFlowPanel
-      data={data}
+      data={ownerId && data.userId !== ownerId ? { ...data, availableBalance: null, saveAvailableBalance: null } : data}
       onEnterStatement={
         onOpenModal ? (item) => onOpenModal("card_amount", item) : undefined
       }
