@@ -4,6 +4,8 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Aylık gerçek maaş/gelir tutarı: canlı yayın ve mobil kontrol](docs/2026-11-01_aylik-gercek-gelir-yayin.md)
+
 - [Aylık gerçek maaş/gelir tutarı (yerel uygulama ve testler)](docs/2026-11-01_aylik-gercek-gelir.md)
 
 - [Dört liste sayfasında kompakt tasarım: canlı yayın ve mobil kontrol](docs/2026-11-01_kompakt-liste-sayfalari-yayin.md)
