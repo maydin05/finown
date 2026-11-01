@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Icon } from "../ui/Icon";
 import { ModalShell } from "../ui/Modal";
 
 export const Header = ({ onOpenQuickMenu, onSignOut }) => {
+  const { pathname } = useLocation();
   const [accountOpen, setAccountOpen] = useState(false);
   return (
     <>
-      <header className="app-header">
+      <header className={`app-header ${pathname === "/" ? "app-header-compact" : ""}`}>
         <Link to="/" className="wordmark" aria-label="Finown ana ekran">
           <span className="brand-symbol">f</span>finown
         </Link>

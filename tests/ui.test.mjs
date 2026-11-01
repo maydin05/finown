@@ -11,8 +11,13 @@ test('real UI components label unknown statements, preserve explicit zero, and e
         const { PaymentItem } = await server.ssrLoadModule('/src/components/items/PaymentItem.jsx');
         const data = { products: [{ id: 1, type: 'card', paymentDueDay: 5, name: 'Fixture card' }] };
         const panel = renderToStaticMarkup(React.createElement(CashFlowPanel, { data, today: new Date(2026, 10, 1) }));
-        assert.match(panel, /1 kart ekstresinin tutarı eksik/);
+        assert.match(panel, /1 ekstre eksik · Sonuç kesinleşmedi/);
         assert.match(panel, /mevcut hesap bakiyen değildir/);
+        assert.match(panel, /Tahmini · Ekstre eksik/);
+        assert.doesNotMatch(panel, /gelir yeterli/i);
+        const complete = renderToStaticMarkup(React.createElement(CashFlowPanel, { data: {}, today: new Date(2026, 10, 1) }));
+        assert.match(complete, /Beklenen gelire dayalı tahmin/);
+        assert.doesNotMatch(complete, /Sonuç kesinleşmedi/);
         assert.match(panel, /aria-pressed="true"[^>]*>7 gün/);
         assert.match(panel, />30 gün/);
         const unknown = renderToStaticMarkup(React.createElement(PaymentItem, { item: { type: 'card', title: 'Fixture', dueDate: '2026-11-05', needsCardAmount: true, amount: null }, onEdit: () => {} }));

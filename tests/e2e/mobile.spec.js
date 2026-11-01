@@ -21,7 +21,7 @@ test("mobile summary, 7/30 days, missing statement and local sample entry", asyn
     region.getByRole("button", { name: "30 gün", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(region).toContainText("29 Kasım");
-  await expect(region).toContainText("1 kart ekstresinin tutarı eksik");
+  await expect(region).toContainText("1 ekstre eksik · Sonuç kesinleşmedi");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -73,7 +73,7 @@ test("approved home layout supports details, status, statement entry and keyboar
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/tests/ui-preview.html?app=1");
   await expect(
-    page.getByRole("heading", { name: "Finansal özetin" }),
+    page.getByRole("heading", { name: "Özet" }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Kasım", exact: true }),
@@ -193,7 +193,7 @@ test("all simplified pages retain navigation, record actions, bank details and q
   await expect(page.getByTestId("last-action")).toHaveText("income");
   await nav.getByRole("button", { name: "Özet", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Finansal özetin" }),
+    page.getByRole("heading", { name: "Özet" }),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -285,4 +285,33 @@ test("one linked TL expense plan updates remaining debt without a second payment
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("compact home shows two upcoming payments above navigation on a short mobile screen", async ({ page }) => {
+  await page.setViewportSize({ width: page.viewportSize().width, height: 667 });
+  await page.goto('/tests/ui-preview.html?app=1');
+  const summary = page.getByRole('region', { name: 'Yaklaşan ödeme ve gelir özeti' });
+  await expect(summary.getByRole('heading', { name: 'Özet', exact: true })).toBeVisible();
+  await expect(summary.getByRole('heading', { name: 'Yaklaşan ödemeler', exact: true })).toBeVisible();
+  await expect(summary.getByRole('button', { name: 'Ödemeler', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  const geometry = await page.evaluate(() => {
+    const navTop = document.querySelector('.bottom-nav').getBoundingClientRect().top;
+    return {
+      noOverflow: document.documentElement.scrollWidth <= innerWidth,
+      twoRowsVisible: [...document.querySelectorAll('.movement-row')].slice(0, 2).length === 2 && [...document.querySelectorAll('.movement-row')].slice(0, 2).every(row => row.getBoundingClientRect().bottom <= navTop),
+      summaryBottom: document.querySelector('.summary-card').getBoundingClientRect().bottom,
+    };
+  });
+  expect(geometry.noOverflow).toBe(true);
+  expect(geometry.twoRowsVisible).toBe(true);
+  expect(geometry.summaryBottom).toBeLessThan(365);
+  await expect(summary).toContainText('Tahmini · Ekstre eksik');
+  const summaryText = await summary.getByTestId('period-difference').textContent();
+  await summary.getByRole('button', { name: 'Gelirler', exact: true }).click();
+  await expect(summary.getByRole('button', { name: 'Örnek gelir ayrıntısı' })).toBeVisible();
+  await expect(summary.getByTestId('period-difference')).toHaveText(summaryText);
+  await summary.getByRole('button', { name: 'Ekstre tutarı gir', exact: true }).click();
+  await page.getByRole('button', { name: 'Vazgeç', exact: true }).click();
+  await expect(summary).toContainText('Sonuç kesinleşmedi');
+  await expect(summary.getByTestId('period-difference')).toHaveText(summaryText);
 });

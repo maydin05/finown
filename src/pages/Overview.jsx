@@ -33,16 +33,6 @@ export default function Overview({ onOpenModal }) {
   };
   return (
     <div className="calm-page overview-page">
-      <p className="greeting">Merhaba</p>
-      <div className="page-title">
-        <h1>Finansal özetin</h1>
-        <span>
-          {new Date().toLocaleDateString("tr-TR", {
-            day: "numeric",
-            month: "short",
-          })}
-        </span>
-      </div>
       <CashFlowSummary onOpenModal={onOpenModal} onOpenItem={openItem} />
       {selected && (
         <ModalShell

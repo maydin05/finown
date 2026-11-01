@@ -12,7 +12,7 @@ export function CashFlowPanel({
   onOpenItem,
 }) {
   const [days, setDays] = useState(7);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("out");
   const [expanded, setExpanded] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const summary = useMemo(
@@ -24,10 +24,20 @@ export function CashFlowPanel({
     (item) => filter === "all" || item.direction === filter,
   );
   const visible = expanded ? filtered : filtered.slice(0, 3);
+  const hasUncertainty =
+    summary.missing.length > 0 ||
+    summary.incomplete.length > 0 ||
+    summary.ambiguous > 0 ||
+    summary.unlinkedCardSubscriptions > 0;
   return (
     <section className="cashflow" aria-label="Yaklaşan ödeme ve gelir özeti">
       <div className="period-row">
-        <h2>Önümüzdeki günler</h2>
+        <div className="overview-heading">
+          <h1>Özet</h1>
+          <p>
+            {today.toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
+          </p>
+        </div>
         <div className="segmented" aria-label="Özet dönemi">
           {[7, 30].map((value) => (
             <button
@@ -45,7 +55,9 @@ export function CashFlowPanel({
       </div>
       <div className="summary-card">
         <div className="summary-label">
-          <span>Beklenen gelir − ödeme</span>
+          <span>
+            {formatDateTR(summary.start)} – {formatDateTR(summary.end)}
+          </span>
           <button
             className="icon-button"
             aria-label="Dönem farkı hakkında bilgi"
@@ -54,17 +66,6 @@ export function CashFlowPanel({
             <Icon name="info" size={17} />
           </button>
         </div>
-        <p
-          className={`summary-figure ${summary.difference < 0 ? "negative" : ""}`}
-          data-testid="period-difference"
-        >
-          {summary.difference < 0 ? "−" : "+"}
-          <span className="currency">₺</span>
-          {formatMoneyTR(Math.abs(summary.difference))}
-        </p>
-        <p className="muted text-xs mt-2">
-          {formatDateTR(summary.start)} – {formatDateTR(summary.end)}
-        </p>
         <div className="summary-metrics">
           <div>
             <p>
@@ -85,21 +86,45 @@ export function CashFlowPanel({
             </strong>
           </div>
         </div>
-      </div>
-      {summary.missing.length > 0 && (
-        <div className="notice compact" role="status">
-          <span>
-            <Icon name="alert-circle" size={16} />
-            {summary.missing.length} kart ekstresinin tutarı eksik
-          </span>
-          <button
-            onClick={() => onEnterStatement?.(summary.missing[0])}
-            disabled={!onEnterStatement}
+        <div className="summary-net">
+          <div>
+            <p>Bilinen tutarlara göre fark</p>
+            <p
+              className={`summary-certainty ${hasUncertainty ? "uncertain" : ""}`}
+              role="status"
+            >
+              {summary.missing.length > 0
+                ? "Tahmini · Ekstre eksik"
+                : hasUncertainty
+                  ? "Tahmini · Bilgi eksik"
+                  : "Beklenen gelire dayalı tahmin"}
+            </p>
+          </div>
+          <p
+            className={`summary-figure ${summary.difference < 0 ? "negative" : ""}`}
+            data-testid="period-difference"
           >
-            Ekstre tutarı gir <span aria-hidden="true">→</span>
-          </button>
+            {summary.difference < 0 ? "−" : "+"}
+            <span className="currency">₺</span>
+            {formatMoneyTR(Math.abs(summary.difference))}
+          </p>
         </div>
-      )}
+        {summary.missing.length > 0 && (
+          <div className="summary-statement" role="status">
+            <span>
+              <Icon name="alert-circle" size={15} />
+              {summary.missing.length} ekstre eksik · Sonuç kesinleşmedi
+            </span>
+            <button
+              aria-label="Ekstre tutarı gir"
+              onClick={() => onEnterStatement?.(summary.missing[0])}
+              disabled={!onEnterStatement}
+            >
+              Tamamla <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        )}
+      </div>
       {(summary.incomplete.length > 0 ||
         summary.ambiguous > 0 ||
         summary.unlinkedCardSubscriptions > 0) && (
@@ -142,18 +167,18 @@ export function CashFlowPanel({
         </details>
       )}
       <div className="section-title">
-        <h2>Yaklaşan hareketler</h2>
-        {filtered.length > 3 && (
-          <button onClick={() => setExpanded(!expanded)}>
-            {expanded ? "Kısalt" : "Tümünü gör"}
-          </button>
-        )}
+        <h2>
+          {filter === "out" ? "Yaklaşan ödemeler" : filter === "in" ? "Yaklaşan gelirler" : "Yaklaşan hareketler"}
+        </h2>
+        <span className="movement-count">
+          {filtered.length} {filter === "out" ? "ödeme" : filter === "in" ? "gelir" : "hareket"}
+        </span>
       </div>
       <div className="line-tabs" aria-label="Hareket filtresi">
         {[
-          ["all", "Tümü"],
           ["out", "Ödemeler"],
           ["in", "Gelirler"],
+          ["all", "Tümü"],
         ].map(([value, label]) => (
           <button
             key={value}
