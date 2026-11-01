@@ -281,3 +281,50 @@ test("subscription confirmation keeps archive, permanent delete and reactivation
     '{"action":"delete"}',
   );
 });
+
+test("new loan previews clamped unpaid installments and existing loan schedule cannot be rewritten", async ({
+  page,
+}) => {
+  await page.goto("/tests/forms-preview.html");
+  await page
+    .getByRole("button", { name: "Kart/Kredi ekle", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Kredi", exact: true }).click();
+  await page.getByLabel("Ürün Adı", { exact: true }).fill("Örnek yeni kredi");
+  await page.getByLabel("Aylık Taksit (₺)", { exact: true }).fill("1000");
+  await page.getByLabel("Kaç Taksit", { exact: true }).fill("3");
+  await page
+    .getByLabel("İlk Taksit Ödeme Tarihi", { exact: true })
+    .fill("2026-01-31");
+  await expect(
+    page.getByRole("heading", {
+      name: "Oluşturulacak ödeme planı",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("dialog")).toContainText("28 Şubat");
+  await expect(page.getByRole("dialog")).toContainText("31 Mart");
+  await expect(page.getByRole("dialog")).toContainText("3 taksit");
+  await expect(
+    page.getByRole("button", { name: "Kaydet", exact: true }),
+  ).toBeInViewport();
+  await page.getByRole("button", { name: "Vazgeç", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Kredi düzenlemeyi gör", exact: true })
+    .click();
+  await expect(
+    page.getByLabel("Aylık Taksit (₺)", { exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByLabel("İlk Taksit Ödeme Tarihi", { exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Kart", exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByLabel("Ürün Adı", { exact: true })).toBeEnabled();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});

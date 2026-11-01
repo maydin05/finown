@@ -202,3 +202,87 @@ test("all simplified pages retain navigation, record actions, bank details and q
   ).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test("month reset and due filters show actual next-week payments across a month boundary", async ({
+  page,
+}) => {
+  await page.goto("/tests/ui-preview.html?app=1");
+  const nav = page.getByRole("navigation", { name: "Ana gezinme" });
+  await nav.getByRole("button", { name: "Ödemeler", exact: true }).click();
+  await page.getByRole("button", { name: "Sonraki ay", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Aralık", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Bu aya dön", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ekim", exact: true }),
+  ).toBeVisible();
+  const filters = page.getByRole("group", { name: "Vade filtresi" });
+  await filters.getByRole("button", { name: "7 gün", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Örnek taksit", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Ekstre tutarı girilmedi", { exact: true }),
+  ).toBeVisible();
+  await filters.getByRole("button", { name: "Bugün", exact: true }).click();
+  await expect(
+    page.getByText("Kayıt bulunamadı.", { exact: true }),
+  ).toBeVisible();
+  await filters.getByRole("button", { name: "Geciken", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Örnek kira", exact: true }),
+  ).toBeVisible();
+  await nav.getByRole("button", { name: "Gelir", exact: true }).click();
+  await page.getByRole("button", { name: "Sonraki ay", exact: true }).click();
+  await page.getByRole("button", { name: "Bu aya dön", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ekim", exact: true }),
+  ).toBeVisible();
+  await nav.getByRole("button", { name: "Abonelik", exact: true }).click();
+  await page.getByRole("button", { name: "Sonraki ay", exact: true }).click();
+  await page.getByRole("button", { name: "Bu aya dön", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ekim", exact: true }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+test("one linked TL expense plan updates remaining debt without a second payment source or USD conversion", async ({
+  page,
+}) => {
+  await page.goto("/tests/ui-preview.html?app=1");
+  const nav = page.getByRole("navigation", { name: "Ana gezinme" });
+  await nav.getByRole("button", { name: "Bankalar", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Elden borçlar", exact: true }),
+  ).toBeVisible();
+  const summary = page.getByRole("region", { name: "Banka özeti" });
+  await expect(summary.getByText("₺33.500,00", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Örnek kira ayrıntısı", exact: true }),
+  ).toHaveCount(1);
+  await expect(page.locator("body")).not.toContainText("USD");
+  await nav.getByRole("button", { name: "Ödemeler", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Örnek kira ayrıntısı", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Ödendi olarak işaretle", exact: true })
+    .click();
+  await nav.getByRole("button", { name: "Bankalar", exact: true }).click();
+  await expect(summary.getByText("₺31.000,00", { exact: true })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Örnek kira ayrıntısı", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText("₺30.000,00");
+  await page.getByRole("button", { name: "Kapat", exact: true }).click();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});

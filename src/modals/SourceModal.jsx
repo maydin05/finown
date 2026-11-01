@@ -88,6 +88,24 @@ export const SourceModal = ({
           </div>
         )}
 
+        {isExpense && (
+          <label className="debt-toggle">
+            <input
+              type="checkbox"
+              checked={!!form.isDebt}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, isDebt: e.target.checked }))
+              }
+            />
+            <span>
+              Elden borç olarak izle
+              <small>
+                TL planının kalan tutarı Bankalar ekranında da görünür.
+                Tekrarlayan borç için bitiş tarihi gerekli.
+              </small>
+            </span>
+          </label>
+        )}
         <div className="space-y-3">
           <div>
             <label
@@ -270,7 +288,9 @@ export const SourceModal = ({
               htmlFor="sourcemodal-field-6"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Bitiş Tarihi (Opsiyonel)
+              {isExpense && form.isDebt && form.type === "recurring"
+                ? "Bitiş Tarihi (Gerekli)"
+                : "Bitiş Tarihi (Opsiyonel)"}
             </label>
             <input
               id="sourcemodal-field-6"

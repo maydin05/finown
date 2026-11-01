@@ -1,4 +1,6 @@
 import React from "react";
+import { newLoanPlan } from "../domain/plans";
+import { formatDateTR, formatMoneyTR } from "../utils";
 import { FormModal } from "../components/ui/FormModal";
 
 export const ProductModal = ({
@@ -10,6 +12,14 @@ export const ProductModal = ({
   onClose,
   onSave,
 }) => {
+  let preview = [];
+  if (!editingItem && newProduct.type === "loan") {
+    try {
+      preview = newLoanPlan(newProduct);
+    } catch {
+      /* Show preview once the required values are complete. */
+    }
+  }
   return (
     <FormModal
       onClose={onClose}
@@ -22,6 +32,12 @@ export const ProductModal = ({
       {/* Scrollable Content */}
       <div className="form-fields">
         <div className="space-y-4">
+          {editingItem && newProduct.type === "loan" && (
+            <p className="form-context text-sm">
+              Mevcut taksitlerin tarih ve durumlarını korumak için bu formda
+              yalnız banka ve kredi adını düzenleyebilirsin.
+            </p>
+          )}
           <div>
             <label
               htmlFor="productmodal-field-1"
@@ -48,6 +64,7 @@ export const ProductModal = ({
 
           <div className="flex gap-2">
             <button
+              disabled={!!editingItem}
               onClick={() => setNewProduct((p) => ({ ...p, type: "card" }))}
               className={`flex-1 py-2 rounded-xl font-bold border ${
                 newProduct.type === "card"
@@ -58,6 +75,7 @@ export const ProductModal = ({
               Kart
             </button>
             <button
+              disabled={!!editingItem}
               onClick={() => setNewProduct((p) => ({ ...p, type: "loan" }))}
               className={`flex-1 py-2 rounded-xl font-bold border ${
                 newProduct.type === "loan"
@@ -260,6 +278,7 @@ export const ProductModal = ({
                   </label>
                   <input
                     id="productmodal-field-8"
+                    disabled={!!editingItem}
                     type="number"
                     step="0.01"
                     className="w-full p-3 rounded-xl border border-gray-200"
@@ -282,6 +301,7 @@ export const ProductModal = ({
                   </label>
                   <input
                     id="productmodal-field-9"
+                    disabled={!!editingItem}
                     type="number"
                     className="w-full p-3 rounded-xl border border-gray-200"
                     value={newProduct.totalInstallments}
@@ -304,6 +324,7 @@ export const ProductModal = ({
                 </label>
                 <input
                   id="productmodal-field-10"
+                  disabled={!!editingItem}
                   type="date"
                   className="w-full p-3 rounded-xl border border-gray-200"
                   value={newProduct.firstPaymentDate}
@@ -319,12 +340,32 @@ export const ProductModal = ({
               <div className="text-[11px] text-gray-500 bg-gray-50 border border-gray-100 rounded-xl p-3">
                 Toplam kredi otomatik hesaplanır:{" "}
                 <b>(aylık taksit x taksit sayısı)</b>.<br></br>
-                Geçmiş taksitler otomatik "ödendi" işaretlenecek.
+                Tüm yeni taksitler ödeme bekliyor olarak oluşturulur.
               </div>
             </>
           )}
         </div>
       </div>
+      {preview.length > 0 && (
+        <div className="loan-plan-preview">
+          <h3>Oluşturulacak ödeme planı</h3>
+          <p>
+            {preview.length} taksit · Toplam ₺
+            {formatMoneyTR(preview.reduce((sum, row) => sum + row.amount, 0))}
+          </p>
+          <ol>
+            {preview.slice(0, 3).map((row) => (
+              <li key={row.dueDate}>
+                {formatDateTR(row.dueDate)} · ₺{formatMoneyTR(row.amount)} ·
+                Bekliyor
+              </li>
+            ))}
+          </ol>
+          {preview.length > 3 && (
+            <p>… Son ödeme: {formatDateTR(preview.at(-1).dueDate)}</p>
+          )}
+        </div>
+      )}
     </FormModal>
   );
 };

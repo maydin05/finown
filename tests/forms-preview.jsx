@@ -86,7 +86,18 @@ export function FormsPreview() {
         ? { title: "Örnek gider", amount: "2500" }
         : {}),
     });
-    setProduct(initialProduct);
+    setProduct(
+      key === "product-edit"
+        ? {
+            ...initialProduct,
+            type: "loan",
+            name: "Mevcut örnek kredi",
+            installmentAmount: "100",
+            totalInstallments: "3",
+            firstPaymentDate: "2026-01-31",
+          }
+        : initialProduct,
+    );
     setSaved(null);
     setActive(key);
   };
@@ -108,6 +119,7 @@ export function FormsPreview() {
           subscription: "Abonelik ekle",
           bank: "Banka ekle",
           product: "Kart/Kredi ekle",
+          "product-edit": "Kredi düzenlemeyi gör",
           card: "Ekstre düzenle",
           paid: "Abonelik ödemesi",
           note: "Not düzenle",
@@ -163,8 +175,9 @@ export function FormsPreview() {
           onSave={() => save({ bankName, bankColor })}
         />
       )}
-      {active === "product" && (
+      {["product", "product-edit"].includes(active) && (
         <ProductModal
+          editingItem={active === "product-edit" ? { id: 9001 } : null}
           newProduct={product}
           setNewProduct={setProduct}
           banks={banks}

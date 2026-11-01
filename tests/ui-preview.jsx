@@ -76,6 +76,8 @@ export function Preview() {
           {
             id: 9007,
             title: "Örnek kira",
+            isDebt: true,
+            endDate: "2027-01-04",
             amount: 2500,
             type: "recurring",
             startDate: "2026-01-04",
@@ -181,6 +183,7 @@ export function Preview() {
                   element={
                     <Expenses
                       viewDate={viewDate}
+                      onThisMonth={() => setViewDate(new Date())}
                       prevMonth={() =>
                         setViewDate(
                           new Date(
@@ -210,6 +213,7 @@ export function Preview() {
                   element={
                     <Incomes
                       viewDate={viewDate}
+                      onThisMonth={() => setViewDate(new Date())}
                       prevMonth={() =>
                         setViewDate(
                           new Date(
@@ -239,6 +243,7 @@ export function Preview() {
                   element={
                     <Subscriptions
                       viewDate={viewDate}
+                      onThisMonth={() => setViewDate(new Date())}
                       prevMonth={() =>
                         setViewDate(
                           new Date(
@@ -307,6 +312,7 @@ export function Preview() {
         <DataContext.Provider value={data}>
           <Expenses
             viewDate={viewDate}
+            onThisMonth={() => setViewDate(new Date())}
             prevMonth={() =>
               setViewDate(
                 new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1),

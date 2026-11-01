@@ -1,45 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './lib/supabase';
-import { dateKey } from './domain/finance';
-import { DataProvider } from './context/DataContext';
-import { useData } from './context/store';
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { supabase } from "./lib/supabase";
+import { newLoanPlan, debtPlan } from "./domain/plans";
+import { dateKey } from "./domain/finance";
+import { DataProvider } from "./context/DataContext";
+import { useData } from "./context/store";
 
 // Pages
-import Login from './pages/Login';
-import Expenses from './pages/Expenses';
-import Overview from './pages/Overview';
-import Incomes from './pages/Incomes';
-import Subscriptions from './pages/Subscriptions';
-import Banks from './pages/Banks';
-import Migration from './pages/Migration';
+import Login from "./pages/Login";
+import Expenses from "./pages/Expenses";
+import Overview from "./pages/Overview";
+import Incomes from "./pages/Incomes";
+import Subscriptions from "./pages/Subscriptions";
+import Banks from "./pages/Banks";
+import Migration from "./pages/Migration";
 
 // Layout
-import { Header } from './components/layout/Header';
-import { BottomNav } from './components/layout/BottomNav';
+import { Header } from "./components/layout/Header";
+import { BottomNav } from "./components/layout/BottomNav";
 
 // Modals
-import { SourceModal } from './modals/SourceModal';
-import { BankModal } from './modals/BankModal';
-import { ProductModal } from './modals/ProductModal';
-import { NoteModal } from './modals/NoteModal';
-import { PaymentEntryModal } from './modals/PaymentEntryModal';
-import { DeleteConfirmModal } from './modals/DeleteConfirmModal';
-import { CardAmountModal } from './modals/CardAmountModal';
-import { PaymentConfirmModal } from './modals/PaymentConfirmModal';
-import { BestCardsModal } from './modals/BestCardsModal';
-import { QuickMenu } from './modals/QuickMenu';
+import { SourceModal } from "./modals/SourceModal";
+import { BankModal } from "./modals/BankModal";
+import { ProductModal } from "./modals/ProductModal";
+import { NoteModal } from "./modals/NoteModal";
+import { PaymentEntryModal } from "./modals/PaymentEntryModal";
+import { DeleteConfirmModal } from "./modals/DeleteConfirmModal";
+import { CardAmountModal } from "./modals/CardAmountModal";
+import { PaymentConfirmModal } from "./modals/PaymentConfirmModal";
+import { BestCardsModal } from "./modals/BestCardsModal";
+import { QuickMenu } from "./modals/QuickMenu";
 
 function AppContent() {
   const {
-    loading, loadError, fetchData,
-    banks, products,
-    statusTracker, toggleTracker,
-    addBank, editBank, removeBank,
-    addProduct, editProduct, removeProduct,
-    addSource, updateSource, deleteSource,
-    upsertPayment, editPayment, removePayment,
-    markSubscriptionPaid
+    loading,
+    loadError,
+    fetchData,
+    banks,
+    products,
+    statusTracker,
+    toggleTracker,
+    addBank,
+    editBank,
+    removeBank,
+    addProduct,
+    editProduct,
+    removeProduct,
+    addSource,
+    updateSource,
+    deleteSource,
+    upsertPayment,
+    editPayment,
+    removePayment,
+    markSubscriptionPaid,
   } = useData();
 
   const [session, setSession] = useState(null);
@@ -64,14 +77,34 @@ function AppContent() {
 
   // Product Form
   const [newProduct, setNewProduct] = useState({
-    bankId: "", type: "card", name: "", cardType: "physical", parentCardId: "",
-    last4Digits: "", limit: "", cutoffDay: "", paymentDueDay: "",
-    installmentAmount: "", totalInstallments: "", firstPaymentDate: ""
+    bankId: "",
+    type: "card",
+    name: "",
+    cardType: "physical",
+    parentCardId: "",
+    last4Digits: "",
+    limit: "",
+    cutoffDay: "",
+    paymentDueDay: "",
+    installmentAmount: "",
+    totalInstallments: "",
+    firstPaymentDate: "",
   });
 
   // Source Forms
-  const initialSource = { title: "", amount: "", type: "recurring", date: "", endDate: "", note: "", isVariable: false };
-  const [sourceForm, setSourceForm] = useState({ ...initialSource, category: "bills" });
+  const initialSource = {
+    title: "",
+    amount: "",
+    type: "recurring",
+    date: "",
+    endDate: "",
+    note: "",
+    isVariable: false,
+  };
+  const [sourceForm, setSourceForm] = useState({
+    ...initialSource,
+    category: "bills",
+  });
   // We reuse sourceForm for Income, Expense, Subscription (mapped fields)
 
   // Note Modal
@@ -83,7 +116,9 @@ function AppContent() {
       setSession(session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
@@ -105,6 +140,8 @@ function AppContent() {
   };
 
   const openModal = (type, item = null, callback = null) => {
+    const addingDebt = type === "debt";
+    if (addingDebt) type = "expense";
     setEditingItem(item);
     setModalCallback(() => callback);
 
@@ -114,24 +151,49 @@ function AppContent() {
       setNewBankColor(item ? item.color : "from-blue-600 to-blue-800");
       setActiveModal("bankModal");
     } else if (type === "product") {
-      setNewProduct(item ? { ...item } : { ...newProduct, bankId: "", name: "" }); // simplified reset
+      setNewProduct(
+        item
+          ? { ...item }
+          : {
+              bankId: "",
+              type: "card",
+              name: "",
+              cardType: "physical",
+              parentCardId: "",
+              last4Digits: "",
+              limit: "",
+              cutoffDay: "",
+              paymentDueDay: "",
+              installmentAmount: "",
+              totalInstallments: "",
+              firstPaymentDate: "",
+              creationRequestId: crypto.randomUUID(),
+            },
+      ); // simplified reset
       setActiveModal("productModal");
     } else if (["income", "expense", "subscription"].includes(type)) {
       // Map item to form
       // Important: Handle date/dueDate mapping
-      const d = item ? (item._originalDate || item.startDate || item.date || item.dueDate) : dateKey();
+      const d = item
+        ? item._originalDate || item.startDate || item.date || item.dueDate
+        : dateKey();
       // eslint-disable-next-line no-unused-vars
       const { id: existingId, ...itemWithoutId } = item || {};
-      const mapped = item ? { ...itemWithoutId, date: d.split('T')[0] } : {
-        ...initialSource,
-        category: type === 'income' ? 'salary' : 'bills',
-        date: dateKey()
-      };
+      const mapped = item
+        ? { ...itemWithoutId, date: d.split("T")[0] }
+        : {
+            ...initialSource,
+            category: type === "income" ? "salary" : "bills",
+            isDebt: addingDebt,
+            date: dateKey(),
+          };
 
       // Special fields for subscription
       if (type === "subscription") {
-        mapped.paymentMethodType = item?.paymentMethodType || item?.paymentMethod?.type || "bank";
-        mapped.paymentMethodValue = item?.paymentMethodValue || item?.paymentMethod?.value || "";
+        mapped.paymentMethodType =
+          item?.paymentMethodType || item?.paymentMethod?.type || "bank";
+        mapped.paymentMethodValue =
+          item?.paymentMethodValue || item?.paymentMethod?.value || "";
         mapped.relatedCardId = item?.relatedCardId || "";
         mapped.billingCycle = item?.billingCycle || "monthly";
         mapped.isVariable = item?.isVariable || false;
@@ -147,15 +209,19 @@ function AppContent() {
     } else if (type === "note") {
       setNoteText(item ? item.note || "" : "");
       setActiveModal("noteModal");
-    } else if (type === "delete_bank" || type === "delete_product" || type.startsWith("delete_")) {
+    } else if (
+      type === "delete_bank" ||
+      type === "delete_product" ||
+      type.startsWith("delete_")
+    ) {
       const delType = type.replace("delete_", "");
       let wrapper = { type: delType, data: item };
-      if (delType === 'bank') {
-        const countP = products.filter(p => p.bankId == item.id).length;
+      if (delType === "bank") {
+        const countP = products.filter((p) => p.bankId == item.id).length;
         wrapper.meta = { productCount: countP };
       }
       // Check if subscription is already archived
-      if (delType === 'subscription' && item) {
+      if (delType === "subscription" && item) {
         const archiveKey = `sub_archived_${item.id}`;
         wrapper.data = { ...item, isArchived: !!statusTracker[archiveKey] };
       }
@@ -179,7 +245,10 @@ function AppContent() {
   const handleSaveBank = async () => {
     if (!newBankName) return;
     if (editingItem) {
-      await editBank(editingItem.id, { name: newBankName, color: newBankColor });
+      await editBank(editingItem.id, {
+        name: newBankName,
+        color: newBankColor,
+      });
     } else {
       await addBank({ name: newBankName, color: newBankColor });
     }
@@ -187,8 +256,12 @@ function AppContent() {
   };
 
   const handleSaveProduct = async () => {
-    if (!newProduct.bankId || !newProduct.name) return;
-    const payload = { ...newProduct }; // Cleanup empty fields if needed
+    if (!newProduct.bankId || !newProduct.name)
+      throw Object.assign(new Error("Banka ve ürün adı gerekli."), {
+        userMessage: "Banka ve ürün adı gerekli.",
+      });
+    if (!editingItem && newProduct.type === "loan") newLoanPlan(newProduct);
+    const payload = { ...newProduct };
 
     if (editingItem) {
       await editProduct(editingItem.id, payload);
@@ -200,7 +273,7 @@ function AppContent() {
 
   const handleSaveSource = async (type) => {
     if (!sourceForm.title || !sourceForm.amount) {
-      console.log('Validation failed: title or amount missing', sourceForm);
+      console.log("Validation failed: title or amount missing", sourceForm);
       return;
     }
 
@@ -210,11 +283,11 @@ function AppContent() {
       const { id: formId, ...formWithoutId } = sourceForm;
       const payload = {
         ...formWithoutId,
-        amount: parseFloat(String(sourceForm.amount).replace(',', '.')) || 0
+        amount: parseFloat(String(sourceForm.amount).replace(",", ".")) || 0,
       };
 
       // For subscriptions, sync startDate and dayOfMonth from the date field
-      if (type === 'subscription' && payload.date) {
+      if (type === "subscription" && payload.date) {
         const parsed = new Date(payload.date);
         if (!isNaN(parsed.getTime())) {
           payload.startDate = payload.date;
@@ -222,14 +295,23 @@ function AppContent() {
         }
       }
 
-      console.log('Saving source:', type, editingItem?.id, payload);
+      if (type === "expense" && payload.isDebt) {
+        const plan = debtPlan(
+          { ...payload, id: editingItem?.id ?? "new" },
+          { expenseSources: [payload], statusTracker: {} },
+        );
+        if (plan.error || !plan.rows.length)
+          throw new Error(
+            plan.error || "Borç planında en az bir ödeme gerekli.",
+          );
+      }
 
       if (editingItem) {
-        if (updateScope === 'future' && effectiveDate) {
+        if (updateScope === "future" && effectiveDate) {
           // 1. Calculate end date for old source (effectiveDate - 1 day)
           const prevDay = new Date(effectiveDate);
           prevDay.setDate(prevDay.getDate() - 1);
-          const prevDayStr = prevDay.toISOString().split('T')[0];
+          const prevDayStr = prevDay.toISOString().split("T")[0];
 
           // 2. Update old source to end on prevDayStr
           await updateSource(type, editingItem.id, { endDate: prevDayStr });
@@ -239,9 +321,9 @@ function AppContent() {
             ...payload,
             startDate: effectiveDate,
             date: effectiveDate,
-            endDate: payload.endDate || null
+            endDate: payload.endDate || null,
           };
-          if (type === 'subscription') {
+          if (type === "subscription") {
             const parsed = new Date(effectiveDate);
             if (!isNaN(parsed.getTime())) {
               newPayload.startDate = effectiveDate;
@@ -257,19 +339,19 @@ function AppContent() {
       }
       closeModal();
     } catch (error) {
-      console.error('Error saving source:', error);
-      alert('Kaydetme hatası: ' + error.message);
+      console.error("Error saving source:", error);
+      alert("Kaydetme hatası: " + error.message);
     }
   };
 
   const handleDelete = async () => {
     const { type, data } = editingItem;
-    if (type === 'bank') await removeBank(data.id);
-    else if (type === 'product') await removeProduct(data.id);
-    else if (type === 'payment') await removePayment(data.id);
+    if (type === "bank") await removeBank(data.id);
+    else if (type === "product") await removeProduct(data.id);
+    else if (type === "payment") await removePayment(data.id);
     else {
       // Hard delete: also clean up archive tracker if exists
-      if (type === 'subscription') {
+      if (type === "subscription") {
         const archiveKey = `sub_archived_${data.id}`;
         if (statusTracker[archiveKey]) {
           await toggleTracker(archiveKey, true); // sets to false
@@ -299,8 +381,8 @@ function AppContent() {
   const handleSaveNote = async () => {
     // We act on editingItem which is the source item
     // Determine type? editingItem doesn't have type info always.
-    // But we opened via onOpenModal('note', item). 
-    // We lack type. 
+    // But we opened via onOpenModal('note', item).
+    // We lack type.
     // Solution: pass strict item with type or determine from context.
     // Hack: check item fields? Or pass { ...item, _sourceType: 'income' }
     // For now, let's assume we iterate all types? No.
@@ -315,7 +397,7 @@ function AppContent() {
     const type = editingItem.sourceType;
     // If undefined, we fail.
     if (type && noteText !== undefined) {
-      if (['income', 'expense', 'subscription'].includes(type)) {
+      if (["income", "expense", "subscription"].includes(type)) {
         await updateSource(type, editingItem.id, { note: noteText });
       }
     }
@@ -326,10 +408,16 @@ function AppContent() {
     // editingItem is the payment row
     if (editingItem) {
       try {
-        const parsedAmount = parseFloat(String(amount).replace(',', '.')) || 0;
+        const parsedAmount = parseFloat(String(amount).replace(",", ".")) || 0;
         const dueDateISO = dueDate || editingItem.dueDate;
-        if (String(amount).trim() === '' || !Number.isFinite(Number(String(amount).replace(',', '.'))) || parsedAmount < 0) {
-          alert('Geçerli bir ekstre tutarı girin. Borç yoksa 0 girebilirsiniz.');
+        if (
+          String(amount).trim() === "" ||
+          !Number.isFinite(Number(String(amount).replace(",", "."))) ||
+          parsedAmount < 0
+        ) {
+          alert(
+            "Geçerli bir ekstre tutarı girin. Borç yoksa 0 girebilirsiniz.",
+          );
           return;
         }
 
@@ -349,12 +437,12 @@ function AppContent() {
           await upsertPayment({
             ...editingItem,
             amount: parsedAmount,
-            dueDate: dueDateISO
+            dueDate: dueDateISO,
           });
         }
       } catch (error) {
-        console.error('Error saving card amount:', error);
-        alert('Kaydetme hatası: ' + error.message);
+        console.error("Error saving card amount:", error);
+        alert("Kaydetme hatası: " + error.message);
         return;
       }
     }
@@ -362,117 +450,203 @@ function AppContent() {
   };
 
   // Month Navigation
-  const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
-  const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  const nextMonth = () =>
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  const prevMonth = () =>
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
 
   if (!session) {
     return <Login />;
   }
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Yükleniyor...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        Yükleniyor...
+      </div>
+    );
   }
 
   if (loadError) {
-    return <div role="alert" className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
-      <p>{loadError}</p><button onClick={fetchData} className="bg-blue-600 text-white p-3 rounded-xl">Tekrar dene</button>
-    </div>;
+    return (
+      <div
+        role="alert"
+        className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center"
+      >
+        <p>{loadError}</p>
+        <button
+          onClick={fetchData}
+          className="bg-blue-600 text-white p-3 rounded-xl"
+        >
+          Tekrar dene
+        </button>
+      </div>
+    );
   }
 
   return (
     <BrowserRouter>
       <div className="app-shell">
-
         {/* Header always visible */}
         <Header onOpenQuickMenu={() => setActiveModal("quickMenu")} />
 
         <div className="app-content">
           <Routes>
             <Route path="/" element={<Overview onOpenModal={openModal} />} />
-            <Route path="/expenses" element={
-              <Expenses
-                viewDate={viewDate} prevMonth={prevMonth} nextMonth={nextMonth}
-                onOpenModal={openModal}
-                paymentTab={paymentTab} setPaymentTab={setPaymentTab}
-              />
-            } />
-            <Route path="/incomes" element={
-              <Incomes
-                viewDate={viewDate} prevMonth={prevMonth} nextMonth={nextMonth}
-                onOpenModal={openModal}
-                incomeTab={incomeTab} setIncomeTab={setIncomeTab}
-              />
-            } />
-            <Route path="/subscriptions" element={
-              <Subscriptions
-                viewDate={viewDate} prevMonth={prevMonth} nextMonth={nextMonth}
-                onOpenModal={openModal}
-              />
-            } />
-            <Route path="/banks" element={
-              <Banks onOpenModal={openModal} />
-            } />
+            <Route
+              path="/expenses"
+              element={
+                <Expenses
+                  viewDate={viewDate}
+                  prevMonth={prevMonth}
+                  nextMonth={nextMonth}
+                  onThisMonth={() => setViewDate(new Date())}
+                  onOpenModal={openModal}
+                  paymentTab={paymentTab}
+                  setPaymentTab={setPaymentTab}
+                />
+              }
+            />
+            <Route
+              path="/incomes"
+              element={
+                <Incomes
+                  viewDate={viewDate}
+                  prevMonth={prevMonth}
+                  nextMonth={nextMonth}
+                  onThisMonth={() => setViewDate(new Date())}
+                  onOpenModal={openModal}
+                  incomeTab={incomeTab}
+                  setIncomeTab={setIncomeTab}
+                />
+              }
+            />
+            <Route
+              path="/subscriptions"
+              element={
+                <Subscriptions
+                  viewDate={viewDate}
+                  prevMonth={prevMonth}
+                  nextMonth={nextMonth}
+                  onThisMonth={() => setViewDate(new Date())}
+                  onOpenModal={openModal}
+                />
+              }
+            />
+            <Route path="/banks" element={<Banks onOpenModal={openModal} />} />
             <Route path="/migration" element={<Migration />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
 
-        <BottomNav
-          onOpenQuickMenu={() => setActiveModal("quickMenu")}
-        />
+        <BottomNav onOpenQuickMenu={() => setActiveModal("quickMenu")} />
 
         {/* MODALS */}
-        {activeModal === "quickMenu" && <QuickMenu onClose={closeModal} onAction={(t) => { closeModal(); openModal(t); }} />}
+        {activeModal === "quickMenu" && (
+          <QuickMenu
+            onClose={closeModal}
+            onAction={(t) => {
+              closeModal();
+              openModal(t);
+            }}
+          />
+        )}
         {activeModal === "bankModal" && (
           <BankModal
             editingItem={editingItem}
-            newBankName={newBankName} setNewBankName={setNewBankName}
-            newBankColor={newBankColor} setNewBankColor={setNewBankColor}
-            onClose={closeModal} onSave={handleSaveBank}
+            newBankName={newBankName}
+            setNewBankName={setNewBankName}
+            newBankColor={newBankColor}
+            setNewBankColor={setNewBankColor}
+            onClose={closeModal}
+            onSave={handleSaveBank}
           />
         )}
         {activeModal === "productModal" && (
           <ProductModal
             editingItem={editingItem}
-            newProduct={newProduct} setNewProduct={setNewProduct}
-            banks={banks} products={products}
-            onClose={closeModal} onSave={handleSaveProduct}
+            newProduct={newProduct}
+            setNewProduct={setNewProduct}
+            banks={banks}
+            products={products}
+            onClose={closeModal}
+            onSave={handleSaveProduct}
           />
         )}
         {activeModal === "incomeModal" && (
           <SourceModal
-            type="income" editingItem={editingItem}
-            form={sourceForm} setForm={setSourceForm}
-            banks={banks} products={products}
-            updateScope={updateScope} setUpdateScope={setUpdateScope}
-            effectiveDate={effectiveDate} setEffectiveDate={setEffectiveDate}
-            onClose={closeModal} onSave={() => handleSaveSource('income')}
+            type="income"
+            editingItem={editingItem}
+            form={sourceForm}
+            setForm={setSourceForm}
+            banks={banks}
+            products={products}
+            updateScope={updateScope}
+            setUpdateScope={setUpdateScope}
+            effectiveDate={effectiveDate}
+            setEffectiveDate={setEffectiveDate}
+            onClose={closeModal}
+            onSave={() => handleSaveSource("income")}
           />
         )}
         {activeModal === "expenseModal" && (
           <SourceModal
-            type="expense" editingItem={editingItem}
-            form={sourceForm} setForm={setSourceForm}
-            banks={banks} products={products}
-            updateScope={updateScope} setUpdateScope={setUpdateScope}
-            effectiveDate={effectiveDate} setEffectiveDate={setEffectiveDate}
-            onClose={closeModal} onSave={() => handleSaveSource('expense')}
+            type="expense"
+            editingItem={editingItem}
+            form={sourceForm}
+            setForm={setSourceForm}
+            banks={banks}
+            products={products}
+            updateScope={updateScope}
+            setUpdateScope={setUpdateScope}
+            effectiveDate={effectiveDate}
+            setEffectiveDate={setEffectiveDate}
+            onClose={closeModal}
+            onSave={() => handleSaveSource("expense")}
           />
         )}
         {activeModal === "subscriptionModal" && (
           <SourceModal
-            type="subscription" editingItem={editingItem}
-            form={sourceForm} setForm={setSourceForm}
-            banks={banks} products={products}
-            updateScope={updateScope} setUpdateScope={setUpdateScope}
-            effectiveDate={effectiveDate} setEffectiveDate={setEffectiveDate}
-            onClose={closeModal} onSave={() => handleSaveSource('subscription')}
+            type="subscription"
+            editingItem={editingItem}
+            form={sourceForm}
+            setForm={setSourceForm}
+            banks={banks}
+            products={products}
+            updateScope={updateScope}
+            setUpdateScope={setUpdateScope}
+            effectiveDate={effectiveDate}
+            setEffectiveDate={setEffectiveDate}
+            onClose={closeModal}
+            onSave={() => handleSaveSource("subscription")}
           />
         )}
-        {activeModal === "deleteConfirm" && <DeleteConfirmModal deletingItem={editingItem} onClose={closeModal} onConfirm={handleDelete} onSoftDelete={handleSoftDelete} onReactivate={handleReactivate} />}
-        {activeModal === "noteModal" && <NoteModal item={editingItem} noteText={noteText} setNoteText={setNoteText} onClose={closeModal} onSave={handleSaveNote} />}
-        {activeModal === "cardAmountModal" && <CardAmountModal target={editingItem} onClose={closeModal} onSave={handleSaveCardAmount} />}
+        {activeModal === "deleteConfirm" && (
+          <DeleteConfirmModal
+            deletingItem={editingItem}
+            onClose={closeModal}
+            onConfirm={handleDelete}
+            onSoftDelete={handleSoftDelete}
+            onReactivate={handleReactivate}
+          />
+        )}
+        {activeModal === "noteModal" && (
+          <NoteModal
+            item={editingItem}
+            noteText={noteText}
+            setNoteText={setNoteText}
+            onClose={closeModal}
+            onSave={handleSaveNote}
+          />
+        )}
+        {activeModal === "cardAmountModal" && (
+          <CardAmountModal
+            target={editingItem}
+            onClose={closeModal}
+            onSave={handleSaveCardAmount}
+          />
+        )}
         {activeModal === "paymentConfirmModal" && (
           <PaymentConfirmModal
             payment={editingItem}
@@ -483,15 +657,16 @@ function AppContent() {
               try {
                 if (payment.isVirtual) {
                   // eslint-disable-next-line no-unused-vars
-                  const { id, isVirtual, subtitle, isManual, ...payload } = payment;
+                  const { id, isVirtual, subtitle, isManual, ...payload } =
+                    payment;
                   await upsertPayment({ ...payload, isPaid: true });
                 } else {
                   await editPayment(payment.id, { isPaid: true });
                 }
                 closeModal();
               } catch (error) {
-                console.error('Error confirming payment:', error);
-                alert('Ödeme onaylanırken hata oluştu: ' + error.message);
+                console.error("Error confirming payment:", error);
+                alert("Ödeme onaylanırken hata oluştu: " + error.message);
               }
             }}
           />
@@ -504,16 +679,29 @@ function AppContent() {
               try {
                 const currentMonth = viewDate.getMonth() + 1; // 1-12
                 const currentYear = viewDate.getFullYear();
-                await markSubscriptionPaid(editingItem.id, currentYear, currentMonth, amount, paidDate, note);
+                await markSubscriptionPaid(
+                  editingItem.id,
+                  currentYear,
+                  currentMonth,
+                  amount,
+                  paidDate,
+                  note,
+                );
                 closeModal();
               } catch (error) {
-                console.error('Error saving subscription payment:', error);
-                alert('Ödeme kaydedilirken hata oluştu: ' + error.message);
+                console.error("Error saving subscription payment:", error);
+                alert("Ödeme kaydedilirken hata oluştu: " + error.message);
               }
             }}
           />
         )}
-        {activeModal === "bestCardsModal" && <BestCardsModal bestCards={editingItem} banks={banks} onClose={closeModal} />}
+        {activeModal === "bestCardsModal" && (
+          <BestCardsModal
+            bestCards={editingItem}
+            banks={banks}
+            onClose={closeModal}
+          />
+        )}
       </div>
     </BrowserRouter>
   );

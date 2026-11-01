@@ -7,6 +7,7 @@ export function MonthHeader({
   viewDate,
   prevMonth,
   nextMonth,
+  onThisMonth,
   label,
   amount,
   secondary = [],
@@ -36,6 +37,11 @@ export function MonthHeader({
           <Icon name="chevron-right" size={19} />
         </button>
       </div>
+      {onThisMonth && (
+        <button className="this-month-button" onClick={onThisMonth}>
+          Bu aya dön
+        </button>
+      )}
       <section className="monthly-summary" aria-label={`${title} aylık özeti`}>
         <p>{label}</p>
         <strong>₺{formatMoneyTR(amount)}</strong>

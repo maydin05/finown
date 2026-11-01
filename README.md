@@ -4,6 +4,8 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Kredi, bağlı borç ve vade paketi (yerel uygulama + DB doğrulama)](docs/2026-11-01_kredi-borc-ve-vade-paketi.md)
+
 - [Ödeme/silme pencereleri yayın kaydı](docs/2026-11-01_onay-pencereleri-yayin.md)
 - [Onay pencereleri ve canlı renkler, uygulama ayrıntıları](docs/2026-10-31_onay-pencereleri-ve-canli-renkler.md)
 

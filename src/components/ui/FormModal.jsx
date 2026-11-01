@@ -24,9 +24,10 @@ export function FormModal({
     setError("");
     try {
       await onSave();
-    } catch {
+    } catch (error) {
       setError(
-        "Kaydedilemedi. Bilgilerini kontrol edip tekrar deneyebilirsin.",
+        error.userMessage ||
+          "Kaydedilemedi. Bilgilerini kontrol edip tekrar deneyebilirsin.",
       );
     } finally {
       setSaving(false);

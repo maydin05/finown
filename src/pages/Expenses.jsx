@@ -1,5 +1,5 @@
 import { MonthHeader, FilterTabs } from "../components/ui/MonthHeader";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useData } from "../context/store";
 import { useViewData } from "../hooks/useViewData";
 import { PaymentItem } from "../components/items/PaymentItem";
@@ -12,14 +12,20 @@ import {
   paymentItemsForMonth,
 } from "../domain/finance";
 
+import { duePayments } from "../domain/plans";
+import { formatDateTR } from "../utils";
+
 export default function Expenses({
   viewDate,
   prevMonth,
   nextMonth,
+  onThisMonth,
   onOpenModal,
   paymentTab,
   setPaymentTab,
 }) {
+  const data = useData();
+  const [dueFilter, setDueFilter] = useState("all");
   const {
     payments,
     expenseSources,
@@ -27,7 +33,7 @@ export default function Expenses({
     toggleTracker,
     editPayment,
     products,
-  } = useData();
+  } = data;
 
   // 1. Generate recurring/one-time items from Sources
   const expenseItems = useViewData(
@@ -58,9 +64,10 @@ export default function Expenses({
     .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
 
   // 5. Filter for Tab
-  const filteredList = allItems.filter((item) =>
-    paymentTab === "pending" ? !item.isPaid : item.isPaid,
-  );
+  const filteredList =
+    paymentTab === "pending"
+      ? duePayments(data, allItems, dueFilter)
+      : allItems.filter((item) => item.isPaid);
 
   const incompleteSources = expenseSources.filter(
     (source) =>
@@ -89,8 +96,18 @@ export default function Expenses({
       <MonthHeader
         title="Ödemeler"
         viewDate={viewDate}
-        prevMonth={prevMonth}
-        nextMonth={nextMonth}
+        prevMonth={() => {
+          setDueFilter("all");
+          prevMonth();
+        }}
+        nextMonth={() => {
+          setDueFilter("all");
+          nextMonth();
+        }}
+        onThisMonth={() => {
+          setDueFilter("all");
+          onThisMonth?.();
+        }}
         label="Bilinen ödemeler"
         amount={totalRemaining}
         secondary={[{ label: "Ödenen", amount: totalPaid }]}
@@ -150,6 +167,39 @@ export default function Expenses({
           { value: "paid", label: "Ödenmişler" },
         ]}
       />
+      {paymentTab === "pending" && (
+        <>
+          <div className="due-filters" role="group" aria-label="Vade filtresi">
+            {[
+              ["all", "Tümü"],
+              ["overdue", "Geciken"],
+              ["today", "Bugün"],
+              ["week", "7 gün"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                aria-pressed={dueFilter === key}
+                onClick={() => {
+                  setDueFilter(key);
+                  if (key !== "all") onThisMonth?.();
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {dueFilter !== "all" && (
+            <p className="filter-caption">
+              {dueFilter === "week"
+                ? `Liste: ${formatDateTR(new Date())} – ${formatDateTR(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 6))}`
+                : dueFilter === "today"
+                  ? "Liste: Bugün vadesi gelen ödemeler"
+                  : "Liste: Kaydedilmiş geciken ödemeler"}{" "}
+              · Üstteki özet seçili aya aittir.
+            </p>
+          )}
+        </>
+      )}
       <div className="record-list">
         {filteredList.map((item, idx) => (
           <PaymentItem

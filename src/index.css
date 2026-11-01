@@ -1618,3 +1618,15 @@ body {
   border-color: #f0bfcb;
   background: #fff1f4;
 }
+
+.this-month-button { display: block; margin: -6px auto 18px; padding: 6px 12px; min-height: 36px; border: 1px solid var(--accent-line, var(--line)); border-radius: 9px; font-size: 12px; color: var(--accent,var(--green)); background: var(--tint,var(--soft)); }
+.due-filters { display: flex; flex-wrap: wrap; gap: 7px; margin: 17px 0 8px; }
+.due-filters button { border: 1px solid var(--line); border-radius: 10px; background: white; padding: 8px 12px; min-height: 40px; font-size: 12px; }
+.due-filters button[aria-pressed="true"] { background: var(--tint); color: var(--accent); border-color: var(--accent-line); font-weight: 650; }
+.filter-caption { font-size: 11px; line-height: 1.6; color: var(--muted); margin-bottom: 8px; }
+.form-fields .debt-toggle { display: flex; align-items: flex-start; gap: 10px; padding: 14px; background: var(--tint); border: 1px solid var(--accent-line); border-radius: 12px; }
+.form-dialog .debt-toggle input { width: 20px; min-height: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; accent-color: var(--accent); }
+.debt-toggle small { display: block; font-size: 11px; line-height: 1.6; font-weight: 400; color: var(--muted); margin-top: 5px; }
+.loan-plan-preview { padding: 16px; margin-top: 20px; background: var(--tint); border: 1px solid var(--accent-line); border-radius: 13px; font-size: 12px; line-height: 1.7; }
+.loan-plan-preview h3 { font-weight: 650; color: var(--accent); margin-bottom: 6px; }
+.loan-plan-preview ol { margin: 8px 0 0; padding-left: 18px; }

@@ -23,6 +23,7 @@ export default function Subscriptions({
   viewDate,
   prevMonth,
   nextMonth,
+  onThisMonth,
   onOpenModal,
 }) {
   const {
@@ -145,6 +146,7 @@ export default function Subscriptions({
         viewDate={viewDate}
         prevMonth={prevMonth}
         nextMonth={nextMonth}
+        onThisMonth={onThisMonth}
         label="Bu ay"
         amount={monthCost}
         secondary={[

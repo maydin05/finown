@@ -1,57 +1,17 @@
 import { RecordRow } from "../components/items/RecordRow";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useData } from "../context/store";
 import { Icon } from "../components/ui/Icon";
-import { formatMoneyTR, getDaysDifference } from "../utils";
+import { formatMoneyTR, getDaysDifference, formatDateTR } from "../utils";
 
-// Static cash debt in USD (elden borc)
-const CASH_DEBT_USD = 5000;
+import { debtPlans, loanRemaining } from "../domain/plans";
 
 export default function Banks({ onOpenModal }) {
-  const { banks, products, payments } = useData();
+  const data = useData();
+  const { banks, products, payments } = data;
+  const plans = debtPlans(data);
   const [selectedBank, setSelectedBank] = useState(null);
-  const [usdRate, setUsdRate] = useState(36.5); // Default fallback rate
-
-  // Fetch current USD/TRY exchange rate
-  useEffect(() => {
-    const fetchRate = async () => {
-      try {
-        // Using free exchange rate API
-        const res = await fetch(
-          "https://api.exchangerate-api.com/v4/latest/USD",
-        );
-        const data = await res.json();
-        if (data?.rates?.TRY) {
-          setUsdRate(data.rates.TRY);
-        }
-      } catch {
-        console.log("Could not fetch exchange rate, using default");
-      }
-    };
-    fetchRate();
-  }, []);
-
-  // Calculate remaining loan debt based on unpaid installments
-  const getLoanRemaining = (loan) => {
-    // Get all installment payments for this loan
-    const loanPayments = (payments || []).filter(
-      (p) => p.type === "loan" && String(p.productId) === String(loan.id),
-    );
-
-    // If there are actual payment records, sum the unpaid ones
-    if (loanPayments.length > 0) {
-      return loanPayments
-        .filter((p) => !p.isPaid)
-        .reduce((sum, p) => sum + Number(p.amount || 0), 0);
-    }
-
-    // Fallback: calculate from product data if no payment records exist
-    const paidCount = loanPayments.filter((p) => p.isPaid).length;
-    const total =
-      Number(loan.installmentAmount || 0) * Number(loan.totalInstallments || 0);
-    const remaining = total - paidCount * Number(loan.installmentAmount || 0);
-    return Math.max(0, remaining);
-  };
+  const getLoanRemaining = (loan) => loanRemaining(loan, payments);
 
   /**
    * Avantajli Kart Algoritmasi
@@ -301,7 +261,10 @@ export default function Banks({ onOpenModal }) {
     );
   }
 
-  const cashDebtTL = CASH_DEBT_USD * usdRate;
+  const cashDebtTL = plans.reduce(
+    (sum, plan) => sum + (plan.remaining ?? 0),
+    0,
+  );
   const totalDebt = globalLoanDebt + cashDebtTL;
   return (
     <div className="calm-page tone-banks">
@@ -329,15 +292,69 @@ export default function Banks({ onOpenModal }) {
           </div>
         </dl>
         <details className="summary-details">
-          <summary>Elden borç ve kur ayrıntısı</summary>
-          <p>
-            ${CASH_DEBT_USD.toLocaleString("en-US")} ≈ ₺
-            {formatMoneyTR(cashDebtTL)}
-          </p>
-          <p>1 USD = ₺{usdRate.toFixed(2)}</p>
+          <summary>Elden borç planı ayrıntısı</summary>
+          <p>TL planlarından kalan: ₺{formatMoneyTR(cashDebtTL)}</p>
           <p>Kart borcu bu toplamın kapsamında değil.</p>
+          <p>
+            Bu planlar Ödemeler listesinde de aynı kaynaktan izlenir; ikinci bir
+            ödeme satırı oluşturulmaz.
+          </p>
         </details>
       </section>
+      <div className="section-title">
+        <h2>Elden borçlar</h2>
+        <button onClick={() => onOpenModal("debt", null)}>Plan ekle</button>
+      </div>
+      {plans.length === 0 && (
+        <p className="empty-state">
+          Bir gider planında “Elden borç olarak izle”yi seçerek burada takip
+          edebilirsin.
+        </p>
+      )}
+      {plans.map((plan) =>
+        plan.error ? (
+          <p className="notice" key={plan.source.id}>
+            {plan.source.title}: {plan.error} Toplam eksik olabilir.
+          </p>
+        ) : (
+          <RecordRow
+            key={plan.source.id}
+            title={plan.source.title}
+            amount={plan.remaining}
+            meta={`${plan.pending.length} / ${plan.rows.length} ödeme bekliyor · TL`}
+            icon="hand-coins"
+            detail={
+              <>
+                <dl className="detail-list">
+                  <div>
+                    <dt>İlk ödeme</dt>
+                    <dd>{formatDateTR(plan.rows[0]?.dueDate)}</dd>
+                  </div>
+                  <div>
+                    <dt>Son ödeme</dt>
+                    <dd>{formatDateTR(plan.rows.at(-1)?.dueDate)}</dd>
+                  </div>
+                  <div>
+                    <dt>Planlanan toplam</dt>
+                    <dd>₺{formatMoneyTR(plan.total)}</dd>
+                  </div>
+                </dl>
+                <p className="footnote">
+                  Kalan borç, bu TL gider planının ödenmemiş taksitlerinden
+                  hesaplanır.
+                </p>
+              </>
+            }
+            actions={[
+              {
+                label: "Planı düzenle",
+                opensModal: true,
+                onClick: () => onOpenModal("expense", plan.source),
+              },
+            ]}
+          />
+        ),
+      )}
       <div className="section-title">
         <h2>Hesaplar</h2>
         <button onClick={handleBestCards}>Avantajlı kartlar</button>

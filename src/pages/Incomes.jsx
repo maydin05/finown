@@ -9,6 +9,7 @@ export default function Incomes({
   viewDate,
   prevMonth,
   nextMonth,
+  onThisMonth,
   onOpenModal,
   incomeTab,
   setIncomeTab,
@@ -42,6 +43,7 @@ export default function Incomes({
         viewDate={viewDate}
         prevMonth={prevMonth}
         nextMonth={nextMonth}
+        onThisMonth={onThisMonth}
         label="Beklenen gelir"
         amount={totalExpected}
         secondary={[{ label: "Alınan", amount: totalReceived }]}
