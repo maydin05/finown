@@ -4,6 +4,8 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Kullanılabilir bakiye ve ödeme açığı: canlı yayın ve mobil kontrol](docs/2026-11-01_bakiye-ve-acik-yayin.md)
+
 - [Kullanılabilir bakiye ve ödeme açığı: yerel uygulama ve testler](docs/2026-11-01_bakiye-ve-acik-uygulama.md)
 
 - [Gelirden önce gerekli tutar: canlı yayın ve mobil kontrol](docs/2026-11-01_gelir-oncesi-kart-yayin.md)
