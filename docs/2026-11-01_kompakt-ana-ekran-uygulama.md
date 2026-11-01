@@ -1,6 +1,6 @@
 # Kompakt ana ekran uygulaması
 
-1 Kasım 2026. Kullanıcı onaylı kompakt önizlemenin ana ekrana uygulanmasını ve mobilde test edilmesini istedi. Durum: yerelde uygulandı; bu değişiklik için commit/push/Netlify yayını yapılmadı.
+1 Kasım 2026. Kullanıcı onaylı kompakt önizlemenin ana ekrana uygulanmasını ve mobilde test edilmesini istedi. Bu belge yayın öncesi uygulama/test kaydıdır. Sonraki GitHub/Netlify yayını ve gerçek hesap kontrolü [yayın kaydında](2026-11-01_kompakt-ana-ekran-yayin.md) yer alır.
 
 ## Öncesi / sonrası
 
@@ -25,4 +25,4 @@ Kompakt Header stili yalnız ana ekran rotasında etkindir. Diğer sayfaların h
 - CUA ile yerel React uygulaması ayrıca 375×667 boyutunda incelendi. Özet alt sınırı 326 px, ilk iki ödeme alt sınırları 485/554 px, alt gezinme üst sınırı 590 px. Sentetik örnek veri kullanıldı.
 - `npm run build` ve `git diff --check`: başarılı. Mevcut büyük JS paketi uyarısı devam ediyor.
 
-Yerel uygulama önizlemesi: http://127.0.0.1:5175/tests/ui-preview.html?app=1. Gerçek kullanıcı oturumuyla canlı/cihaz kabulü bu çalışmanın kapsamına dahil değildir; henüz yayınlanmadı. Örnek verili mobil görsel `docs/private.local/2026-11-01_kompakt-ana-ekran-uygulama-375.jpg` içinde yerel olarak korunur.
+Yerel uygulama önizlemesi: http://127.0.0.1:5175/tests/ui-preview.html?app=1. Sonraki gerçek hesap kontrolünün kapsamı ve sınırları yayın kaydında yer alır. Örnek verili mobil görsel `docs/private.local/2026-11-01_kompakt-ana-ekran-uygulama-375.jpg` içinde yerel olarak korunur.
