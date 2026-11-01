@@ -971,9 +971,9 @@ button:disabled {
   --accent-line: #d5e1f8;
 }
 .tone-payments {
-  --accent: #a34e32;
-  --tint: #fff0e7;
-  --accent-line: #f3dccc;
+  --accent: #b83b46;
+  --tint: #fff0f2;
+  --accent-line: #f3cdd2;
 }
 .tone-income {
   --accent: #21705b;
@@ -981,9 +981,9 @@ button:disabled {
   --accent-line: #cce5d9;
 }
 .tone-subscriptions {
-  --accent: #7455a6;
-  --tint: #f2edfb;
-  --accent-line: #e3d9f3;
+  --accent: #7a3fd0;
+  --tint: #f2eaff;
+  --accent-line: #e1cdfa;
 }
 .tone-banks {
   --accent: #326a91;
@@ -1016,7 +1016,7 @@ body {
 .summary-metrics > div + div {
   padding-left: 12px;
   border-left: 0;
-  background: #fff0e5;
+  background: #fff0f2;
 }
 .summary-metrics > div:first-child strong,
 .summary-metrics > div:first-child p {
@@ -1024,12 +1024,12 @@ body {
 }
 .summary-metrics > div + div strong,
 .summary-metrics > div + div p {
-  color: #98482d;
+  color: #b03345;
 }
 .movement-icon {
-  background: #fff0e7;
-  color: #a34e32;
-  border-color: #f3dccc;
+  background: #fff0f2;
+  color: #b83b46;
+  border-color: #f3cdd2;
 }
 .movement-icon.income {
   background: #e8f5ee;
@@ -1383,4 +1383,238 @@ body {
   .auth-intro h2 {
     font-size: 29px;
   }
+}
+
+/* Brighter purple for confirmations and explicit red for destructive actions. */
+.tone-confirm {
+  --accent: #713bd1;
+  --tint: #f1eaff;
+  --accent-line: #dac9fb;
+}
+.tone-danger {
+  --accent: #c62e4b;
+  --tint: #fff0f3;
+  --accent-line: #f7cbd5;
+}
+.action-dialog .form-emblem {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.action-dialog .form-header {
+  background: linear-gradient(115deg, var(--tint), #fafaf8);
+}
+.confirm-amount {
+  background: linear-gradient(130deg, #f0e8ff, #faf6ff);
+  border: 1px solid #dac9fb;
+  border-radius: 18px;
+  padding: 21px;
+}
+.confirm-kicker {
+  font-size: 11px;
+  color: #713bd1;
+  font-weight: 650;
+}
+.confirm-amount h3 {
+  font-size: 18px;
+  font-weight: 650;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+.confirm-amount > p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+.confirm-amount > strong {
+  display: block;
+  font-size: clamp(28px, 8vw, 36px);
+  line-height: 1.2;
+  letter-spacing: -1px;
+  color: #713bd1;
+  margin-top: 18px;
+  overflow-wrap: anywhere;
+}
+.confirm-details {
+  margin: 8px 0 18px;
+}
+.confirm-details dd {
+  font-weight: 600;
+}
+.confirmation-overdue {
+  color: #bc2542;
+}
+.confirmation-soon {
+  color: #a34e32;
+}
+.confirmation-note,
+.confirmation-warning {
+  display: flex;
+  gap: 9px;
+  font-size: 12px;
+  line-height: 1.65;
+  padding: 13px;
+  border-radius: 12px;
+}
+.confirmation-note {
+  color: #5b4b77;
+  background: #f2edf9;
+}
+.confirmation-warning {
+  color: #a6243f;
+  background: #fff0f3;
+  border: 1px solid #f7cbd5;
+  margin-top: 18px;
+}
+.confirmation-note svg,
+.confirmation-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.confirmation-record {
+  padding: 16px 18px;
+  background: white;
+  border: 1px solid var(--accent-line);
+  border-radius: 15px;
+}
+.confirmation-record > p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.confirmation-record h3 {
+  font-size: 18px;
+  font-weight: 650;
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+}
+.confirmation-copy {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 18px;
+  color: var(--muted);
+}
+.confirmation-impact,
+.confirmation-benefits {
+  margin-top: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.confirmation-impact > p,
+.confirmation-benefits > p {
+  font-weight: 600;
+}
+.confirmation-impact ul,
+.confirmation-benefits ul {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+.confirmation-impact li,
+.confirmation-benefits li {
+  display: flex;
+  gap: 9px;
+  margin-top: 11px;
+  align-items: flex-start;
+}
+.confirmation-impact svg {
+  color: #c62e4b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.confirmation-benefits svg {
+  color: #713bd1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.delete-options {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+.delete-option {
+  display: flex;
+  gap: 11px;
+  padding: 17px 14px;
+  border: 1px solid;
+  border-radius: 15px;
+  text-align: left;
+  align-items: flex-start;
+}
+.delete-option > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.delete-option strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+}
+.delete-option small {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 5px;
+  background: #e3d4fa;
+  border-radius: 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.delete-option > span > span {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 6px;
+  color: var(--muted);
+}
+.option-icon {
+  width: 35px;
+  height: 35px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.archive-option {
+  border-color: #dac9fb;
+  background: #f6f0ff;
+  color: #713bd1;
+}
+.archive-option .option-icon {
+  color: white;
+  background: #713bd1;
+}
+.remove-option {
+  border-color: #f7cbd5;
+  background: #fff4f6;
+  color: #b52543;
+}
+.remove-option .option-icon {
+  color: white;
+  background: #c62e4b;
+}
+.delete-option > svg {
+  flex-shrink: 0;
+  margin-top: 9px;
+}
+.form-footer .confirm-actions {
+  flex-wrap: wrap;
+}
+.confirm-actions .secondary-button {
+  flex: 1;
+  min-width: 65px;
+}
+.confirm-actions .primary-button {
+  flex: 1.6;
+}
+.confirm-actions .full-width-action {
+  flex-basis: 100%;
+}
+.form-footer .destructive-action.primary-button {
+  background: #c62e4b;
+  color: white;
+}
+.form-footer .destructive-action.secondary-button {
+  color: #b52543;
+  border-color: #f0bfcb;
+  background: #fff1f4;
 }

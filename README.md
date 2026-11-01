@@ -4,6 +4,8 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Onay pencereleri ve canlı renkler, yerel uygulama](docs/2026-10-31_onay-pencereleri-ve-canli-renkler.md)
+
 - [Giriş ve form tasarımı, yerel test kaydı](docs/2026-10-31_giris-ve-form-tasarimi.md)
 
 - [Renk güncellemesi ve canlı yayın doğrulaması](docs/2026-10-31_renk-vurgulari.md)

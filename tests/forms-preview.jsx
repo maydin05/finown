@@ -1,6 +1,8 @@
 // Local UI fixtures: no database writes; auth requests must not be submitted here.
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
+import { PaymentConfirmModal } from "../src/modals/PaymentConfirmModal";
+import { DeleteConfirmModal } from "../src/modals/DeleteConfirmModal";
 import Login from "../src/pages/Login";
 import { SourceModal } from "../src/modals/SourceModal";
 import { BankModal } from "../src/modals/BankModal";
@@ -109,6 +111,11 @@ export function FormsPreview() {
           card: "Ekstre düzenle",
           paid: "Abonelik ödemesi",
           note: "Not düzenle",
+          confirm: "Ödeme onayını gör",
+          delete: "Silme onayını gör",
+          "delete-bank": "Banka silmeyi gör",
+          "delete-subscription": "Abonelik silmeyi gör",
+          "archived-subscription": "Arşivlenmiş aboneliği gör",
         }).map(([key, label]) => (
           <button
             className="secondary-button"
@@ -178,6 +185,52 @@ export function FormsPreview() {
           item={{ title: "Örnek abonelik", expectedAmount: 500 }}
           onClose={close}
           onSave={(amount, paidDate, note) => save({ amount, paidDate, note })}
+        />
+      )}
+      {active === "confirm" && (
+        <PaymentConfirmModal
+          payment={{
+            id: 42,
+            productId: 1,
+            type: "card",
+            title: "Örnek kart ödemesi",
+            amount: 3250,
+            dueDate: "2026-11-06",
+            subtitle: "Kasım dönemi",
+          }}
+          banks={banks}
+          products={[{ ...products[0], limit: 20000 }]}
+          onClose={close}
+          onConfirm={(payment) => save({ action: "paid", id: payment.id })}
+        />
+      )}
+      {[
+        "delete",
+        "delete-bank",
+        "delete-subscription",
+        "archived-subscription",
+      ].includes(active) && (
+        <DeleteConfirmModal
+          deletingItem={{
+            type:
+              active === "delete-bank"
+                ? "bank"
+                : active === "delete"
+                  ? "expense"
+                  : "subscription",
+            data: {
+              id: 42,
+              title: "Örnek kayıt",
+              name: "Örnek banka",
+              amount: 500,
+              isArchived: active === "archived-subscription",
+            },
+            meta: { productCount: 2, paymentsCount: 4, subscriptionsCount: 3 },
+          }}
+          onClose={close}
+          onConfirm={() => save({ action: "delete" })}
+          onSoftDelete={() => save({ action: "archive" })}
+          onReactivate={() => save({ action: "reactivate" })}
         />
       )}
       {active === "note" && (

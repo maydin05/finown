@@ -172,3 +172,112 @@ test("income and subscription payment keep their entered amounts, dates and note
     "Örnek dönem notu",
   );
 });
+
+test("payment and bank deletion confirmations preserve cancel, failure and exact action callbacks", async ({
+  page,
+}) => {
+  await page.goto("/tests/forms-preview.html");
+  await page
+    .getByRole("button", { name: "Ödeme onayını gör", exact: true })
+    .click();
+  let dialog = page.getByRole("dialog", { name: "Ödeme Onayı", exact: true });
+  await expect(dialog).toContainText("₺3.250,00");
+  await expect(dialog).toContainText("bankadan ödeme yapmaz");
+  await expect(
+    dialog.getByRole("button", { name: "Ödendi olarak kaydet", exact: true }),
+  ).toBeInViewport();
+  await dialog.getByRole("button", { name: "Vazgeç", exact: true }).click();
+  await expect(page.getByTestId("saved-data")).toHaveText("null");
+  await page.getByLabel("Kaydetme hatası göster (örnek)").check();
+  await page
+    .getByRole("button", { name: "Ödeme onayını gör", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Ödendi olarak kaydet", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("İşlem tamamlanamadı");
+  await expect(page.getByRole("dialog")).toContainText("Örnek kart ödemesi");
+  await page.keyboard.press("Escape");
+  await page.getByLabel("Kaydetme hatası göster (örnek)").uncheck();
+  await page
+    .getByRole("button", { name: "Ödeme onayını gör", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Ödendi olarak kaydet", exact: true })
+    .click();
+  await expect(page.getByTestId("saved-data")).toHaveText(
+    '{"action":"paid","id":42}',
+  );
+  await page
+    .getByRole("button", { name: "Banka silmeyi gör", exact: true })
+    .click();
+  dialog = page.getByRole("dialog", { name: "Silme Onayı", exact: true });
+  await expect(dialog).toContainText("2 bağlı kart/kredi");
+  await expect(dialog).toContainText("4 ödeme satırı");
+  await expect(dialog).toContainText("3 aboneliğin");
+  await noOverflow(page);
+  await dialog.getByRole("button", { name: "Vazgeç", exact: true }).click();
+  await expect(page.getByTestId("saved-data")).toHaveText("null");
+  await page
+    .getByRole("button", { name: "Silme onayını gör", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Sil", exact: true }).click();
+  await expect(page.getByTestId("saved-data")).toHaveText(
+    '{"action":"delete"}',
+  );
+});
+
+test("subscription confirmation keeps archive, permanent delete and reactivation separate", async ({
+  page,
+}) => {
+  await page.goto("/tests/forms-preview.html");
+  await page
+    .getByRole("button", { name: "Abonelik silmeyi gör", exact: true })
+    .click();
+  await page.getByRole("button", { name: /^Arşivle Önerilen/ }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Arşivleme Onayı", exact: true }),
+  ).toContainText("Geçmiş ödeme kayıtları korunur");
+  await page.getByRole("button", { name: "Geri", exact: true }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Abonelik Silme", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /^Kalıcı Olarak Sil/ }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Kalıcı Silme Onayı", exact: true }),
+  ).toContainText("tüm geçmiş ödeme kayıtları");
+  await expect(page.getByTestId("saved-data")).toHaveText("null");
+  await noOverflow(page);
+  await page.getByRole("button", { name: "Geri", exact: true }).click();
+  await page.getByRole("button", { name: /^Arşivle Önerilen/ }).click();
+  await page.getByRole("button", { name: "Arşivle", exact: true }).click();
+  await expect(page.getByTestId("saved-data")).toHaveText(
+    '{"action":"archive"}',
+  );
+  await page
+    .getByRole("button", { name: "Abonelik silmeyi gör", exact: true })
+    .click();
+  await page.getByRole("button", { name: /^Kalıcı Olarak Sil/ }).click();
+  await page.getByRole("button", { name: "Kalıcı Sil", exact: true }).click();
+  await expect(page.getByTestId("saved-data")).toHaveText(
+    '{"action":"delete"}',
+  );
+  await page
+    .getByRole("button", { name: "Arşivlenmiş aboneliği gör", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Tekrar Aktif Et", exact: true })
+    .click();
+  await expect(page.getByTestId("saved-data")).toHaveText(
+    '{"action":"reactivate"}',
+  );
+  await page
+    .getByRole("button", { name: "Arşivlenmiş aboneliği gör", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Kalıcı Olarak Sil", exact: true })
+    .click();
+  await expect(page.getByTestId("saved-data")).toHaveText(
+    '{"action":"delete"}',
+  );
+});
