@@ -411,3 +411,39 @@ test('failed balance save preserves the previous snapshot and same-day/unknown o
   await page.getByRole('button',{name:'Bakiyeyi kullanma',exact:true}).click();
   await expect(card).toContainText('Önce bakiyeni gir');
 });
+
+test('compact monthly pages keep summaries, month controls and first records within a short mobile screen', async ({ page }) => {
+  await page.setViewportSize({ width: page.viewportSize().width, height: 667 });
+  await page.goto('/tests/ui-preview.html?app=1');
+  const nav = page.getByRole('navigation', { name: 'Ana gezinme' });
+  for (const name of ['Ödemeler', 'Gelir', 'Abonelik', 'Bankalar']) {
+    await nav.getByRole('button', { name, exact: true }).click();
+    const layout = await page.evaluate(() => {
+      const content = document.querySelector('.compact-list-page');
+      const first = content.querySelector('.record-row');
+      const bottom = document.querySelector('.bottom-nav').getBoundingClientRect().top;
+      return {
+        noOverflow: document.documentElement.scrollWidth <= innerWidth,
+        summaryHeight: content.querySelector('.monthly-summary').getBoundingClientRect().height,
+        firstRecordTop: first.getBoundingClientRect().top,
+        firstRecordVisible: first.getBoundingClientRect().bottom <= bottom,
+        compactHeader: document.querySelector('.app-header').getBoundingClientRect().height <= 60,
+      };
+    });
+    expect(layout.noOverflow, name).toBe(true);
+    expect(layout.summaryHeight, name).toBeLessThan(155);
+    expect(layout.firstRecordTop, name).toBeLessThan(410);
+    expect(layout.firstRecordVisible, name).toBe(true);
+    expect(layout.compactHeader, name).toBe(true);
+    if (name !== 'Bankalar') {
+      await expect(page.getByRole('heading', { name: 'Kasım', exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'Sonraki ay', exact: true }).click();
+      await expect(page.getByRole('heading', { name: 'Aralık', exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'Önceki ay', exact: true }).click();
+    } else {
+      await expect(page.getByRole('button', { name: 'Örnek Banka ayrıntısı' })).toBeVisible();
+      await page.getByText('Elden borç planı ayrıntısı', { exact: true }).click();
+      await expect(page.getByText('Kart borcu bu toplamın kapsamında değil.')).toBeVisible();
+    }
+  }
+});

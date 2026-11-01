@@ -14,35 +14,35 @@ export function MonthHeader({
 }) {
   return (
     <>
-      <div className="page-title">
+      <div className="page-title compact-month-heading">
         <h1>{title}</h1>
-      </div>
-      <div className="month-selector">
-        <button
-          className="icon-button"
-          onClick={prevMonth}
-          aria-label="Önceki ay"
-        >
-          <Icon name="chevron-left" size={19} />
-        </button>
-        <div>
-          <h2>{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
-          <span>{viewDate.getFullYear()}</span>
+        <div className="month-selector">
+          <button
+            className="icon-button"
+            onClick={prevMonth}
+            aria-label="Önceki ay"
+          >
+            <Icon name="chevron-left" size={19} />
+          </button>
+          <div>
+            <h2>{viewDate.toLocaleString("tr-TR", { month: "long" })}</h2>
+            <span>{viewDate.getFullYear()}</span>
+          </div>
+          <button
+            className="icon-button"
+            onClick={nextMonth}
+            aria-label="Sonraki ay"
+          >
+            <Icon name="chevron-right" size={19} />
+          </button>
         </div>
-        <button
-          className="icon-button"
-          onClick={nextMonth}
-          aria-label="Sonraki ay"
-        >
-          <Icon name="chevron-right" size={19} />
-        </button>
       </div>
       {onThisMonth && (
         <button className="this-month-button" onClick={onThisMonth}>
           Bu aya dön
         </button>
       )}
-      <section className="monthly-summary" aria-label={`${title} aylık özeti`}>
+      <section className="monthly-summary compact-month-summary" aria-label={`${title} aylık özeti`}>
         <p>{label}</p>
         <strong>₺{formatMoneyTR(amount)}</strong>
         {secondary.length > 0 && (

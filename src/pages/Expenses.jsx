@@ -92,7 +92,7 @@ export default function Expenses({
   };
 
   return (
-    <div className="calm-page tone-payments">
+    <div className="calm-page compact-list-page tone-payments">
       <MonthHeader
         title="Ödemeler"
         viewDate={viewDate}
@@ -119,13 +119,13 @@ export default function Expenses({
         </p>
       )}
       {incompleteSources.length > 0 && (
-        <section
-          className="mx-1 p-4 rounded-2xl border border-amber-200 bg-amber-50"
+        <details
+          className="compact-source-warning"
           aria-label="Bilgisi tamamlanmalı"
         >
-          <h3 className="font-bold text-amber-900">
+          <summary>
             Bilgisi tamamlanmalı ({incompleteSources.length})
-          </h3>
+          </summary>
           <p className="text-xs text-amber-800 mt-1">
             Bu kayıtlar doğrulanana kadar ödeme toplamına dahil değil. Mevcut
             kayıtlar değiştirilmedi.
@@ -139,22 +139,6 @@ export default function Expenses({
                   {sourceIssue(source, "expense")}
                 </p>
               </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {cardTrackedSources.length > 0 && (
-        <details className="mx-1 p-3 border border-gray-200 rounded-xl text-sm text-gray-600">
-          <summary>
-            Kart ekstresinden takip edilen giderler ({cardTrackedSources.length}
-            )
-          </summary>
-          <p className="text-xs mt-2">
-            Ayrı gider olarak toplanmaz; eski kayıtlar korunur.
-          </p>
-          <ul className="mt-2">
-            {cardTrackedSources.map((source) => (
-              <li key={source.id}>{source.title}</li>
             ))}
           </ul>
         </details>
@@ -237,6 +221,22 @@ export default function Expenses({
           </div>
         )}
       </div>
+      {cardTrackedSources.length > 0 && (
+        <details className="mx-1 p-3 border border-gray-200 rounded-xl text-sm text-gray-600">
+          <summary>
+            Kart ekstresinden takip edilen giderler ({cardTrackedSources.length}
+            )
+          </summary>
+          <p className="text-xs mt-2">
+            Ayrı gider olarak toplanmaz; eski kayıtlar korunur.
+          </p>
+          <ul className="mt-2">
+            {cardTrackedSources.map((source) => (
+              <li key={source.id}>{source.title}</li>
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

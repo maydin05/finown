@@ -123,7 +123,7 @@ export default function Banks({ onOpenModal }) {
     const cards = bankProducts.filter((product) => product.type === "card");
     const loans = bankProducts.filter((product) => product.type === "loan");
     return (
-      <div className="calm-page tone-banks">
+      <div className="calm-page compact-list-page tone-banks">
         <button className="back-link" onClick={() => setSelectedBank(null)}>
           <Icon name="chevron-left" size={17} /> Tüm bankalar
         </button>
@@ -267,7 +267,7 @@ export default function Banks({ onOpenModal }) {
   );
   const totalDebt = globalLoanDebt + cashDebtTL;
   return (
-    <div className="calm-page tone-banks">
+    <div className="calm-page compact-list-page tone-banks">
       <div className="page-title">
         <h1>Bankalarım</h1>
         <button
@@ -278,7 +278,7 @@ export default function Banks({ onOpenModal }) {
           <Icon name="plus" />
         </button>
       </div>
-      <section className="monthly-summary" aria-label="Banka özeti">
+      <section className="monthly-summary compact-month-summary" aria-label="Banka özeti">
         <p>Kredi + elden borç</p>
         <strong>₺{formatMoneyTR(totalDebt)}</strong>
         <dl>

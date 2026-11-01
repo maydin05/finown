@@ -140,7 +140,7 @@ export default function Subscriptions({
   );
 
   return (
-    <div className="calm-page tone-subscriptions">
+    <div className="calm-page compact-list-page tone-subscriptions">
       <MonthHeader
         title="Abonelikler"
         viewDate={viewDate}
