@@ -4,6 +4,8 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Gelirden önce gerekli tutar kartı ve mobil testler (yerel)](docs/2026-11-01_gelir-oncesi-kart-uygulama.md)
+
 - [Kompakt ana ekran: canlı yayın ve mobil kontrol](docs/2026-11-01_kompakt-ana-ekran-yayin.md)
 
 - [Kompakt ana ekran uygulaması ve mobil kontroller (yerel)](docs/2026-11-01_kompakt-ana-ekran-uygulama.md)

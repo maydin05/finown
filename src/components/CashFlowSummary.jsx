@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useData } from "../context/store";
+import IncomeBridge from "./IncomeBridge";
+import { shortBridgeDate } from "../domain/incomeBridge";
 import { cashFlow } from "../domain/finance";
 import { formatDateTR, formatMoneyTR } from "../utils";
 import { Icon } from "./ui/Icon";
@@ -30,12 +32,12 @@ export function CashFlowPanel({
     summary.ambiguous > 0 ||
     summary.unlinkedCardSubscriptions > 0;
   return (
-    <section className="cashflow" aria-label="Yaklaşan ödeme ve gelir özeti">
+    <section className="cashflow cashflow-with-bridge" aria-label="Yaklaşan ödeme ve gelir özeti">
       <div className="period-row">
         <div className="overview-heading">
           <h1>Özet</h1>
           <p>
-            {today.toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
+            {shortBridgeDate(summary.start)} – {shortBridgeDate(summary.end)}
           </p>
         </div>
         <div className="segmented" aria-label="Özet dönemi">
@@ -54,18 +56,6 @@ export function CashFlowPanel({
         </div>
       </div>
       <div className="summary-card">
-        <div className="summary-label">
-          <span>
-            {formatDateTR(summary.start)} – {formatDateTR(summary.end)}
-          </span>
-          <button
-            className="icon-button"
-            aria-label="Dönem farkı hakkında bilgi"
-            onClick={() => setInfoOpen(true)}
-          >
-            <Icon name="info" size={17} />
-          </button>
-        </div>
         <div className="summary-metrics">
           <div>
             <p>
@@ -88,7 +78,9 @@ export function CashFlowPanel({
         </div>
         <div className="summary-net">
           <div>
-            <p>Bilinen tutarlara göre fark</p>
+            <button className="bridge-summary-info" aria-label="Dönem farkı hakkında bilgi" onClick={() => setInfoOpen(true)}>
+              Tahmini dönem farkı <Icon name="info" size={14} />
+            </button>
             <p
               className={`summary-certainty ${hasUncertainty ? "uncertain" : ""}`}
               role="status"
@@ -125,6 +117,7 @@ export function CashFlowPanel({
           </div>
         )}
       </div>
+      <IncomeBridge summary={summary} />
       {(summary.incomplete.length > 0 ||
         summary.ambiguous > 0 ||
         summary.unlinkedCardSubscriptions > 0) && (

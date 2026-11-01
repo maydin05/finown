@@ -20,7 +20,7 @@ test("mobile summary, 7/30 days, missing statement and local sample entry", asyn
   await expect(
     region.getByRole("button", { name: "30 gün", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
-  await expect(region).toContainText("29 Kasım");
+  await expect(region).toContainText("29 Kas");
   await expect(region).toContainText("1 ekstre eksik · Sonuç kesinleşmedi");
   expect(
     await page.evaluate(
@@ -82,7 +82,7 @@ test("approved home layout supports details, status, statement entry and keyboar
     name: "Yaklaşan ödeme ve gelir özeti",
   });
   await region.getByRole("button", { name: "30 gün", exact: true }).click();
-  await expect(region).toContainText("29 Kasım");
+  await expect(region).toContainText("29 Kas");
   await region.getByRole("button", { name: "7 gün", exact: true }).click();
   const info = region.getByRole("button", {
     name: "Dönem farkı hakkında bilgi",
@@ -314,4 +314,39 @@ test("compact home shows two upcoming payments above navigation on a short mobil
   await page.getByRole('button', { name: 'Vazgeç', exact: true }).click();
   await expect(summary).toContainText('Sonuç kesinleşmedi');
   await expect(summary.getByTestId('period-difference')).toHaveText(summaryText);
+});
+
+test("arrival preparation separates pending dates, unknown statements and same-day payments without saving", async ({ page }) => {
+  await page.goto('/tests/ui-preview.html?app=1&bridge=late');
+  const summary = page.getByRole('region', { name: 'Yaklaşan ödeme ve gelir özeti' });
+  const card = summary.getByRole('button', { name: 'Gelirden önceki ödemelerin ayrıntısı', exact: true });
+  await expect(card).toContainText('En az ₺3.500,00');
+  await expect(card).toContainText('1 ödeme tutarı eksik');
+  const difference = await summary.getByTestId('period-difference').textContent();
+  await card.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeFocused();
+  await expect(dialog).toContainText('Bu kesin nakit açığın değil.');
+  await expect(dialog).toContainText('Mevcut bakiyen bilinmiyor.');
+  await expect(dialog).toContainText('alt sınırdır');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(card).toBeFocused();
+  await expect(summary.getByTestId('period-difference')).toHaveText(difference);
+  await summary.getByRole('button', { name: 'Ekstre tutarı gir', exact: true }).click();
+  await page.getByRole('button', { name: 'Vazgeç', exact: true }).click();
+  await expect(card).toContainText('En az ₺3.500,00');
+  await summary.getByRole('button', { name: '30 gün', exact: true }).click();
+  await expect(card).toContainText('En az ₺3.500,00');
+
+  await page.goto('/tests/ui-preview.html?app=1&bridge=same-day');
+  await expect(card).toContainText('₺1.000,00');
+  await expect(card).toContainText('Gelir günü ₺2.500,00 ödeme');
+  await card.click();
+  await expect(dialog).toContainText('hesaba geçiş saati bilinmediğinden');
+  await page.getByRole('button', { name: 'Anladım', exact: true }).click();
+  await page.goto('/tests/ui-preview.html?app=1&bridge=none');
+  await expect(card).toContainText('Seçili aralıkta gelir görünmüyor');
+  await expect(card).toContainText('En az ₺3.500,00');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

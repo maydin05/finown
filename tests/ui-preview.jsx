@@ -122,6 +122,13 @@ export function Preview() {
       },
     ],
   };
+  // Synthetic arrival scenarios for the mobile harness; never part of the production app.
+  const arrivalScenario = new URLSearchParams(window.location.search).get("bridge");
+  if (appMode && ["late", "same-day", "none"].includes(arrivalScenario)) {
+    data.incomeSources = arrivalScenario === "none" ? [] : data.incomeSources.map((source) => ({
+      ...source, dayOfMonth: arrivalScenario === "late" ? 7 : 4,
+    }));
+  }
   data.trackerOwners = legacyOwners(data);
   const card = paymentItemsForMonth(
     payments,

@@ -1676,3 +1676,33 @@ body {
   .summary-net > div > p:first-child { font-size: 10px; }
   .cashflow .movement-copy strong { font-size: 12px; }
 }
+
+/* Arrival timing uses the selected summary rows without changing any records. */
+.cashflow-with-bridge .summary-card { padding-top: 10px; }
+.cashflow-with-bridge .summary-metrics { padding-bottom: 0; }
+.cashflow-with-bridge .summary-net { padding: 2px 0; }
+.cashflow-with-bridge .summary-certainty { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.bridge-summary-info { display: flex; align-items: center; gap: 4px; min-height: 34px; text-align: left; color: #627187; font-size: 10px; }
+.bridge-summary-info svg { flex-shrink: 0; }
+.income-bridge { display: block; width: 100%; margin-top: 8px; padding: 6px 12px; border: 1px solid #ecd7b8; border-radius: 15px; background: linear-gradient(120deg,#fff5e9,#fffaf4); color: #81551b; text-align: left; }
+.income-bridge:hover { background: #fff2dc; }
+.income-bridge.no-prior-payment { background: #f0f5f1; border-color: #d5e5d9; color: #285b41; }
+.bridge-label { display: block; font-size: 10px; font-weight: 650; }
+.bridge-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; }
+.bridge-head strong { font-size: clamp(18px,5.6vw,21px); font-weight: 700; line-height: 1.25; letter-spacing: -.6px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.bridge-head .bridge-empty { font-size: 16px; }
+.bridge-head > span { font-size: 10px; }
+.bridge-head > svg { margin-left: auto; align-self: center; flex-shrink: 0; }
+.bridge-next,.bridge-foot { display: block; font-size: 10px; line-height: 1.45; }
+.bridge-next { color: #6f644e; }
+.bridge-foot { color: #887b66; }
+.cashflow-with-bridge .section-title { margin-top: 8px; }
+.bridge-timeline { list-style: none; margin: 12px 0; padding: 0; }
+.bridge-timeline li { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.bridge-timeline li > span { min-width: 0; overflow-wrap: anywhere; }
+.bridge-timeline li > span strong { font-weight: 600; }
+.bridge-timeline small { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+.bridge-timeline li > b { flex-shrink: 0; font-weight: 650; }
+.bridge-detail-copy { font-size: 13px; line-height: 1.65; color: var(--muted); margin-top: 10px; }
+.bridge-same-day { background: #f3eef9; border-color: #e3d8f0; color: #6e508d; }
+.cashflow-with-bridge .summary-metrics strong { font-size: clamp(18px,5.3vw,21px); }
