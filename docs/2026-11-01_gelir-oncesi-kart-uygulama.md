@@ -1,6 +1,6 @@
 # Gelirden önce gerekli tutar: ana ekran uygulaması
 
-1 Kasım 2026. Kullanıcı onaylı önizlemenin ana ekrana uygulanmasını ve mobilde test edilmesini istedi. Durum: yerelde hazır; bu değişiklik için commit/push/Netlify yayını yapılmadı.
+1 Kasım 2026. Kullanıcı onaylı önizlemenin ana ekrana uygulanmasını ve mobilde test edilmesini istedi. Bu belge yayın öncesi uygulama/test kaydıdır. Sonraki GitHub/Netlify yayını ve gerçek hesap kontrolü [yayın kaydında](2026-11-01_gelir-oncesi-kart-yayin.md) yer alır.
 
 ## Davranış
 
@@ -35,6 +35,6 @@ Mevcut bakiye bilinmediğinden kart kesin nakit açığı veya yeterlilik sonucu
 - 667 px yükseklikte ilk iki örnek ödeme tamamen görünür. CUA ile 375×667 ayrıca incelendi: kart alt sınırı 361 px; ilk iki satır alt sınırları 512/581 px; alt gezinme üst sınırı 590 px; yatay taşma yok.
 - `npm run build` ve `git diff --check`: başarılı. Mevcut büyük JS paketi uyarısı sürüyor.
 
-Yerel React önizlemesi: http://127.0.0.1:5175/tests/ui-preview.html?app=1. Sentetik gecikme/aynı gün/gelirsiz test örnekleri `&bridge=late`, `&bridge=same-day`, `&bridge=none` ile yalnız harness içinde açılır. Gerçek hesapta canlı/fiziksel cihaz kabulü henüz yapılmadı.
+Yerel React önizlemesi: http://127.0.0.1:5175/tests/ui-preview.html?app=1. Sentetik gecikme/aynı gün/gelirsiz test örnekleri `&bridge=late`, `&bridge=same-day`, `&bridge=none` ile yalnız harness içinde açılır. Sonraki gerçek hesap kontrolünün kapsamı ve sınırları yayın kaydındadır.
 
 Yerel görsel: `docs/private.local/2026-11-01_gelir-oncesi-uygulama-375.jpg` (Git dışında).
