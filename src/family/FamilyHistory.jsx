@@ -5,7 +5,10 @@ const kinds={income:'Gelir',payment:'Ödeme',expense:'Gider',subscription:'Abone
 const statuses={received:'Alındı',paid:'Ödendi',unpaid:'Ödenmedi',expected:'Bekleniyor',uncertain:'Durum belirsiz',plan:'Kaynak / plan'};
 function valueOf(field){return field.value==null || field.value===''?'Kaydedilmedi':field.type==='money'?money(field.value):field.type==='date'?date(field.value):String(field.value);}
 export default function FamilyHistory({repository,revision}) {
- const [result,setResult]=useState(null),[error,setError]=useState(''),[period,setPeriod]=useState(''),[kind,setKind]=useState(''),[status,setStatus]=useState(''),[search,setSearch]=useState(''),[view,setView]=useState('rows'),[page,setPage]=useState(0);
+ const [result,setResult]=useState(null),[error,setError]=useState(''),[year,setYear]=useState(''),[month,setMonth]=useState(''),[kind,setKind]=useState(''),[status,setStatus]=useState(''),[search,setSearch]=useState(''),[view,setView]=useState('rows'),[page,setPage]=useState(0);
+ const period=year && month?`${year}-${month}`:'';
+ const currentYear=new Date().getFullYear();
+ const years=[...new Set([year,...(result?.years || []),...Array.from({length:11},(_,i)=>String(currentYear+5-i))])].filter(Boolean).sort((a,b)=>Number(b)-Number(a));
  useEffect(()=>{
   let alive=true;
   const load=()=>repository.loadHistory(period).then(data=>{if(alive){setResult({...data,revision});setError('');}}).catch(()=>{if(alive){setResult(null);setError('Detaylar yüklenemedi veya erişimin sona erdi. Bir ay seçerek yeniden deneyebilirsin.');}});
@@ -13,8 +16,8 @@ export default function FamilyHistory({repository,revision}) {
   return()=>{alive=false;clearInterval(timer);};
  },[repository,period,revision]);
  const change=(setter,value)=>{setter(value);setPage(0);};
- const visible=result?.revision===revision?result:null;
- const list=(visible?.[view] || []).filter(r=>(!kind || r.kind===kind) && (view==='sources' || !status || r.status===status) && (!search || `${r.title} ${r.details.map(d=>d.value ?? '').join(' ')}`.toLocaleLowerCase('tr-TR').includes(search.toLocaleLowerCase('tr-TR'))));
+ const visible=result?.revision===revision && result.period===period?result:null;
+ const list=(visible?.[view] || []).filter(r=>(!kind || r.kind===kind) && (view==='sources' || !year || (r.date || r.period || '').startsWith(year)) && (view==='sources' || !status || r.status===status) && (!search || `${r.title} ${r.details.map(d=>d.value ?? '').join(' ')}`.toLocaleLowerCase('tr-TR').includes(search.toLocaleLowerCase('tr-TR'))));
  const pages=Math.max(1,Math.ceil(list.length/30)),current=Math.min(page,pages-1);
  return <section className="family-readonly" aria-label="Gelir ve ödeme detayları">
   <h2>Geçmiş ve detaylar</h2><p className="family-muted">Yalnız görüntüleme. Tutarlar, tarihler ve ödeme durumları bu ekrandan değiştirilemez. Yalnız ortak bütçeye seçilmiş kayıtlar gösterilir.</p>
@@ -22,9 +25,9 @@ export default function FamilyHistory({repository,revision}) {
   <div className="family-history-filters">
    <label className="family-field">Kayıt ara<input type="search" value={search} onChange={e=>change(setSearch,e.target.value)} placeholder="Maaş, kira, kart…"/></label>
    <label className="family-field">Kayıt türü<select aria-label="Kayıt türü" value={kind} onChange={e=>change(setKind,e.target.value)}><option value="">Tüm türler</option>{Object.entries(kinds).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
-   {view==='rows' && <><label className="family-field">Dönem<input type="month" value={period} onChange={e=>{change(setPeriod,e.target.value);setResult(null);}}/></label><label className="family-field">Kayıt durumu<select aria-label="Kayıt durumu" value={status} onChange={e=>change(setStatus,e.target.value)}><option value="">Tüm durumlar</option>{Object.entries(statuses).filter(([key])=>key!=='plan').map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><button className="secondary-button" onClick={()=>{change(setPeriod,'');if(period)setResult(null);}}>Tüm tarihler</button></>}
+   {view==='rows' && <><div className="family-field"><span>Dönem</span><div className="family-grid"><select aria-label="Yıl" value={year} onChange={e=>{change(setYear,e.target.value);if(!e.target.value)setMonth('');}}><option value="">Tüm yıllar</option>{years.map(y=><option key={y} value={y}>{y}</option>)}</select><select aria-label="Ay" value={month} onChange={e=>{change(setMonth,e.target.value);if(e.target.value && !year)setYear(String(currentYear));}}><option value="">Tüm aylar</option>{Array.from({length:12},(_,i)=><option key={i} value={String(i+1).padStart(2,'0')}>{new Intl.DateTimeFormat('tr-TR',{month:'long'}).format(new Date(2020,i,1))}</option>)}</select></div></div><label className="family-field">Kayıt durumu<select aria-label="Kayıt durumu" value={status} onChange={e=>change(setStatus,e.target.value)}><option value="">Tüm durumlar</option>{Object.entries(statuses).filter(([key])=>key!=='plan').map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><button className="secondary-button" onClick={()=>{change(setYear,'');setMonth('');}}>Tüm tarihler</button></>}
   </div>
-  {view==='rows' && <p className="family-muted">{period || 'Tüm tarihler'} · Ödenmiş ve alınmış kayıtlar da dahildir. Süresiz planlar bu aya kadar listelenir; daha ileri bir dönem için ay seç. Karttan ödenen abonelikler de gösterilir; bu liste bir toplam hesabı değildir.</p>}
+  {view==='rows' && <p className="family-muted">{period || (year?`${year} · Tüm aylar`:'Tüm tarihler')} · Ödenmiş ve alınmış kayıtlar da dahildir. Süresiz planlar bu aya kadar listelenir; daha ileri bir dönem için ay seç. Karttan ödenen abonelikler de gösterilir; bu liste bir toplam hesabı değildir.</p>}
   {error && <p className="family-error" role="alert">{error}</p>}
   {!visible && !error && <p role="status">Detaylar yükleniyor…</p>}
   {visible && <><p role="status">{list.length} kayıt · Sayfa {current+1}/{pages}</p>

@@ -9,10 +9,11 @@ const d=(label,value,type='text')=>({label,value:value ?? null,type});
 export function sharedHistory(data,scope,today,period='') {
  if(period && !safeMonth(period))throw new Error('Geçerli bir ay seç.');
  const selected=new Set(scope),pick=table=>(data[table] || []).filter(r=>selected.has(`${table}:${r.id}`));
- const products=pick('products'),tracker=data.statusTracker || {},owners=legacyOwners(data),rows=[],sources=[];
+ const products=pick('products'),tracker=data.statusTracker || {},owners=legacyOwners(data),rows=[],sources=[],years=new Set();
+ const currentYear=calendarDate(today).getFullYear();for(let y=currentYear-5;y<=currentYear+5;y++)years.add(String(y));
  const productName=id=>id==null ? null : products.find(p=>String(p.id)===String(id))?.name || 'Ürün paylaşılmıyor';
  for(const p of pick('payments')) {
-  const date=dateKey(p.dueDate || p.date) || null;
+  const date=dateKey(p.dueDate || p.date) || null;if(date)years.add(date.slice(0,4));
   const row={key:`payment:${p.id}`,kind:'payment',title:p.title || 'Ödeme',date,amount:p.amount ?? null,status:p.isPaid?'paid':'unpaid',details:[d('Ödeme tarihi',date,'date'),d('Tutar',p.amount,'money'),d('Açıklama',p.subtitle),d('Ürün',productName(p.productId)),d('Ödeme türü',paymentType(p.type))]};
   if(!period || date?.startsWith(period))rows.push(row);
  }
@@ -30,6 +31,8 @@ export function sharedHistory(data,scope,today,period='') {
    if(legacy)dates.push(`${legacy[2]}-${String(Number(legacy[1])+1).padStart(2,'0')}-01`);
   }
   const valid=dates.map(calendarDate).filter(Boolean),months=new Set();
+  for(const date of valid)years.add(String(date.getFullYear()));
+  if(valid.length){const first=Math.min(...valid.map(d=>d.getFullYear())),last=Math.max(...valid.map(d=>d.getFullYear()));if(last-first<=100)for(let y=first;y<=last;y++)years.add(String(y));}
   if(period)months.add(period);
   else if(valid.length) {
    const min=Math.min(...valid.map(v=>v.getFullYear()*12+v.getMonth())),max=Math.max(...valid.map(v=>v.getFullYear()*12+v.getMonth()));
@@ -59,5 +62,5 @@ export function sharedHistory(data,scope,today,period='') {
  }
  for(const p of products)sources.push({key:`products:${p.id}`,kind:'product',title:p.name || 'Banka ürünü',date:p.startDate || p.firstPaymentDate || null,amount:p.remaining ?? null,status:'plan',details:[d('Ürün türü',p.type==='loan'?'Kredi':p.type==='card'?'Kredi kartı':p.type),d('Kalan borç',p.remaining,'money'),d('Toplam tutar',p.total,'money'),d('Kayıtlı limit',p.limit,'money'),d('Aylık taksit',p.installmentAmount ?? p.installment,'money'),d('Taksit sayısı',p.totalInstallments),d('İlk taksit',p.firstPaymentDate,'date'),d('Kesim günü',p.cutoffDay),d('Son ödeme günü',p.paymentDueDay),d('Ana kart',productName(p.parentCardId)),d('Son dört hane',p.last4Digits)]});
  rows.sort((a,b)=>(b.date || '').localeCompare(a.date || '') || a.key.localeCompare(b.key));
- return {period,today,rows,sources};
+ return {period,today,rows,sources,years:[...years].sort((a,b)=>Number(b)-Number(a))};
 }
