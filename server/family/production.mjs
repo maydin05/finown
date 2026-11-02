@@ -21,7 +21,7 @@ export function createFamilyHandler({pool,authUrl,anonKey,fingerprintKey,origins
     const text=await request.text();if(Buffer.byteLength(text)>64000)throw problem('İstek çok büyük.',413);
     try{body=JSON.parse(text || '{}');}catch{throw problem('Geçersiz istek.');}
    }
-   return reply(200,await familyRoute(service,user,{path,method:request.method,body}));
+   return reply(200,await familyRoute(service,user,{path,method:request.method,body,query:new URL(request.url).searchParams}));
   } catch(error) {return reply(error.status || 503,{error:error.status?error.message:'İşlem tamamlanamadı. Biraz sonra tekrar dene.'});}
  };
 }

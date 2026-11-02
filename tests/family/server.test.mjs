@@ -88,9 +88,9 @@ test('concurrent reservations serialize, stale financial basis rejected, operati
  const s=await load(),operationId=randomUUID(),body={operationId,command:{action:'approve',payload:{amount:1000,cardId:'11'},requestId:id,version:s.version},environmentVersion:s._server.environmentVersion};
  const responses=await Promise.all([api(owner,`/budgets/${budget}/command`,body),api(owner,`/budgets/${budget}/command`,{...body,operationId:randomUUID()})]);assert.deepEqual(responses.map(r=>r.status).sort(),[200,409]);
  const retry=await api(owner,`/budgets/${budget}/command`,responses[0].status===200?body:{...body,operationId:(await pool.query("select id from family_operations where budget_id=$1 and body_hash is not null order by ctid desc limit 1",[budget])).rows[0].id});assert.equal(retry.status,200);
- const old=await load();await pool.query("update income_sources set data=jsonb_set(data,'{amount}','24000') where user_id=$1",[owner.id]);
+ const old=await load();await pool.query("update income_sources set data=jsonb_set(data,'{amount}','24000') where user_id=$1 and data->>'id'='101'",[owner.id]);
  const stale=await api(owner,`/budgets/${budget}/command`,{operationId:randomUUID(),command:{action:'policy',payload:{buffer:1000,confirmCoverage:true},version:old.version},environmentVersion:old._server.environmentVersion});assert.equal(stale.status,409);
- await pool.query("update income_sources set data=jsonb_set(data,'{amount}','25000') where user_id=$1",[owner.id]);
+ await pool.query("update income_sources set data=jsonb_set(data,'{amount}','25000') where user_id=$1 and data->>'id'='101'",[owner.id]);
 });
 test('PostgreSQL RLS blocks cross-family, direct writes and private snapshot; history immutable',async()=>{
  const c=await pool.connect();try{
@@ -133,6 +133,8 @@ test('production function contract: restricted DB login, genuine Auth, stable co
   const b=await (await second(request('/family-api/budgets/'+budget))).json();
   assert.equal(a._server.environmentVersion,b._server.environmentVersion);
   assert.equal((await handler(request('/.netlify/functions/family/budgets'))).status,200);
+  const history=await handler(request('/.netlify/functions/family/budgets/'+budget+'/history?period=2024-01'));assert.equal(history.status,200);assert.equal((await history.json()).rows.length,2);
+  assert.equal((await handler(request('/family-api/budgets/'+foreign+'/history'))).status,403);
   assert.deepEqual(await financeSnapshot(),financeBefore);
  }finally{await restricted.end();}
 });

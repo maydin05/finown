@@ -36,7 +36,7 @@ export function familyHttpServer(pool,{today,authUrl,anonKey,adminKey,accountCre
    if(path==='/family-api/health' && req.method==='GET')return reply(200,{local:true});
    if(['/family-api/register','/family-api/login','/family-api/logout'].includes(path))throw problem('Bu giriş işlemi açık değil.',404);
    const user=await userFor(req);
-   return reply(200,await familyRoute(service,user,{method:req.method,path,body:req.method==='POST'?await jsonBody(req):undefined}));
+   return reply(200,await familyRoute(service,user,{method:req.method,path,query:new URL(req.url,'http://127.0.0.1').searchParams,body:req.method==='POST'?await jsonBody(req):undefined}));
   }catch(e){reply(e.status || 500,{error:e.status?e.message:'Yerel sunucu işlemi tamamlanamadı.'});}
  });
  server.requestTimeout=15000;server.headersTimeout=10000;

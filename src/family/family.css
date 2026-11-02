@@ -74,3 +74,18 @@
 
 .family-login-shell { margin: 0; padding: 0; }
 .family-auth-note { padding: 10px 22px; color: #667369; font-size: 11px; }
+
+.family-history-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:14px 0; }
+.family-history-filters>.family-field:first-child { grid-column:1/-1; }
+.family-history-filters button { min-height:44px; padding:10px; align-self:end; }
+.family-readonly-list { list-style:none; padding:0; margin:12px 0; }
+.family-readonly-list summary { display:flex; gap:10px; align-items:flex-start; justify-content:space-between; }
+.family-readonly-list summary>span { flex:1; }
+.family-readonly-list summary small { display:block; font-size:11px; color:#617168; margin-top:6px; }
+.family-readonly-list summary>b { color:#69429c; font-size:13px; text-align:right; max-width:43%; }
+.family-readonly-list dl { margin-top:10px; border-top:1px solid #e5e8e5; }
+.family-readonly-list dl>div { padding:9px 0; border-bottom:1px solid #eef0ed; }
+.family-readonly-list dt { color:#617168; font-size:11px; }
+.family-readonly-list dd { color:#233d30; font-size:13px; margin:4px 0 0; white-space:pre-wrap; }
+.family-readonly-list details[open] summary { border-bottom:1px solid #e5e8e5; }
+@media(max-width:350px) { .family-history-filters { grid-template-columns:1fr; } .family-tabs button { font-size:11px; } }

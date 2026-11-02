@@ -13,6 +13,7 @@ export function serverFamilyRepository(id) {
  const apply=(result,ticket)=>{if(ticket>=applied && (!state || result.version>=state.version)){state=result;applied=ticket;}return state;};
  return {
   async load(){const ticket=++sequence;return apply(await familyRequest(`/budgets/${id}`),ticket);},
+  async loadHistory(period=''){return familyRequest(`/budgets/${id}/history${period?'?period='+encodeURIComponent(period):''}`);},
   async dispatch(_actor,command,_environment,operationId=crypto.randomUUID()) {
    const ticket=++sequence;return apply(await familyRequest(`/budgets/${id}/command`,{operationId,command,environmentVersion:state?._server.environmentVersion}),ticket);
   },

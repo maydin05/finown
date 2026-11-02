@@ -4,6 +4,10 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Salt okunur ortak geçmiş: üretim yayın kaydı](docs/2026-11-02_ortak-gecmis-yayin.md)
+
+- [Ortak bütçede salt okunur geçmiş ve detaylar (yerel)](docs/2026-11-02_ortak-gecmis-yerel.md)
+
 - [Eş hesabı oluşturma: üretim yayın kaydı](docs/2026-11-02_es-hesabi-yayin.md)
 
 - [Bütçe sahibinden eş hesabı oluşturma (yerel uygulama)](docs/2026-11-02_es-hesabi-yerel.md)

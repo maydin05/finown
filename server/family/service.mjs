@@ -1,3 +1,4 @@
+import {sharedHistory} from './history.mjs';
 import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { newFamily, transitionFamily, localToday } from '../../src/family/model.js';
 import { personalEnvironment, selectableRecords } from '../../src/family/environment.js';
@@ -22,7 +23,7 @@ export class FamilyService {
   const b=q.rows[0];if(!b || (owner && b.owner_id!==user.id)) throw problem('Bütçe bulunamadı veya yetkin yok.',403);
   return b;
  }
- async environment(c,b) {
+ async financeData(c,b) {
   // A concurrent private-finance writer cannot change the basis between assessment and commit.
   const {rows}=await c.query('select family_private_finance($1) as data',[b.id]);
   const data={};
@@ -31,6 +32,10 @@ export class FamilyService {
    data[camel(name)]=records.map(r=>mapRow(r.data ? {...r.data,id:r.data.id ?? r.id,user_id:r.user_id}:r)).sort((a,b)=>String(a.id ?? a.key ?? '').localeCompare(String(b.id ?? b.key ?? '')));
   }
   data.statusTracker=Object.fromEntries(data.trackers.map(r=>[r.key,r.value]));data.availableBalance=data.availableBalances[0] || null;
+  return data;
+ }
+ async environment(c,b) {
+  const data=await this.financeData(c,b);
   const fingerprint=await hashBalanceBasis(balanceBasis(data));
   const env=personalEnvironment(data,b.state.scope,fingerprint,this.today());
   // A raw private-finance digest could allow guessing an unshared amount offline.
@@ -53,6 +58,10 @@ export class FamilyService {
   await c.query("insert into family_members values($1,$2,'owner')",[id,user.id]);return {id};
  });}
  async load(user,id) {return this.transaction(user,async c=>{const b=await this.budget(c,id,user);return this.publicState(b,user,await this.environment(c,b));});}
+ async history(user,id,period='') {return this.transaction(user,async c=>{
+  const b=await this.budget(c,id,user),data=await this.financeData(c,b);
+  try{return sharedHistory(data,b.state.scope,this.today(),period);}catch{throw problem('Geçerli bir ay seç. Çok geniş tarih aralıkları ay seçilerek görüntülenebilir.');}
+ });}
  async dispatch(user,id,body) {return this.transaction(user,async c=>{
   if(!body || !/^[a-f0-9-]{36}$/i.test(body.operationId || '') || !body.command || Object.keys(body).some(k=>!['operationId','command','environmentVersion'].includes(k))) throw problem('Geçersiz işlem.');
   const b=await this.budget(c,id,user,{lock:true});

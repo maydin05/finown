@@ -113,3 +113,27 @@ test('bütçe sahibi eş hesabı oluşturur; yeni kişi belirlenen şifreyle gir
   expect(await spouse.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(errors).toEqual([]);
  }finally{await context.close();}
 });
+
+test('salt okunur geçmiş: iki oturumda eski maaş ve ödeme, filtre ve detay, sıfır finans yazma isteği',async({page,browser},info)=>{
+ test.setTimeout(60000);const width=info.project.use.viewport.width;
+ const ctx=await browser.newContext({viewport:{width,height:667},isMobile:true,hasTouch:true});const owner=await ctx.newPage();
+ async function login(p,email){await p.goto('/tests/family-server-preview.html');await p.getByLabel('E-posta',{exact:true}).fill(email);await p.getByLabel('Şifre',{exact:true}).fill('Local-Test-Password-2026');await p.getByRole('button',{name:'Giriş Yap',exact:true}).click();await expect(p.getByText(email,{exact:true})).toBeVisible();}
+ try {
+  await login(owner,`owner-${width+2000}@family.test`);await owner.getByRole('button',{name:'Ortak bütçe oluştur',exact:true}).click();
+  await owner.getByRole('button',{name:'Ortak plan',exact:true}).click();await owner.getByRole('button',{name:'Hesaplamaya katılacak kayıtları seç',exact:true}).click();
+  for(const check of await owner.getByRole('dialog').getByRole('checkbox').all())await check.check();await owner.getByRole('button',{name:'Yerel olarak kaydet',exact:true}).click();
+  await owner.getByText('Hesap ve bütçe yönetimi',{exact:true}).click();
+  await expect(owner.getByRole('button',{name:'Ortak plan',exact:true})).toBeVisible();
+  await owner.getByText('Üye ve davet yönetimi',{exact:true}).click();await owner.getByLabel('Davet edilecek yerel hesabın e-postası',{exact:true}).fill(`member-${width}@family.test`);await owner.getByRole('button',{name:'Yerel davet bağlantısı oluştur',exact:true}).click();const link=await owner.getByLabel('Yerel davet bağlantısı',{exact:true}).inputValue();
+  await login(page,`member-${width}@family.test`);await page.goto(link);await page.getByText('Davet bağlantısını kabul et',{exact:true}).click();await page.getByRole('button',{name:'Bu hesapla daveti kabul et',exact:true}).click();await expect(page.getByRole('button',{name:'Geçmiş',exact:true})).toBeVisible();
+  const writes=[];page.on('request',r=>{if(r.method()!=='GET' && new URL(r.url()).pathname.startsWith('/family-api/'))writes.push(r.url());});
+  await page.getByRole('button',{name:'Geçmiş',exact:true}).click();const screen=page.getByRole('region',{name:'Gelir ve ödeme detayları'});
+  await screen.getByLabel('Kayıt ara',{exact:true}).fill('Yerel geçmiş maaş');await expect(screen.getByText('Yerel geçmiş maaş',{exact:true})).toBeVisible();
+  await screen.locator('summary').click();await expect(screen.getByText('Yerel geçmiş kesinti',{exact:true})).toBeVisible();await expect(screen.getByText('₺23.000,00',{exact:true}).first()).toBeVisible();
+  await screen.getByLabel('Dönem',{exact:true}).fill('2024-01');await screen.getByLabel('Kayıt ara',{exact:true}).fill('Yerel eski taksit');await expect(screen.getByRole('list',{name:'Paylaşılan finans kayıtları'}).getByText('Ödendi',{exact:true})).toBeVisible();
+  await screen.getByRole('button',{name:'Tüm tarihler',exact:true}).click();await screen.getByRole('button',{name:'Kaynaklar ve planlar',exact:true}).click();await screen.getByLabel('Kayıt ara',{exact:true}).fill('Yerel geçmiş maaş');await screen.locator('summary').click();await expect(screen.getByText('Başlangıç',{exact:true})).toBeVisible();
+  await expect(screen.getByRole('button',{name:/Kaydet|Sil|Düzenle|Ödendi işaretle/})).toHaveCount(0);expect(writes).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await owner.getByRole('button',{name:'İkinci üyenin yerel erişimini kaldır',exact:true}).click();
+  await expect(page.getByText('Bu bütçeye erişimin sona erdi veya sunucuya ulaşılamıyor.',{exact:true})).toBeVisible({timeout:10000});await expect(screen).toHaveCount(0);
+ }finally{await ctx.close();}
+});

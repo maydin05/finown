@@ -1,12 +1,13 @@
 import {problem} from './service.mjs';
-export async function familyRoute(service,user,{method,path,body}) {
+export async function familyRoute(service,user,{method,path,body,query=new URLSearchParams()}) {
  if(path==='/family-api/me' && method==='GET')return {...user,canCreateMemberAccount:service.canCreateMemberAccount(user)};
  if(path==='/family-api/budgets' && method==='GET')return service.list(user);
  if(path==='/family-api/budgets' && method==='POST')return service.create(user);
  if(path==='/family-api/accept' && method==='POST')return service.accept(user,body?.token);
- const match=path.match(/^\/family-api\/budgets\/([a-f0-9-]{36})(?:\/(command|invite|revoke|remove-member|create-member))?$/i);
+ const match=path.match(/^\/family-api\/budgets\/([a-f0-9-]{36})(?:\/(command|invite|revoke|remove-member|create-member|history))?$/i);
  if(!match)throw problem('Adres bulunamadı.',404);
  const [,id,action]=match;
+ if(action==='history'){if(method!=='GET')throw problem('Bu ekran yalnız okunabilir.',405);return service.history(user,id,query.get('period') || '');}
  if(!action && method==='GET')return service.load(user,id);
  if(method!=='POST')throw problem('İşlem yöntemi geçersiz.',405);
  if(action==='command')return service.dispatch(user,id,body);
