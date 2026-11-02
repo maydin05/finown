@@ -42,6 +42,7 @@ export const Header = ({ onOpenQuickMenu, onSignOut }) => {
                 <Icon name="x" />
               </button>
             </div>
+            <Link className="secondary-button" to="/family" onClick={() => setAccountOpen(false)}>Aile bütçesi</Link>
             <button
               className="secondary-button"
               onClick={() =>

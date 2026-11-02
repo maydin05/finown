@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Icon } from "../components/ui/Icon";
 
@@ -6,36 +6,24 @@ export default function Login({ auth = supabase.auth }) {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  const submitting = useRef(false);
   const handleAuth = async (e) => {
     e.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setLoading(true);
     setError(null);
-    setMessage(null);
 
     try {
-      if (isSignUp) {
-        const { error } = await auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        setMessage("Kayıt başarılı! Lütfen e-postanızı doğrulayın.");
-      } else {
-        const { error } = await auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        // Redirect handled by onAuthStateChange in App.jsx
-      }
+      const { error } = await auth.signInWithPassword({email: email.trim(), password});
+      if (error) throw error;
     } catch (err) {
-      setError(err.message);
+      setError(err.code === 'invalid_credentials' ? 'E-posta veya şifre hatalı.' : err.status === 429 ? 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.' : 'Giriş yapılamadı. Bilgilerini kontrol edip tekrar dene.');
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   };
@@ -48,18 +36,12 @@ export default function Login({ auth = supabase.auth }) {
         </h1>
         <div className="auth-intro">
           <span className="auth-eyebrow">Finansın, daha net.</span>
-          <h2>
-            {isSignUp ? "Takibe birlikte başlayalım." : "Yeniden merhaba."}
-          </h2>
-          <p>
-            {isSignUp
-              ? "Gelirlerini, ödemelerini ve kartlarını tek yerde takip et."
-              : "Yaklaşan ödemelerin ve gelirlerin tek bir yerde."}
-          </p>
+          <h2>Yeniden merhaba.</h2>
+          <p>Yaklaşan ödemelerin ve gelirlerin tek bir yerde.</p>
         </div>
         <section
           className="auth-card"
-          aria-label={isSignUp ? "Hesap oluştur" : "Hesabına giriş"}
+          aria-label="Hesabına giriş"
         >
           <form onSubmit={handleAuth}>
             <div className="auth-fields">
@@ -84,14 +66,10 @@ export default function Login({ auth = supabase.auth }) {
                     id="auth-password"
                     type={showPassword ? "text" : "password"}
                     required
-                    minLength={6}
-                    autoComplete={
-                      isSignUp ? "new-password" : "current-password"
-                    }
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
-                    aria-describedby={isSignUp ? "password-hint" : undefined}
                   />
                   <button
                     type="button"
@@ -105,11 +83,6 @@ export default function Login({ auth = supabase.auth }) {
                     <Icon name={showPassword ? "eye-off" : "eye"} size={19} />
                   </button>
                 </div>
-                {isSignUp && (
-                  <p id="password-hint" className="form-hint">
-                    En az 6 karakter kullan.
-                  </p>
-                )}
               </div>
             </div>
             {error && (
@@ -117,30 +90,11 @@ export default function Login({ auth = supabase.auth }) {
                 {error}
               </p>
             )}
-            {message && (
-              <p className="auth-success" role="status">
-                {message}
-              </p>
-            )}
             <button type="submit" className="primary-button" disabled={loading}>
-              {loading ? "İşleniyor…" : isSignUp ? "Kayıt Ol" : "Giriş Yap"}
+              {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
               <Icon name="arrow-right" size={18} />
             </button>
           </form>
-          <p className="auth-switch">
-            {isSignUp ? "Zaten hesabın var mı?" : "Henüz hesabın yok mu?"}{" "}
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError(null);
-                setMessage(null);
-              }}
-            >
-              {isSignUp ? "Giriş yap" : "Hesap oluştur"}
-            </button>
-          </p>
         </section>
         <div className="auth-highlights" aria-label="Takip alanları">
           <span>

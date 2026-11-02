@@ -9,8 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --experimental-vm-modules --test tests/*.test.mjs",
-    "test:mobile": "playwright test tests/e2e/mobile.spec.js tests/e2e/forms-mobile.spec.js --reporter=line",
-    "test:live": "playwright test tests/e2e/live.spec.js --reporter=line"
+    "test:mobile": "playwright test tests/e2e/mobile.spec.js tests/e2e/forms-mobile.spec.js tests/e2e/family-mobile.spec.js --reporter=line",
+    "test:live": "playwright test tests/e2e/live.spec.js --reporter=line",
+    "dev:family-server": "node server/family/local.mjs",
+    "test:family-server": "node --test tests/family/server.test.mjs",
+    "test:family-server:mobile": "playwright test tests/e2e/family-server.spec.js --config=playwright.family-server.config.js --reporter=line"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.93.3",
@@ -19,7 +22,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

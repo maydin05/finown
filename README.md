@@ -4,6 +4,14 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Aile bütçesi, sade Auth ve üretim yayın kaydı](docs/2026-11-02_aile-butcesi-yayin.md)
+
+- [Sade e-posta/şifre girişi ve gerçek Supabase Auth (yerel)](docs/2026-11-02_supabase-auth-yerel.md)
+
+- [Aile bütçesi: iki ayrı hesap, davet ve sunucu kontrolü (yerel)](docs/2026-11-01_aile-butcesi-sunucu-yerel.md)
+
+- [Aile bütçesi ve harcama talepleri: yerel deneme ve sınırlar](docs/2026-11-01_aile-butcesi-yerel.md)
+
 - [Gün gün bakiye akışı: canlı yayın ve mobil kontrol](docs/2026-11-01_bakiye-akisi-yayin.md)
 
 - [Gün gün bakiye akışı ve gecikenleri dahil etme (yerel uygulama)](docs/2026-11-01_bakiye-akisi-uygulama.md)

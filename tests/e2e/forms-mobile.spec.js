@@ -5,7 +5,7 @@ const noOverflow = async (page) =>
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-test("login and signup retain usable fields and password visibility without auth requests", async ({
+test("login has only email/password and retains visibility without registration or reset", async ({
   page,
 }) => {
   const authRequests = [];
@@ -26,16 +26,9 @@ test("login and signup retain usable fields and password visibility without auth
     "type",
     "text",
   );
-  await page
-    .getByRole("button", { name: "Hesap oluştur", exact: true })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Kayıt Ol", exact: true }),
-  ).toBeVisible();
-  await expect(page.getByLabel("Şifre", { exact: true })).toHaveAttribute(
-    "autocomplete",
-    "new-password",
-  );
+  await expect(page.getByRole('button',{name:'Hesap oluştur',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:/Kayıt Ol|Şifremi unuttum|Şifre sıfırla/i})).toHaveCount(0);
+  await expect(page.getByLabel('Şifre',{exact:true})).toHaveAttribute('autocomplete','current-password');
   await noOverflow(page);
   expect(authRequests).toEqual([]);
 });

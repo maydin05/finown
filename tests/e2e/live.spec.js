@@ -17,7 +17,7 @@ test('live mobile application loads its login screen and SPA routes without JS e
 });
 
 
-test('live login supports signup switching, password visibility and native validation without auth writes', async ({ page }) => {
+test('live login has email/password only, visibility and native validation without auth writes', async ({ page }) => {
     const authCalls = [];
     page.on('request', request => {
         if (request.url().includes('/auth/v1/') && request.method() !== 'GET') authCalls.push(request.method());
@@ -33,12 +33,8 @@ test('live login supports signup switching, password visibility and native valid
     await expect(password).toHaveAttribute('type', 'text');
     await page.getByRole('button', { name: 'Şifreyi gizle', exact: true }).click();
     await expect(password).toHaveAttribute('type', 'password');
-    await page.getByRole('button', { name: 'Hesap oluştur', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Kayıt Ol', exact: true })).toBeVisible();
-    await expect(password).toHaveAttribute('autocomplete', 'new-password');
-    await expect(page.getByText('En az 6 karakter kullan.', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button',{name:/Hesap oluştur|Kayıt Ol|Şifremi unuttum|Şifre sıfırla/i})).toHaveCount(0);
+    await expect(password).toHaveAttribute('autocomplete','current-password');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole('button', { name: 'Giriş yap', exact: true }).click();
-    await expect(password).toHaveAttribute('autocomplete', 'current-password');
     expect(authCalls).toEqual([]);
 });

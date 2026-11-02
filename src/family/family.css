@@ -1,0 +1,76 @@
+.family-page { padding: 8px 18px 30px; color:var(--text,#1c3028); max-width:760px; margin:auto; overflow-wrap:anywhere; }
+.family-page * { min-width:0; }
+.family-page h1 { font-size:24px; font-weight:800; line-height:1.2; }
+.family-page h2 { font-size:19px; font-weight:750; margin:8px 0; }
+.family-page h3 { font-size:15px; font-weight:750; margin-bottom:10px; }
+.family-page p { font-size:13px; line-height:1.55; }
+.family-local { display:flex; gap:8px; align-items:flex-start; background:#f0eafd; color:#6339a4; padding:10px 12px; border:1px solid #ddd0f2; border-radius:12px; font-size:11px; line-height:1.5; margin-bottom:12px; }
+.family-local svg { flex-shrink:0; margin-top:2px; }
+.family-heading { display:flex; gap:12px; align-items:center; justify-content:space-between; margin:12px 0 16px; }
+.family-heading p { color:#67736c; font-size:11px; margin-bottom:3px; }
+.family-heading .primary-button { padding:10px; display:flex; align-items:center; gap:5px; font-size:12px; min-height:44px; }
+.family-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.family-field { display:flex; flex-direction:column; gap:6px; font-size:12px; color:#4b5d53; font-weight:600; }
+.family-field input,.family-field select,.family-field textarea { width:100%; padding:11px; background:#fff; border:1px solid #d4dcd5; border-radius:10px; min-height:44px; font:inherit; font-size:16px; color:#1c3028; box-sizing:border-box; }
+.family-field textarea { min-height:85px; resize:vertical; }
+.family-fields { display:grid; gap:14px; }
+.family-fields>p { font-size:13px; line-height:1.6; color:#52635a; }
+.family-controls select { font-size:12px; padding:8px; }
+.family-tabs { display:flex; gap:3px; padding:4px; background:#eaf0eb; border-radius:12px; margin:16px 0; }
+.family-tabs button { flex:1; padding:10px 5px; border-radius:9px; min-height:44px; font-weight:700; font-size:12px; color:#52665b; }
+.family-tabs [aria-pressed=true] { background:white; color:#285b46; box-shadow:0 1px 4px #25412d12; }
+.family-mini-summary { display:grid; grid-template-columns:1fr 1fr; gap:10px; background:linear-gradient(115deg,#e9f4ee,#efedfb); border:1px solid #dfe7e1; border-radius:14px; padding:14px; margin-bottom:10px; }
+.family-mini-summary small,.family-mini-summary strong { display:block; }
+.family-mini-summary small { font-size:10px; color:#596d60; margin-bottom:5px; }
+.family-mini-summary strong { font-size:17px; color:#22583f; }
+.family-muted { color:#617168; margin:10px 0; font-size:12px; }
+.family-empty { padding:26px 10px; text-align:center; color:#577165; }
+.family-empty svg { margin:auto; color:#8360b7; }
+.family-request-list,.family-plan,.family-notifications,.family-history { list-style:none; padding:0; margin:12px 0; }
+.family-request-list li { background:white; border:1px solid #e1e7e2; margin-bottom:10px; border-radius:14px; }
+.family-request-list button { display:flex; gap:8px; padding:14px; align-items:center; width:100%; text-align:left; min-height:88px; }
+.family-request-list button>span { flex:1; }
+.family-request-list strong { font-size:14px; }
+.family-request-list small,.family-plan small { display:block; font-size:10px; color:#617168; margin-top:5px; }
+.family-request-list b { font-size:13px; color:#65449b; }
+.family-status { font-size:10px; font-style:normal; padding:4px 8px; border-radius:7px; background:#f3ebfc; color:#684294; display:inline-block; margin-top:7px; }
+.status-approved,.status-purchased { background:#e2f3e9; color:#205b42; }
+.status-review,.status-rejected,.status-cancelled { background:#ffeded; color:#a82c43; }
+.family-card { padding:16px; border:1px solid #e0e6e0; border-radius:14px; background:white; margin:12px 0; }
+.family-card p+p { margin-top:6px; }
+.family-card a { color:#395fac; text-decoration:underline; font-size:13px; display:inline-block; margin-top:10px; }
+.family-copy { white-space:pre-wrap; }
+.family-amount { display:block; font-size:26px; color:#634498; margin:6px 0; }
+.family-terms { background:#f3eefc; border-color:#dfd2f1; }
+.family-back { min-height:44px; color:#52685b; font-size:13px; }
+.family-actions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+.family-actions button { flex:1 1 130px; min-height:44px; font-size:12px; padding:10px; }
+.family-assessment { padding:12px; border-radius:12px; margin:14px 0; font-size:12px; line-height:1.6; }
+.family-assessment strong { font-size:13px; }
+.family-assessment p { font-size:12px; margin:6px 0; }
+.family-assessment ul { padding-left:16px; list-style:disc; margin:8px 0; }
+.family-assessment small { display:block; font-size:11px; margin-top:8px; }
+.family-assessment.is-ok { background:#e8f5ee; border:1px solid #c9e5d4; color:#245c42; }
+.family-assessment.is-warning { background:#fff5e4; border:1px solid #ead7b8; color:#855d1e; }
+.family-error { background:#fff0f1; color:#a32c44; border-radius:10px; padding:12px; font-size:13px; margin:10px 0; }
+.family-plan li { padding:13px 0; border-bottom:1px solid #e1e8e1; display:flex; gap:12px; align-items:center; }
+.family-plan li>span { flex:1; }
+.family-plan strong { font-size:13px; }
+.family-plan b { font-size:12px; color:#aa334b; text-align:right; }
+.family-plan .family-income { color:#246649; }
+.family-history li { border-left:2px solid #d7c5ed; padding:0 0 15px 12px; margin-top:10px; }
+.family-history strong { font-size:10px; color:#72786e; }
+.family-history p { margin:4px 0; }
+.family-history small { font-size:10px; }
+.family-notifications li { border-bottom:1px solid #e5e9e4; }
+.family-notifications button { text-align:left; font-size:13px; line-height:1.5; padding:14px 0; min-height:44px; width:100%; }
+.family-check { display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.5; padding:9px 0; }
+.family-check input { flex:none; width:20px; height:20px; margin-top:2px; accent-color:#6d45a0; }
+.family-check small { display:block; font-size:10px; color:#617168; }
+@media(max-width:350px) { .family-heading { align-items:flex-start; } .family-heading .primary-button { max-width:112px; } .family-heading h1 { font-size:22px; } .family-grid:not(.family-controls) { grid-template-columns:1fr; } .family-mini-summary { padding:11px; } .family-mini-summary strong { font-size:15px; } }
+
+.family-account-compact { padding-bottom: 0; }
+.family-page summary { min-height: 44px; padding: 12px 0; font-size: 13px; font-weight: 650; cursor: pointer; }
+
+.family-login-shell { margin: 0; padding: 0; }
+.family-auth-note { padding: 10px 22px; color: #667369; font-size: 11px; }

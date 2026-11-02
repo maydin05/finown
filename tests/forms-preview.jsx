@@ -15,9 +15,6 @@ const previewAuth = {
   signInWithPassword: async () => ({
     error: new Error("Bu bir önizleme; gerçek hesaba giriş yapılmaz."),
   }),
-  signUp: async () => ({
-    error: new Error("Bu bir önizleme; gerçek hesap oluşturulmaz."),
-  }),
 };
 const banks = [
   { id: 1, name: "Örnek Banka" },

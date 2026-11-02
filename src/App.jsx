@@ -31,6 +31,8 @@ import { PaymentConfirmModal } from "./modals/PaymentConfirmModal";
 import { BestCardsModal } from "./modals/BestCardsModal";
 import { QuickMenu } from "./modals/QuickMenu";
 
+const FamilyPage = React.lazy(() => import('./family/FamilyServer'));
+
 function AppContent() {
   const {
     loading,
@@ -535,6 +537,7 @@ function AppContent() {
             />
             <Route path="/banks" element={<Banks onOpenModal={openModal} />} />
             <Route path="/migration" element={<Migration />} />
+            <Route path="/family" element={<React.Suspense fallback={<p>Yerel modül yükleniyor…</p>}><FamilyPage auth={supabase.auth} /></React.Suspense>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -1,0 +1,84 @@
+import {test,expect} from '@playwright/test';
+test('iki gerçek yerel oturum: davet → ortak kayıt seçimi → talep/onay → harcama → erişim kaldırma',async({page,browser},testInfo)=>{
+ test.setTimeout(90000);
+ const memberContext=await browser.newContext({viewport:testInfo.project.use.viewport,timezoneId:'Europe/Istanbul',isMobile:true,hasTouch:true});
+ const spouse=await memberContext.newPage();
+ const width=testInfo.project.use.viewport.width;const ownerEmail=`owner-${width}@family.test`,memberEmail=`member-${width}@family.test`;
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));spouse.on('pageerror',e=>errors.push(e.message));
+ async function login(p,email) {
+  await p.goto('/tests/family-server-preview.html');
+  await p.getByLabel('E-posta',{exact:true}).fill(email);await p.getByLabel('Şifre',{exact:true}).fill('Local-Test-Password-2026');
+  await p.getByRole('button',{name:'Giriş Yap',exact:true}).click();
+  await expect(p.getByRole('button',{name:/Hesap oluştur|Kayıt Ol|Şifremi unuttum/i})).toHaveCount(0);
+  await expect(p.getByText(email,{exact:true})).toBeVisible();
+ }
+ try {
+  await login(page,ownerEmail);await login(spouse,memberEmail);
+  await page.getByRole('button',{name:'Ortak bütçe oluştur',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Aile bütçesi',exact:true})).toBeVisible();
+  await expect(page.getByLabel('Deneme görünümü')).toHaveCount(0);
+  await page.getByRole('button',{name:'Ortak plan',exact:true}).click();
+  await page.getByRole('button',{name:'Hesaplamaya katılacak kayıtları seç',exact:true}).click();
+  for(const check of await page.getByRole('dialog').getByRole('checkbox').all())await check.check();
+  await page.getByRole('button',{name:'Yerel olarak kaydet',exact:true}).click();
+  await page.getByRole('button',{name:'Bütçe kapsamını doğrula',exact:true}).click();
+  await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Yerel olarak kaydet',exact:true}).click();
+  await page.getByRole('button',{name:'Kullanılabilir limitleri doğrula',exact:true}).click();
+  await page.getByLabel('Kart',{exact:true}).selectOption('11');await page.getByLabel('Bankadaki bugünkü kullanılabilir limit (TL)',{exact:true}).fill('30000');
+  await page.getByRole('button',{name:'Yerel olarak kaydet',exact:true}).click();
+  await page.getByText('Hesap ve bütçe yönetimi',{exact:true}).click();
+  await page.getByText('Üye ve davet yönetimi',{exact:true}).click();
+  await page.getByLabel('Davet edilecek yerel hesabın e-postası',{exact:true}).fill(memberEmail);
+  await page.getByRole('button',{name:'Yerel davet bağlantısı oluştur',exact:true}).click();
+  const link=await page.getByLabel('Yerel davet bağlantısı',{exact:true}).inputValue();
+  await spouse.goto(link);await spouse.getByText('Davet bağlantısını kabul et',{exact:true}).click();
+  await spouse.getByRole('button',{name:'Bu hesapla daveti kabul et',exact:true}).click();
+  await expect(spouse.getByRole('heading',{name:'Aile bütçesi',exact:true})).toBeVisible();
+  await expect(spouse.getByRole('button',{name:'Bütçe kapsamını doğrula',exact:true})).toHaveCount(0);
+  await spouse.getByRole('button',{name:'Ortak plan',exact:true}).click();
+  await expect(spouse.getByText('Yerel örnek maaş',{exact:true}).first()).toBeVisible();
+  await spouse.getByRole('button',{name:'Talepler',exact:true}).click();
+  await spouse.getByRole('button',{name:'Talep oluştur',exact:true}).click();
+  await spouse.getByLabel('İhtiyaç adı',{exact:true}).fill('Birlikte alınacak süpürge');await spouse.getByLabel('Tahmini tutar (TL)',{exact:true}).fill('2500');
+  await spouse.getByRole('button',{name:'Yerel olarak kaydet',exact:true}).click();
+  await page.getByRole('button',{name:'Talepler',exact:true}).click();
+  await page.getByRole('button',{name:/Birlikte alınacak süpürge/}).click();
+  await page.getByRole('button',{name:'Tutar ve kart seç',exact:true}).click();
+  await page.getByLabel('Ödeme yöntemi',{exact:true}).selectOption('11');
+  await expect(page.getByRole('dialog').getByText('Mevcut plana göre karşılanabiliyor')).toBeVisible();
+  await page.getByRole('button',{name:'Yerel olarak kaydet',exact:true}).click();
+  await expect(spouse.getByRole('button',{name:/Birlikte alınacak süpürge.*Onaylandı/})).toBeVisible({timeout:10000});
+  await spouse.getByRole('button',{name:/Birlikte alınacak süpürge/}).click();
+  await spouse.getByRole('button',{name:'Satın aldım',exact:true}).click();await spouse.getByLabel('Gerçek tutar (TL)').fill('2200');
+  await spouse.getByRole('button',{name:'Yerel olarak kaydet',exact:true}).click();
+  await expect(spouse.getByText('Gerçek harcama · inceleme gerekli',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'İkinci üyenin yerel erişimini kaldır',exact:true}).click();
+  await expect(spouse.getByText('Bu bütçeye erişimin sona erdi veya sunucuya ulaşılamıyor.',{exact:true})).toBeVisible({timeout:10000});
+  await expect(spouse.getByRole('heading',{name:'Birlikte alınacak süpürge',exact:true})).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+ } finally {await memberContext.close();}
+});
+
+test('yalnız e-posta/şifre: hata, gerçek Auth oturumu, yenileme ve çıkış',async({page},testInfo)=>{
+ await page.setViewportSize({width:testInfo.project.use.viewport.width,height:667});
+ const authPaths=[];
+ page.on('request',req=>{const p=new URL(req.url()).pathname;if(p.startsWith('/auth/v1/'))authPaths.push(p);});
+ await page.goto('/tests/family-server-preview.html');
+ const loginButton=await page.getByRole('button',{name:'Giriş Yap',exact:true}).boundingBox();expect(loginButton.y+loginButton.height).toBeLessThanOrEqual(667);
+ await page.getByLabel('E-posta',{exact:true}).fill(`owner-${testInfo.project.use.viewport.width}@family.test`);
+ await page.getByLabel('Şifre',{exact:true}).fill('Wrong-Password-2026');
+ await page.getByRole('button',{name:'Giriş Yap',exact:true}).click();
+ await expect(page.getByRole('alert')).toContainText('E-posta veya şifre hatalı.');
+ await page.getByLabel('Şifre',{exact:true}).fill('Local-Test-Password-2026');
+ await page.getByRole('button',{name:'Giriş Yap',exact:true}).click();
+ await expect(page.getByText('Hesap ve bütçe yönetimi',{exact:true})).toBeVisible();
+ await page.reload();await expect(page.getByText('Hesap ve bütçe yönetimi',{exact:true})).toBeVisible();
+ const renewed=await page.evaluate(async()=>{const {familyAuth}=await import('/src/family/authClient.js');const auth=await familyAuth();const result=await auth.refreshSession();return !result.error;});expect(renewed).toBe(true);
+ await page.getByRole('button',{name:'Yerel oturumu kapat',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Giriş Yap',exact:true})).toBeVisible();
+ await page.reload();await expect(page.getByRole('button',{name:'Giriş Yap',exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:/Kayıt Ol|Hesap oluştur|Şifremi unuttum|Şifre sıfırla/i})).toHaveCount(0);
+ expect(authPaths.every(p=>['/auth/v1/token','/auth/v1/user','/auth/v1/logout'].includes(p))).toBe(true);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

@@ -1,0 +1,10 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
+import FamilyPage from '../src/family/FamilyPage';
+import { DataContext } from '../src/context/store';
+import { Header } from '../src/components/layout/Header';
+import { BottomNav } from '../src/components/layout/BottomNav';
+import '../src/index.css';
+const data = { userId:'synthetic-family-account', products:[], payments:[{ id:77,title:'Seçilebilir örnek ödeme',amount:1000,dueDate:'2026-11-03',isPaid:false,type:'loan' }], incomeSources:[{id:88,title:'Seçilebilir örnek maaş',amount:25000,date:'2026-11-05',type:'recurring'}], expenseSources:[],subscriptionSources:[],incomeReceipts:[],subscriptionPayments:[],statusTracker:{} };
+if (import.meta.env.DEV) createRoot(document.getElementById('root')).render(<MemoryRouter><DataContext.Provider value={data}><div className="app-shell"><Header onOpenQuickMenu={()=>{}}/><main className="app-content"><FamilyPage/></main><BottomNav/></div></DataContext.Provider></MemoryRouter>);
