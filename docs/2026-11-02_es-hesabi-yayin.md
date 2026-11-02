@@ -25,4 +25,10 @@
 
 ## Yayın sonrası doğrulama
 
-GitHub/Netlify sürümü, mobil canlı kontrol ve kayıt karşılaştırması sonuçları doğrulamadan sonra eklenir. Gerçek yeni hesabın canlı giriş kabulü bu kontrolün kapsamı dışındadır; canlıda hesap oluşturulmayacaktır.
+- Özellik commit’i `366a1c60d98cc8c95ba148850334e97395d4b1b3`, GitHub `main` üzerinde doğrulandı. Netlify `6ae82f60a42c1d4119fbf766` aynı SHA ile `ready`; yayın zamanı 2 Kasım 2026 09:36 TRT.
+- İki ortam değişkeni geri okundu: yalnız Functions/production, admin anahtarı secret, izin listesinde tam olarak doğrulanan tek hesap kimliği var. Kişisel kimlik/secret değerlerinin public kaynak veya üretim frontend paketinde bulunmadığı ayrıca kontrol edildi.
+- Canlı `/family-api/health` 200 `ready=true`; oturumsuz `/me` 401. Mevcut sahibin canlı oturumunda hesap oluşturma formunun görünmesi sunucunun yetki sonucuyla doğrulandı.
+- Canlı form 320/375/430 × 667 px boyutlarında kontrol edildi: yatay taşma yok, e-posta/şifre alanları boş, şifre varsayılan maskeli ve en az 10 karakter. Ortak bütçe henüz bulunmadığından kaydetme düğmesi kapalı; açıklama ve alanlar görünür. 375 × 812 px görünümün ekran görüntüsü özel yerel kayda alındı. Fiziksel cihaz kabulü yapılmadı.
+- Canlıda hesap oluşturma, bütçe oluşturma, davet oluşturma/kabul veya ödeme kaydı yazma isteği gönderilmedi; e-posta gönderilmedi. Mevcut finans kayıtları, tarihleri ve ödeme durumları korundu.
+- Yayın sonrası tam satır karşılaştırması: on finans tablosu, beş aile tablosu ve Auth hesap/şifre durumu önceki kopyayla aynı. Yeni kullanıcı, ortak bütçe veya davet oluşmadı.
+- Gerçek yeni hesabın canlı giriş/üyelik kabulü bu kontrolün kapsamı dışındadır; bu akış ayrı yerel GoTrue/PostgreSQL testlerinde doğrulandı. Canlı yetkisiz ikinci hesapla deneme yapılmadı; sunucudaki tek hesap izin listesi geri okundu ve diğer aktörlerin reddi yerel testlerle doğrulandı.
