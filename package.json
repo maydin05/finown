@@ -12,7 +12,7 @@
     "test:mobile": "playwright test tests/e2e/mobile.spec.js tests/e2e/forms-mobile.spec.js tests/e2e/family-mobile.spec.js --reporter=line",
     "test:live": "playwright test tests/e2e/live.spec.js --reporter=line",
     "dev:family-server": "node server/family/local.mjs",
-    "test:family-server": "node --test tests/family/server.test.mjs",
+    "test:family-server": "node --test tests/family/*.test.mjs",
     "test:family-server:mobile": "playwright test tests/e2e/family-server.spec.js --config=playwright.family-server.config.js --reporter=line"
   },
   "dependencies": {

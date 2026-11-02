@@ -9,7 +9,8 @@ let environment,server,stopping=false;
 async function cleanup(){await new Promise(r=>server?server.close(r):r());await environment?.close();}
 try {
  environment=await startSupabaseAuthEnvironment();
- server=familyHttpServer(environment.pool,{authUrl:environment.authUrl,anonKey:environment.anonKey}).server;
+ const accountCreators=(await environment.pool.query("select id from auth.users where email ~ '^owner(-[0-9]+)?@family[.]test$'")).rows.map(r=>r.id);
+ server=familyHttpServer(environment.pool,{authUrl:environment.authUrl,anonKey:environment.anonKey,adminKey:environment.adminKey,accountCreators}).server;
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});
  await mkdir('docs/private.local',{recursive:true});
  if(port===8784)await writeFile('docs/private.local/family-runtime.local.json',JSON.stringify({containers:environment.containers,authImage:environment.image}),{mode:0o600});

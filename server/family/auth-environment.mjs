@@ -43,7 +43,7 @@ export async function startSupabaseAuthEnvironment({today=localToday,fixtures=tr
    await seedLocalFinance(pool,result.id,today());return result;
   };
   const accounts=[];
-  if(fixtures)for(const email of ['owner@family.test','member@family.test','other@family.test',...[320,375,430].flatMap(w=>[`owner-${w}@family.test`,`member-${w}@family.test`])]){await provision(email,'Local-Test-Password-2026');accounts.push({email});}
-  return {pool,authUrl,anonKey,accounts,provision,close,expiredTokenFor:user=>jwt(secret,'authenticated',{sub:user.id,email:user.email,aud:'authenticated',exp:Math.floor(Date.now()/1000)-30}),containers:[database,provider],image:AUTH_IMAGE};
+  if(fixtures)for(const email of ['owner@family.test','member@family.test','other@family.test',...[320,375,430].flatMap(w=>[`owner-${w}@family.test`,`member-${w}@family.test`,`owner-${w+1000}@family.test`])]){await provision(email,'Local-Test-Password-2026');accounts.push({email});}
+  return {pool,authUrl,anonKey,adminKey,accounts,provision,close,expiredTokenFor:user=>jwt(secret,'authenticated',{sub:user.id,email:user.email,aud:'authenticated',exp:Math.floor(Date.now()/1000)-30}),containers:[database,provider],image:AUTH_IMAGE};
  }catch(error){await close();throw error;}
 }

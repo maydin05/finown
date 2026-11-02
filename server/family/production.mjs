@@ -1,9 +1,10 @@
 import {FamilyService,problem} from './service.mjs';
 import {familyRoute} from './routes.mjs';
+import {memberAccountCreator} from './member-account.mjs';
 import {supabaseIdentity} from './supabase-auth.mjs';
-export function createFamilyHandler({pool,authUrl,anonKey,fingerprintKey,origins}) {
+export function createFamilyHandler({pool,authUrl,anonKey,fingerprintKey,origins,adminKey,accountCreators=[]}) {
  if(!fingerprintKey || fingerprintKey.length<32)throw new Error('Kalıcı finans anahtarı gerekli.');
- const service=new FamilyService(pool,{fingerprintKey,testEmailsOnly:false});
+ const service=new FamilyService(pool,{fingerprintKey,testEmailsOnly:false,createMemberAccount:memberAccountCreator({url:authUrl,adminKey}),accountCreators});
  const identify=supabaseIdentity({url:authUrl,anonKey});
  return async request=>{
   const reply=(status,data)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});

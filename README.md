@@ -4,6 +4,10 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Eş hesabı oluşturma: üretim yayın kaydı](docs/2026-11-02_es-hesabi-yayin.md)
+
+- [Bütçe sahibinden eş hesabı oluşturma (yerel uygulama)](docs/2026-11-02_es-hesabi-yerel.md)
+
 - [Aile bütçesi, sade Auth ve üretim yayın kaydı](docs/2026-11-02_aile-butcesi-yayin.md)
 
 - [Sade e-posta/şifre girişi ve gerçek Supabase Auth (yerel)](docs/2026-11-02_supabase-auth-yerel.md)

@@ -1,14 +1,15 @@
 import http from 'node:http';
 import { FamilyService,problem } from './service.mjs';
 import {familyRoute} from './routes.mjs';
+import {memberAccountCreator} from './member-account.mjs';
 import {supabaseIdentity} from './supabase-auth.mjs';
 async function jsonBody(req) {
  let text='';for await(const chunk of req) {text+=chunk;if(Buffer.byteLength(text)>64000)throw problem('İstek çok büyük.',413);}
  try{return JSON.parse(text || '{}');}catch{throw problem('Geçersiz istek.');}
 }
-export function familyHttpServer(pool,{today,authUrl,anonKey}={}) {
+export function familyHttpServer(pool,{today,authUrl,anonKey,adminKey,accountCreators=[]}={}) {
  if(!authUrl || !anonKey)throw new Error('Supabase Auth yapılandırması gerekli.');
- const service=new FamilyService(pool,{today}),userFor=supabaseIdentity({url:authUrl,anonKey});
+ const service=new FamilyService(pool,{today,accountCreators,createMemberAccount:memberAccountCreator({url:authUrl,adminKey})}),userFor=supabaseIdentity({url:authUrl,anonKey});
  const server=http.createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');
   const reply=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(data));};

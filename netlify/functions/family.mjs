@@ -11,7 +11,7 @@ export default async request=>{
    const url=new URL(connectionString);
    if(url.username!=='finown_family_api.zowlpzmvwiszwhtvsagj' || url.hostname!=='aws-1-ap-southeast-1.pooler.supabase.com')throw new Error('Wrong database target');
    const pool=new pg.Pool({connectionString,ssl:supabaseSSL,max:1,idleTimeoutMillis:1000,connectionTimeoutMillis:8000,allowExitOnIdle:true});
-   handle=createFamilyHandler({pool,authUrl:'https://zowlpzmvwiszwhtvsagj.supabase.co/auth/v1',anonKey,fingerprintKey,origins:['https://finown.netlify.app']});
+   handle=createFamilyHandler({pool,authUrl:'https://zowlpzmvwiszwhtvsagj.supabase.co/auth/v1',anonKey,fingerprintKey,origins:['https://finown.netlify.app'],adminKey:process.env.FINOWN_SUPABASE_AUTH_ADMIN_KEY,accountCreators:(process.env.FINOWN_FAMILY_ACCOUNT_CREATORS || '').split(',').map(v=>v.trim()).filter(v=>/^[a-f0-9-]{36}$/i.test(v))});
   }
   return await handle(request);
  }catch{return Response.json({error:'Aile bütçesi hizmeti şu anda kullanılamıyor.'},{status:503,headers:{'Cache-Control':'no-store'}});}

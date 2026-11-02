@@ -7,7 +7,7 @@ export function problem(message,status=400) { return Object.assign(new Error(mes
 const camel = key=>key.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
 const mapRow = row=>Object.fromEntries(Object.entries(row).map(([k,v])=>[camel(k),v]));
 export class FamilyService {
- constructor(pool,{today=localToday,fingerprintKey,testEmailsOnly=true}={}) { this.pool=pool;this.today=today;this.fingerprintKey=fingerprintKey || randomBytes(32);this.testEmailsOnly=testEmailsOnly; }
+ constructor(pool,{today=localToday,fingerprintKey,testEmailsOnly=true,createMemberAccount=null,accountCreators=[]}={}) { this.createMemberAccount=createMemberAccount;this.accountCreators=new Set(accountCreators);this.pool=pool;this.today=today;this.fingerprintKey=fingerprintKey || randomBytes(32);this.testEmailsOnly=testEmailsOnly; }
  async transaction(user,callback) {
   const c=await this.pool.connect();
   try {
@@ -45,7 +45,7 @@ export class FamilyService {
   delete state.operations;
   return {...state,_server:{actor:user.id,role:b.owner_id===user.id?'owner':'requester',environment:context.env,environmentVersion:digest(JSON.stringify(context.env)),records:b.owner_id===user.id?context.records:[]}};
  }
- async list(user) {return this.transaction(user,async c=>(await c.query('select b.id,b.owner_id,b.created_at from family_budgets b join family_members m on m.budget_id=b.id where m.user_id=$1 order by b.created_at',[user.id])).rows);}
+ async list(user) {return this.transaction(user,async c=>(await c.query("select b.id,b.owner_id,b.created_at,b.state->>'requester' as requester_id from family_budgets b join family_members m on m.budget_id=b.id where m.user_id=$1 order by b.created_at",[user.id])).rows);}
  async create(user) {return this.transaction(user,async c=>{
   const id=randomUUID(),state=newFamily(id);state.owner=user.id;state.requester=null;
   const inserted=await c.query('insert into family_budgets(id,owner_id,state) values($1,$2,$3) on conflict(owner_id) do nothing returning id',[id,user.id,state]);
@@ -78,6 +78,24 @@ export class FamilyService {
   await c.query('update family_budgets set state=$2 where id=$1',[id,state]);b.state=state;
   return this.publicState(b,user,await this.environment(c,b));
  });}
+ canCreateMemberAccount(user) {return Boolean(this.createMemberAccount && this.accountCreators.has(user.id));}
+ async createMember(user,id,body) {
+  if(!this.canCreateMemberAccount(user))throw problem('Bu hesap için üye hesabı oluşturma yetkisi yok.',403);
+  const email=String(body?.email || '').trim().toLowerCase(),password=body?.password;
+  if(!body || Object.keys(body).some(k=>!['email','password'].includes(k)) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length>254 || email===user.email.toLowerCase() || (this.testEmailsOnly && !email.endsWith('.test')))throw problem('Eşin için farklı ve geçerli bir e-posta adresi yaz.');
+  if(typeof password!=='string' || password.length<10 || Buffer.byteLength(password)>72)throw problem('Şifre en az 10 karakter ve en fazla 72 bayt olmalı.');
+  return this.transaction(user,async c=>{
+   const b=await this.budget(c,id,user,{lock:true,owner:true});
+   if(b.state.requester)throw problem('Bu bütçenin ikinci üyesi zaten var.',409);
+   if(b.state.events.some(e=>e.action==='member-account-created'))throw problem('Bu bütçenin üye hesabı daha önce oluşturuldu. Yeniden bağlamak için davet bağlantısını kullan.',409);
+   const account=await this.createMemberAccount({budgetId:id,ownerId:user.id,email,password});
+   await c.query("insert into family_members values($1,$2,'requester')",[id,account.id]);
+   await c.query('update family_invitations set revoked_at=now() where budget_id=$1 and accepted_at is null and revoked_at is null',[id]);
+   b.state.requester=account.id;
+   await this.audit(c,b,user,'member-account-created','Üye hesabı oluşturuldu ve bütçeye bağlandı; e-posta gönderilmedi');
+   return {id,memberId:account.id,recovered:account.recovered};
+  });
+ }
  async invite(user,id,email) {return this.transaction(user,async c=>{
   const b=await this.budget(c,id,user,{lock:true,owner:true});
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '') || email.length>254 || (this.testEmailsOnly && !email.endsWith('.test'))) throw problem(this.testEmailsOnly ? 'Yerel davet için .test uzantılı test hesabı kullan.' : 'Geçerli bir e-posta adresi gerekli.');

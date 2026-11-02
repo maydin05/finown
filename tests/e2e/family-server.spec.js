@@ -82,3 +82,34 @@ test('yalnız e-posta/şifre: hata, gerçek Auth oturumu, yenileme ve çıkış'
  expect(authPaths.every(p=>['/auth/v1/token','/auth/v1/user','/auth/v1/logout'].includes(p))).toBe(true);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+test('bütçe sahibi eş hesabı oluşturur; yeni kişi belirlenen şifreyle girer, yalnız ortak bütçeye erişir',async({page,browser},testInfo)=>{
+ test.setTimeout(60000);
+ const width=testInfo.project.use.viewport.width;
+ const email=`created-spouse-${width}@family.test`,password='Local-Spouse-Password-2026';
+ const context=await browser.newContext({viewport:{width,height:667},timezoneId:'Europe/Istanbul',isMobile:true,hasTouch:true});
+ const spouse=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));spouse.on('pageerror',e=>errors.push(e.message));
+ try {
+  await page.setViewportSize({width,height:667});await page.goto('/tests/family-server-preview.html');
+  await page.getByLabel('E-posta',{exact:true}).fill(`owner-${width+1000}@family.test`);await page.getByLabel('Şifre',{exact:true}).fill('Local-Test-Password-2026');
+  await page.getByRole('button',{name:'Giriş Yap',exact:true}).click();
+  await page.getByText('Eşim için hesap oluştur',{exact:true}).click();
+  await expect(page.getByRole('button',{name:'Hesabı oluştur ve bütçeye ekle',exact:true})).toBeDisabled();
+  await page.getByRole('button',{name:'Ortak bütçe oluştur',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Talepler',exact:true})).toBeVisible();
+  await page.getByText('Hesap ve bütçe yönetimi',{exact:true}).click();await page.getByText('Üye ve davet yönetimi',{exact:true}).click();await page.getByText('Eşim için hesap oluştur',{exact:true}).click();
+  await page.getByLabel('Eşinin e-posta adresi',{exact:true}).fill(email);await page.getByLabel('Başlangıç şifresi',{exact:true}).fill(password);
+  await expect(page.getByLabel('Başlangıç şifresi',{exact:true})).toHaveAttribute('type','password');
+  await page.getByLabel('Şifreyi göster',{exact:true}).check();await expect(page.getByLabel('Başlangıç şifresi',{exact:true})).toHaveAttribute('type','text');await page.getByLabel('Şifreyi göster',{exact:true}).uncheck();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.getByRole('button',{name:'Hesabı oluştur ve bütçeye ekle',exact:true}).click();
+  await expect(page.getByRole('status')).toContainText('Eşinin hesabı oluşturuldu');await expect(page.getByLabel('Başlangıç şifresi',{exact:true})).toHaveCount(0);
+  await spouse.goto('/tests/family-server-preview.html');await spouse.getByLabel('E-posta',{exact:true}).fill(email);await spouse.getByLabel('Şifre',{exact:true}).fill(password);await spouse.getByRole('button',{name:'Giriş Yap',exact:true}).click();
+  await expect(spouse.getByText(email,{exact:true})).toBeVisible();
+  await spouse.getByRole('combobox',{name:'Ortak bütçe',exact:true}).selectOption({label:'Ortak bütçe 1 · Talep sahibi'});
+  await expect(spouse.getByRole('button',{name:'Talep oluştur',exact:true})).toBeVisible();
+  await expect(spouse.getByText('Üye ve davet yönetimi',{exact:true})).toHaveCount(0);await expect(spouse.getByText('Eşim için hesap oluştur',{exact:true})).toHaveCount(0);
+  await spouse.getByRole('button',{name:'Ortak plan',exact:true}).click();await expect(spouse.getByLabel('Ortak bütçe hareketleri').locator('li')).toHaveCount(0);
+  expect(await spouse.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(errors).toEqual([]);
+ }finally{await context.close();}
+});
