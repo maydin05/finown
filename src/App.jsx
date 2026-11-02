@@ -537,7 +537,7 @@ function AppContent() {
             />
             <Route path="/banks" element={<Banks onOpenModal={openModal} />} />
             <Route path="/migration" element={<Migration />} />
-            <Route path="/family" element={<React.Suspense fallback={<p>Yerel modül yükleniyor…</p>}><FamilyPage auth={supabase.auth} /></React.Suspense>} />
+            <Route path="/family" element={<React.Suspense fallback={<p>Aile bütçesi yükleniyor…</p>}><FamilyPage auth={supabase.auth} /></React.Suspense>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

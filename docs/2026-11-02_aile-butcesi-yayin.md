@@ -29,6 +29,11 @@
 
 ## Yayın ve canlı kabul
 
-GitHub SHA, Netlify yayın kimliği ve canlı mobil kontrol sonucu doğrulamadan sonra bu kayda eklenir. Yerel testler canlı iki gerçek hesap kabulü sayılmaz; gerçek davet gönderilmeyeceği için ikinci hesabın katılımı canlıda denenmez.
+- Ana özellik commit’i `ff02a0623973b5d048b607f8e95c8feadaabc983`, GitHub `main` üzerinde doğrulandı. Netlify `6ae82152d64b30ae9051adfc` yayını aynı commit ile `ready`; yayın saati 2 Kasım 2026 08:36 TRT.
+- Canlı `/family-api/health` 200 ve `ready=true`; oturumsuz `/me` ve `/budgets` 401. Canlı giriş ekranının 320/375/430 px testleri 6/6 başarılı.
+- Mevcut canlı hesap oturumuyla aile ekranı açıldı; ek giriş gerekmedi. Henüz bütçe bulunmayan başlangıç ekranı ve alt gezinme kontrol edildi. 320/375/430 px ölçümlerde yatay taşma yok.
+- Başlangıç ekranına açık başlık ve yönlendirme eklendi; boş bütçe seçicisi gizlendi ve yükleme metni üretime uyarlandı. Bu son düzenlemeden sonra ESLint, üretim derlemesi ve iki hesaplı altı yerel mobil test tekrar başarılı.
+- Yayın sonrası on eski finans tablosunun tüm satırları başlangıç yedeğiyle birebir aynı. Aile bütçesi ve davet tabloları boş; gerçek bütçe/davet oluşturulmadı, mevcut kayıtlara yazılmadı.
+- Yerel iki hesap testleri canlı iki gerçek hesap kabulü sayılmaz. Gerçek davet gönderilmeyeceği için ikinci hesabın katılımı ve ortak bütçedeki yazma işlemleri canlıda denenmedi. Mobil kontrol tarayıcıdaki viewport boyutlarıyla yapıldı; fiziksel cihaz kabulü değildir.
 
 Referans: [Netlify Functions ortam değişkenleri](https://docs.netlify.com/build/functions/environment-variables/), [Supabase SSL doğrulaması](https://supabase.com/docs/guides/platform/ssl-enforcement).
