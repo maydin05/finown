@@ -35,3 +35,7 @@ Loglar: `/tmp/finown-spending-unit.log`, `/tmp/finown-spending-final-mobile.log`
 ## Yayın öncesi
 
 Kullanıcı ayrıca yetkilendirirse güncel Git hedefi/değişiklik sahipliği doğrulanmalı; yalnız onaylı dosyalar gönderilmeli. Migration yoktur. Gerçek hesapta aile GET yanıtı ve harcama payının belirsizlik nedenleri salt okunur incelenmeli; üretim kayıtları veya bakiyesi test amacıyla kaydedilmemelidir. Yerel kabul canlı doğrulama sayılmamalıdır.
+
+## Yayın güncellemesi
+
+3 Kasım 2026: Bu belgenin üstündeki yerel durum tarihsel aşamadır. Kullanıcının ayrı yayın onayıyla özellik GitHub/Netlify üretimine alındı, canlı mobil kabul ve satır koruması doğrulandı. Güncel kanıt: [üretim yayın kaydı](2026-11-03_harcanabilir-tutar-ve-senaryo-yayin.md).
