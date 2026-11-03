@@ -15,4 +15,4 @@
 - Lint ve üretim build başarılı; mevcut bundle/Browserslist uyarıları sürüyor.
 - Mobil ilk ekran ve dokuz bankanın tam görünümü görsel olarak incelendi. Örnek görüntüler özel yerel alanda tutuluyor.
 
-Logo değişikliği henüz commit/push/deploy edilmedi. Canlı eş hesabında yapılan önceki ana sayfa kabulü, bu logo değişikliğinin canlı kabulü sayılmaz. Üretim kayıtları ve şema bu görsel çalışma sırasında değiştirilmedi.
+Bu yerel kontrolün yapıldığı anda logo değişikliği henüz commit/push/deploy edilmemişti. Sonraki onaylı yayın ve canlı logo kabulü [üretim yayın kaydında](2026-11-03_banka-logolari-yayin.md) doğrulandı. Canlı eş hesabında yapılan önceki ana sayfa kabulü, bu logo değişikliğinin canlı kabulü sayılmaz. Üretim kayıtları ve şema bu görsel çalışma sırasında değiştirilmedi.
