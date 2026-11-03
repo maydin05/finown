@@ -13,4 +13,9 @@
 
 ## Canlı kabul
 
-Git, Netlify ve gerçek oturum sonuçları yayın sonrası bu bölüme eklenecek. Yerel testler tek başına canlı kabul sayılmaz.
+- Özellik SHA’sı `652956aa636bc632d609d9a37ee2f031c2039405`, GitHub `main` ucunda readback ile doğrulandı.
+- Netlify `6ae972f16b5e864abbb1335a`, aynı SHA ile `ready`; yayın zamanı 3 Kasım 2026 08:37 TRT. Canlı health 200/ready, oturumsuz ana görünüm isteği 401.
+- Yeni sürüm mevcut bütçe sahibi oturumunda açıldı. Ödemeler sayfasında 320/375/430 px ölçülerde yatay taşma yok. Bildirilen kartın aylık kaydı ve salt okunur inceleme amacıyla açılan ayrıntısı mevcut DB tutar/tarihiyle eşleşti. Kapat dışında kayıt işlemi yapılmadı; ekran kanıtı özel yerel alanda tutuldu.
+- On finans, beş aile tablosu ve Auth hesap/şifre durumunun tam satır karşılaştırması aynı kaldı. Mevcut tutarlar, tarihler, durumlar ve paylaşım kapsamı korunuyor.
+- Eş hesabıyla gerçek canlı kabul **bekliyor**: tarayıcı oturumu bütçe sahibine ait. Kullanıcıdan kendi tarayıcısında eş hesabına geçmesi istendi; parola istenmedi ve oturum taklidi yapılmadı. İki hesaplı ana sayfa ve yetkilendirme kabulü yerel testlerde başarılı, gerçek eş oturumu kontrolü bununla eşit sayılmadı.
+- Çalışma sırasında gerçek hesap/davet oluşturulmadı ve e-posta gönderilmedi. Şema/ortam ayarı değişmedi.
