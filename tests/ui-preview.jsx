@@ -47,7 +47,7 @@ export function Preview() {
   const [bestCards, setBestCards] = useState(null);
   const appMode = new URLSearchParams(window.location.search).has("app");
   const data = {
-    userId: 'fixture-user', availableBalance, incomeReceipts,
+    userId: 'fixture-user', availableBalance, incomeReceipts, planningFamily: {rows:[],buffer:0,reasons:[]},
     saveIncomeReceipt: async (receipt) => {
       if (new URLSearchParams(window.location.search).has('incomeFail')) throw new Error('Synthetic receipt failure');
       const saved = { ...receipt, id: `${receipt.incomeId}:${receipt.periodYear}:${receipt.periodMonth}`, userId: 'fixture-user' };

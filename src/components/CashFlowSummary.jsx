@@ -26,6 +26,7 @@ export function CashFlowPanel({
     () => cashFlow(data, today, days),
     [data, today, days],
   );
+  const planningSummary = useMemo(() => cashFlow(data, today, 30), [data, today]);
   const cashRows = summary.rows.filter((item) => item.direction !== "card");
   const filtered = cashRows.filter(
     (item) => filter === "all" || item.direction === filter,
@@ -37,7 +38,7 @@ export function CashFlowPanel({
     summary.ambiguous > 0 ||
     summary.unlinkedCardSubscriptions > 0;
   return (
-    <section className="cashflow cashflow-with-bridge" aria-label="Yaklaşan ödeme ve gelir özeti">
+    <section className="cashflow cashflow-with-bridge cashflow-with-spending" aria-label="Yaklaşan ödeme ve gelir özeti">
       <div className="period-row">
         <div className="overview-heading">
           <h1>Özet</h1>
@@ -122,7 +123,7 @@ export function CashFlowPanel({
           </div>
         )}
       </div>
-      <IncomeBridge summary={summary} snapshot={data.availableBalance} fingerprint={fingerprint} today={today} onSaveBalance={data.readOnly ? null : data.saveAvailableBalance} readOnly={data.readOnly} />
+      <IncomeBridge planningData={data} planningSummary={planningSummary} summary={summary} snapshot={data.availableBalance} fingerprint={fingerprint} today={today} onSaveBalance={data.readOnly ? null : data.saveAvailableBalance} readOnly={data.readOnly} />
       {(summary.incomplete.length > 0 ||
         summary.ambiguous > 0 ||
         summary.unlinkedCardSubscriptions > 0) && (

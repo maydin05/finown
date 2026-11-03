@@ -322,7 +322,7 @@ test("arrival preparation separates pending dates, unknown statements and same-d
   const summary = page.getByRole('region', { name: 'Yaklaşan ödeme ve gelir özeti' });
   const card = summary.getByRole('button', { name: 'Bakiye ve ödeme açığının ayrıntısı', exact: true });
   await expect(card).toContainText('Önce bakiyeni gir');
-  await expect(card).toContainText('En az ₺3.500,00 ödeme');
+  await expect(summary.getByTestId('spendable-amount')).toHaveText('Henüz net değil');
   const difference = await summary.getByTestId('period-difference').textContent();
   await card.click();
   const dialog = page.getByRole('dialog');
@@ -341,13 +341,13 @@ test("arrival preparation separates pending dates, unknown statements and same-d
   await expect(card).toContainText('Önce bakiyeni gir');
 
   await page.goto('/tests/ui-preview.html?app=1&bridge=same-day');
-  await expect(card).toContainText('₺3.500,00 ödeme');
+  await expect(summary.getByTestId('spendable-amount')).toHaveText('Henüz net değil');
   await card.click();
   await expect(dialog).toContainText('saat sırası bilinmediğinden');
   await page.getByRole('button', { name: 'Anladım', exact: true }).click();
   await page.goto('/tests/ui-preview.html?app=1&bridge=none');
-  await expect(page.getByRole('region',{name:'Bakiye ve ödeme açığı',exact:true})).toContainText('7 günlük bakiye akışı');
-  await expect(card).toContainText('En az ₺3.500,00');
+  await expect(card).toContainText('Önce bakiyeni gir');
+  await expect(summary.getByTestId('spendable-amount')).toHaveText('Henüz net değil');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
@@ -404,7 +404,7 @@ test('failed balance save preserves the previous snapshot and same-day/unknown o
   await page.goto('/tests/ui-preview.html?app=1&bridge=same-day');
   await edit.click();await page.getByLabel('Kullanılabilir para (₺)',{exact:true}).fill('2000');
   await page.getByRole('button',{name:'Bakiyeyi kaydet',exact:true}).click();
-  await expect(card).toContainText('₺1.500,00');await expect(card).toContainText('Ödemeler gelirden önce çekilirse');
+  await expect(card).toContainText('₺1.500,00');await card.click();await expect(page.getByRole('dialog')).toContainText('ödemeler gelirden önce çekilirse');await page.getByRole('button',{name:'Kapat',exact:true}).click();
   await page.goto('/tests/ui-preview.html?app=1&bridge=none');
   await edit.click();await page.getByLabel('Kullanılabilir para (₺)',{exact:true}).fill('5000');
   await page.getByRole('button',{name:'Bakiyeyi kaydet',exact:true}).click();

@@ -4,6 +4,10 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Harcanabilir tutar ve maaş senaryoları: üretim yayın kaydı](docs/2026-11-03_harcanabilir-tutar-ve-senaryo-yayin.md)
+
+- [Harcanabilir tutar ve maaş senaryoları: yerel uygulama ve mobil kontroller](docs/2026-11-03_harcanabilir-tutar-ve-senaryo-yerel.md)
+
 - [Kartın ilk ekstre ayı: üretim yayın kaydı](docs/2026-11-03_ilk-ekstre-ayi-yayin.md)
 
 - [Kartın ilk ekstre ayı: yerel uygulama ve koruma testleri](docs/2026-11-03_ilk-ekstre-ayi-yerel.md)
