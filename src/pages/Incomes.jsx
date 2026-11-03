@@ -17,7 +17,7 @@ export default function Incomes({
   incomeTab,
   setIncomeTab,
 }) {
-  const { incomeSources, statusTracker, saveIncomeReceipt } = useData();
+  const { incomeSources, statusTracker, saveIncomeReceipt,readOnly } = useData();
 
   const [receiptItem, setReceiptItem] = useState(null);
 
@@ -54,7 +54,7 @@ export default function Incomes({
         amount={totalExpected}
         secondary={[{ label: "Alınan", amount: totalReceived }]}
       />
-      {incomes.some(i => i.isReceived && i.actualAmount == null) && <p className="notice">Bazı eski alınan gelirlerde gerçek tutar kaydedilmemiş; planlanan tutar gösteriliyor. İlgili ayın tutarını düzenleyebilirsin.</p>}
+      {incomes.some(i => i.isReceived && i.actualAmount == null) && <p className="notice">Bazı eski alınan gelirlerde gerçek tutar kaydedilmemiş; planlanan tutar gösteriliyor. {!readOnly && "İlgili ayın tutarını düzenleyebilirsin."}</p>}
       <FilterTabs
         value={incomeTab}
         onChange={setIncomeTab}

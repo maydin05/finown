@@ -40,6 +40,7 @@ export function legacyOwners({ incomeSources = [], expenseSources = [], subscrip
 export function sourceStatus(type, id, date, tracker, owners = {}) {
     const key = statusKey(type, id, date);
     if (Object.hasOwn(tracker, key)) return { key, done: !!tracker[key], ambiguous: false };
+    if (tracker[`ambiguous:${key}`]) return { key, done: false, ambiguous: true };
     const legacyKey = `${id}_${date.getMonth()}_${date.getFullYear()}`;
     const hasLegacy = Object.hasOwn(tracker, legacyKey);
     const uniqueOwner = owners[id]?.length === 1 && owners[id][0] === type;

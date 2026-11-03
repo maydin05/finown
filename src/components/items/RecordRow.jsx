@@ -1,3 +1,4 @@
+import {useData} from '../../context/store';
 import React, { useState } from "react";
 import { Icon } from "../ui/Icon";
 import { ModalShell } from "../ui/Modal";
@@ -15,6 +16,7 @@ export function RecordRow({
   actions = [],
   onEnterAmount,
 }) {
+  const readOnly=useData()?.readOnly;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -59,7 +61,7 @@ export function RecordRow({
           )}
         </span>
       </button>
-      {unknown && onEnterAmount && (
+      {!readOnly && unknown && onEnterAmount && (
         <button className="inline-action" onClick={onEnterAmount}>
           Ekstre tutarı gir <Icon name="arrow-right" size={13} />
         </button>
@@ -92,7 +94,7 @@ export function RecordRow({
             </p>
             {detail}
             {error && <p role="alert">{error}</p>}
-            {actions
+            {(readOnly ? [] : actions)
               .filter((action) => action.onClick)
               .map((action, index) => (
                 <button

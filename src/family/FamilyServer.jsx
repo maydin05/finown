@@ -18,7 +18,7 @@ export default function FamilyServer({onBack,auth:existingAuth}) {
   return()=>{active=false;subscription?.unsubscribe();};
  },[existingAuth]);
  useEffect(()=>{let active=true;if(!session){setUser(null);setId('');return;}familyRequest('/me').then(value=>{if(active)setUser(value);}).catch(()=>{if(active){setUser(null);setId('');setError('Oturum doğrulanamadı. Yeniden giriş yap.');}});return()=>{active=false;};},[session]);
- useEffect(()=>{if(!user)return;let active=true;familyRequest('/budgets').then(rows=>{if(active)setBudgets(rows);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[user,id]);
+ useEffect(()=>{if(!user)return;let active=true;familyRequest('/budgets').then(rows=>{if(active){setBudgets(rows);const shared=rows.find(b=>b.requester_id===user.id && b.owner_id!==user.id);if(shared && !id){setId(shared.id);setSettingsOpen(false);}}}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[user,id]);
  useEffect(()=>{const consume=()=>{const value=new URLSearchParams(window.location.hash.slice(1)).get('invite');if(value){setSettingsOpen(true);setToken(value);window.history.replaceState(null,'',window.location.pathname+window.location.search);}};consume();window.addEventListener('hashchange',consume);return()=>window.removeEventListener('hashchange',consume);},[]);
  const execute=async action=>{if(busy)return;setBusy(true);setError('');try{await action();}catch(e){setError(e.message || 'İşlem tamamlanamadı.');}finally{setBusy(false);}};
  if(!ready)return <p>Oturum kontrol ediliyor…</p>;

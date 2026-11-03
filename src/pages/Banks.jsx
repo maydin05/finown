@@ -8,7 +8,7 @@ import { debtPlans, loanRemaining } from "../domain/plans";
 
 export default function Banks({ onOpenModal }) {
   const data = useData();
-  const { banks, products, payments } = data;
+  const { banks, products, payments,readOnly } = data;
   const plans = debtPlans(data);
   const [selectedBank, setSelectedBank] = useState(null);
   const getLoanRemaining = (loan) => loanRemaining(loan, payments);
@@ -129,7 +129,7 @@ export default function Banks({ onOpenModal }) {
         </button>
         <div className="page-title">
           <h1>{selectedBank.name}</h1>
-          <div className="flex">
+          {!readOnly && <div className="flex">
             <button
               className="icon-button"
               aria-label="Bankayı düzenle"
@@ -144,16 +144,16 @@ export default function Banks({ onOpenModal }) {
             >
               <Icon name="trash-2" size={18} />
             </button>
-          </div>
+          </div>}
         </div>
         <p className="muted text-sm">
           {cards.length} kart · {loans.length} kredi
         </p>
         <div className="section-title">
           <h2>Kredi kartları</h2>
-          <button onClick={() => onOpenModal("product", null)}>
+          {!readOnly && <button onClick={() => onOpenModal("product", null)}>
             Kart ekle
-          </button>
+          </button>}
         </div>
         {cards.map((card) => {
           const parent = products.find(
@@ -251,12 +251,12 @@ export default function Banks({ onOpenModal }) {
         {loans.length === 0 && (
           <p className="empty-state">Bu bankada kredi yok.</p>
         )}
-        <button
+        {!readOnly && <button
           className="secondary-button"
           onClick={() => onOpenModal("product", null)}
         >
           Kart / kredi ekle
-        </button>
+        </button>}
       </div>
     );
   }
@@ -270,13 +270,13 @@ export default function Banks({ onOpenModal }) {
     <div className="calm-page compact-list-page tone-banks">
       <div className="page-title">
         <h1>Bankalarım</h1>
-        <button
+        {!readOnly && <button
           className="icon-button"
           aria-label="Banka ekle"
           onClick={() => onOpenModal("bank", null)}
         >
           <Icon name="plus" />
-        </button>
+        </button>}
       </div>
       <section className="monthly-summary compact-month-summary" aria-label="Banka özeti">
         <p>Kredi + elden borç</p>
@@ -303,7 +303,7 @@ export default function Banks({ onOpenModal }) {
       </section>
       <div className="section-title">
         <h2>Elden borçlar</h2>
-        <button onClick={() => onOpenModal("debt", null)}>Plan ekle</button>
+        {!readOnly && <button onClick={() => onOpenModal("debt", null)}>Plan ekle</button>}
       </div>
       {plans.length === 0 && (
         <p className="empty-state">
@@ -386,12 +386,12 @@ export default function Banks({ onOpenModal }) {
       {banks.length === 0 && (
         <p className="empty-state">Henüz banka eklenmemiş.</p>
       )}
-      <button
+      {!readOnly && <button
         className="secondary-button"
         onClick={() => onOpenModal("product", null)}
       >
         Kart / kredi ekle
-      </button>
+      </button>}
     </div>
   );
 }

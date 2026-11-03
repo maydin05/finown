@@ -4,7 +4,7 @@ import { supabase } from "../../lib/supabase";
 import { Icon } from "../ui/Icon";
 import { ModalShell } from "../ui/Modal";
 
-export const Header = ({ onOpenQuickMenu, onSignOut }) => {
+export const Header = ({ onOpenQuickMenu, onSignOut, readOnly }) => {
   const [accountOpen, setAccountOpen] = useState(false);
   return (
     <>
@@ -13,13 +13,13 @@ export const Header = ({ onOpenQuickMenu, onSignOut }) => {
           <span className="brand-symbol">f</span>finown
         </Link>
         <div className="header-actions">
-          <button
+          {!readOnly && <button
             className="icon-button add-action"
             aria-label="Yeni kayıt ekle"
             onClick={onOpenQuickMenu}
           >
             <Icon name="plus" />
-          </button>
+          </button>}
           <button
             className="account-button"
             onClick={() => setAccountOpen(true)}

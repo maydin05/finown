@@ -8,7 +8,7 @@ import { formatDateTR, formatMoneyTR } from "../utils";
 import IncomeReceiptModal from "../modals/IncomeReceiptModal";
 
 export default function Overview({ onOpenModal, ownerId }) {
-  const { toggleTracker } = useData();
+  const { toggleTracker,readOnly } = useData();
   const [receiptItem, setReceiptItem] = useState(null);
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -18,7 +18,7 @@ export default function Overview({ onOpenModal, ownerId }) {
     setSelected(item);
   };
   const complete = async () => {
-    if (saving || !selected) return;
+    if (readOnly || saving || !selected) return;
     if (selected.direction === "in") {
       setReceiptItem(selected);
       setSelected(null);
@@ -79,7 +79,7 @@ export default function Overview({ onOpenModal, ownerId }) {
             </dl>
             {selected.note && <p>{selected.note}</p>}
             {error && <p role="alert">{error}</p>}
-            <button
+            {!readOnly && <button
               className="primary-button"
               disabled={saving}
               onClick={complete}
@@ -89,10 +89,10 @@ export default function Overview({ onOpenModal, ownerId }) {
                 : selected.direction === "in"
                   ? "Alındı olarak işaretle"
                   : "Ödendi olarak işaretle"}
-            </button>
-            <p className="footnote">
+            </button>}
+            {!readOnly && <p className="footnote">
               Bu işlem bankadan ödeme yapmaz; yalnızca ödeme durumunu kaydeder.
-            </p>
+            </p>}
           </div>
         </ModalShell>
       )}

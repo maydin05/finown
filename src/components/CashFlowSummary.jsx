@@ -14,7 +14,8 @@ export function CashFlowPanel({
   onEnterStatement,
   onOpenItem,
 }) {
-  const fingerprint = useBalanceFingerprint(data);
+  const localFingerprint = useBalanceFingerprint(data);
+  const fingerprint = data.readOnly ? data.sharedFingerprint : localFingerprint;
   const [days, setDays] = useState(7);
   const [filter, setFilter] = useState("out");
   const [expanded, setExpanded] = useState(false);
@@ -109,17 +110,17 @@ export function CashFlowPanel({
               <Icon name="alert-circle" size={15} />
               {summary.missing.length} ekstre eksik · Sonuç kesinleşmedi
             </span>
-            <button
+            {!data.readOnly && <button
               aria-label="Ekstre tutarı gir"
               onClick={() => onEnterStatement?.(summary.missing[0])}
               disabled={!onEnterStatement}
             >
               Tamamla <span aria-hidden="true">→</span>
-            </button>
+            </button>}
           </div>
         )}
       </div>
-      <IncomeBridge summary={summary} snapshot={data.availableBalance} fingerprint={fingerprint} today={today} onSaveBalance={data.saveAvailableBalance} />
+      <IncomeBridge summary={summary} snapshot={data.availableBalance} fingerprint={fingerprint} today={today} onSaveBalance={data.readOnly ? null : data.saveAvailableBalance} readOnly={data.readOnly} />
       {(summary.incomplete.length > 0 ||
         summary.ambiguous > 0 ||
         summary.unlinkedCardSubscriptions > 0) && (
@@ -307,7 +308,7 @@ export default function CashFlowSummary({ onOpenModal, onOpenItem, ownerId }) {
     <CashFlowPanel
       data={ownerId && data.userId !== ownerId ? { ...data, availableBalance: null, saveAvailableBalance: null } : data}
       onEnterStatement={
-        onOpenModal ? (item) => onOpenModal("card_amount", item) : undefined
+        !data.readOnly && onOpenModal ? (item) => onOpenModal("card_amount", item) : undefined
       }
       onOpenItem={onOpenItem}
     />

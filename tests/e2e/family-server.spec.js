@@ -105,6 +105,8 @@ test('bütçe sahibi eş hesabı oluşturur; yeni kişi belirlenen şifreyle gir
   await page.getByRole('button',{name:'Hesabı oluştur ve bütçeye ekle',exact:true}).click();
   await expect(page.getByRole('status')).toContainText('Eşinin hesabı oluşturuldu');await expect(page.getByLabel('Başlangıç şifresi',{exact:true})).toHaveCount(0);
   await spouse.goto('/tests/family-server-preview.html');await spouse.getByLabel('E-posta',{exact:true}).fill(email);await spouse.getByLabel('Şifre',{exact:true}).fill(password);await spouse.getByRole('button',{name:'Giriş Yap',exact:true}).click();
+  await expect(spouse.getByRole('button',{name:'Talep oluştur',exact:true})).toBeVisible();
+  await spouse.getByText('Hesap ve bütçe yönetimi',{exact:true}).click();
   await expect(spouse.getByText(email,{exact:true})).toBeVisible();
   await spouse.getByRole('combobox',{name:'Ortak bütçe',exact:true}).selectOption({label:'Ortak bütçe 1 · Talep sahibi'});
   await expect(spouse.getByRole('button',{name:'Talep oluştur',exact:true})).toBeVisible();

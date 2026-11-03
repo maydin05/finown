@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "./lib/supabase";
 import { newLoanPlan, debtPlan } from "./domain/plans";
 import { dateKey } from "./domain/finance";
-import { DataProvider } from "./context/DataContext";
+import AccountDataProvider from "./context/AccountDataProvider";
 import { useData } from "./context/store";
 
 // Pages
@@ -33,8 +33,10 @@ import { QuickMenu } from "./modals/QuickMenu";
 
 const FamilyPage = React.lazy(() => import('./family/FamilyServer'));
 
-function AppContent() {
+function AppContent({session,auth,router}) {
+  const Router=router;
   const {
+    readOnly,
     loading,
     loadError,
     fetchData,
@@ -57,7 +59,6 @@ function AppContent() {
     markSubscriptionPaid,
   } = useData();
 
-  const [session, setSession] = useState(null);
   const [viewDate, setViewDate] = useState(new Date());
 
   // Navigation state
@@ -112,21 +113,6 @@ function AppContent() {
   // Note Modal
   const [noteText, setNoteText] = useState("");
 
-  // Auth Listener
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   // Fetch Data on Login
   useEffect(() => {
     if (session) {
@@ -142,6 +128,7 @@ function AppContent() {
   };
 
   const openModal = (type, item = null, callback = null) => {
+    if (readOnly && type !== "best_cards") return;
     const addingDebt = type === "debt";
     if (addingDebt) type = "expense";
     setEditingItem(item);
@@ -482,15 +469,17 @@ function AppContent() {
         >
           Tekrar dene
         </button>
+        <button className="secondary-button" onClick={() => auth.signOut()}>Çıkış yap</button>
       </div>
     );
   }
 
   return (
-    <BrowserRouter>
+    <Router>
       <div className="app-shell">
         {/* Header always visible */}
-        <Header onOpenQuickMenu={() => setActiveModal("quickMenu")} />
+        <Header onOpenQuickMenu={() => setActiveModal("quickMenu")} onSignOut={() => auth.signOut()} readOnly={readOnly} />
+        {readOnly && <p className="shared-view-notice" role="status">Ortak görünüm · Salt okunur<span>Yalnız paylaşılan kayıtlar gösteriliyor.</span></p>}
 
         <div className="app-content">
           <Routes>
@@ -536,8 +525,8 @@ function AppContent() {
               }
             />
             <Route path="/banks" element={<Banks onOpenModal={openModal} />} />
-            <Route path="/migration" element={<Migration />} />
-            <Route path="/family" element={<React.Suspense fallback={<p>Aile bütçesi yükleniyor…</p>}><FamilyPage auth={supabase.auth} /></React.Suspense>} />
+            <Route path="/migration" element={readOnly ? <Navigate to="/" replace /> : <Migration />} />
+            <Route path="/family" element={<React.Suspense fallback={<p>Aile bütçesi yükleniyor…</p>}><FamilyPage auth={auth} /></React.Suspense>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -706,14 +695,19 @@ function AppContent() {
           />
         )}
       </div>
-    </BrowserRouter>
+    </Router>
   );
 }
 
-export default function App() {
-  return (
-    <DataProvider>
-      <AppContent />
-    </DataProvider>
-  );
+export default function App({auth=supabase.auth,Router=BrowserRouter}) {
+  const [session,setSession]=useState(undefined);
+  useEffect(()=>{
+    let active=true,observed=false;
+    const {data:{subscription}}=auth.onAuthStateChange((_event,value)=>{observed=true;if(active)setSession(value);});
+    auth.getSession().then(({data})=>{if(active && !observed)setSession(data.session);});
+    return()=>{active=false;subscription.unsubscribe();};
+  },[auth]);
+  if(session===undefined)return <p className="empty-state">Oturum kontrol ediliyor…</p>;
+  if(!session)return <Login auth={auth}/>;
+  return <AccountDataProvider key={session.user.id} session={session} auth={auth}><AppContent session={session} auth={auth} router={Router}/></AccountDataProvider>;
 }

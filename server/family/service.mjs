@@ -1,3 +1,4 @@
+import {sharedMainView} from './main-view.mjs';
 import {sharedHistory} from './history.mjs';
 import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { newFamily, transitionFamily, localToday } from '../../src/family/model.js';
@@ -58,6 +59,19 @@ export class FamilyService {
   await c.query("insert into family_members values($1,$2,'owner')",[id,user.id]);return {id};
  });}
  async load(user,id) {return this.transaction(user,async c=>{const b=await this.budget(c,id,user);return this.publicState(b,user,await this.environment(c,b));});}
+ async mainView(user,id) {return this.transaction(user,async c=>{
+  const b=await this.budget(c,id,user),data=await this.financeData(c,b);
+  const view=sharedMainView(data,b.state.scope);
+  // HMAC prevents offline guessing of hidden amounts from a raw private fingerprint.
+  const opaque=value=>createHmac('sha256',this.fingerprintKey).update(String(value)).digest('hex');
+  view.sharedFingerprint=opaque(await hashBalanceBasis(balanceBasis(data)));
+  if(b.state.scope.includes('balance') && data.availableBalance) {
+   const snapshot=data.availableBalance;
+   view.availableBalance={amount:snapshot.amount,asOfDate:snapshot.asOfDate,capturedAt:snapshot.capturedAt,basisFingerprint:opaque(snapshot.basisFingerprint)};
+  }
+  view.sharedRevision=opaque(JSON.stringify(view));
+  return {...view,userId:user.id,sharedBudgetId:id};
+ });}
  async history(user,id,period='') {return this.transaction(user,async c=>{
   const b=await this.budget(c,id,user),data=await this.financeData(c,b);
   try{return sharedHistory(data,b.state.scope,this.today(),period);}catch{throw problem('Geçerli bir ay seç. Çok geniş tarih aralıkları ay seçilerek görüntülenebilir.');}

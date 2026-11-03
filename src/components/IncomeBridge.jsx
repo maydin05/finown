@@ -8,7 +8,7 @@ import { Icon } from './ui/Icon';
 import AvailableBalanceModal from '../modals/AvailableBalanceModal';
 import BalanceFlowDetails from './BalanceFlowDetails';
 
-export default function IncomeBridge({ summary, snapshot, fingerprint, today, onSaveBalance }) {
+export default function IncomeBridge({ summary, snapshot, fingerprint, today, onSaveBalance, readOnly }) {
   const [open,setOpen]=useState(false),[editing,setEditing]=useState(false),[includeOverdue,setIncludeOverdue]=useState(false);
   const funding=balanceFunding({amount:0,sameDayAmount:0,unknown:0,hasUnverifiedData:false},snapshot,fingerprint,today);
   const flow=balanceFlow(summary,funding.amount,includeOverdue);
@@ -17,7 +17,7 @@ export default function IncomeBridge({ summary, snapshot, fingerprint, today, on
   const period=flow.days.length;
   let label,copy;
   if(!funding.fresh){
-    label={missing:'Önce bakiyeni gir',date:'Bakiye güncel değil',records:'Bakiyeni yeniden doğrula',checking:'Bakiye doğrulanıyor',invalid:'Bakiye doğrulanmalı'}[funding.reason];
+    label={missing:readOnly?'Bakiye paylaşılmadı':'Önce bakiyeni gir',date:'Bakiye güncel değil',records:'Bakiyeni yeniden doğrula',checking:'Bakiye doğrulanıyor',invalid:'Bakiye doğrulanmalı'}[funding.reason];
     const payments=flow.days.reduce((s,d)=>s+d.outgoing,0);
     copy=funding.reason==='records'?'Finans kayıtları değişti; kayıtlı bakiyeyi doğrula.':`${prefix}${money(payments)} ödeme için güncel bakiye gerekli.`;
   }else if(flow.firstGap){
@@ -26,7 +26,7 @@ export default function IncomeBridge({ summary, snapshot, fingerprint, today, on
   }else{label=flow.uncertain?'Açık henüz netleşmedi':`${period} günde açık görünmüyor`;copy='Bilinen tutarlara göre · Gün gün incele →';}
   return <>
     <section className={`funding-card ${!funding.fresh || flow.uncertain || flow.firstGap?.conditional ? 'uncertain' : !flow.firstGap ? 'covered' : ''}`} aria-label="Bakiye ve ödeme açığı">
-      <div className="funding-header"><span>{period} günlük bakiye akışı</span><button className="balance-edit" aria-label="Kullanılabilir bakiyeyi düzenle" disabled={!onSaveBalance} onClick={()=>setEditing(true)}>{snapshot?.amount!=null ? `Bakiye ${money(snapshot.amount)} · ${shortBridgeDate(snapshot.asOfDate)}` : 'Bakiye ekle'} <Icon name="pencil" size={12}/></button></div>
+      <div className="funding-header"><span>{period} günlük bakiye akışı</span>{readOnly ? <span className="balance-edit">{snapshot?.amount!=null ? `Bakiye ${money(snapshot.amount)} · ${shortBridgeDate(snapshot.asOfDate)}` : 'Bakiye paylaşılmadı'}</span> : <button className="balance-edit" aria-label="Kullanılabilir bakiyeyi düzenle" disabled={!onSaveBalance} onClick={()=>setEditing(true)}>{snapshot?.amount!=null ? `Bakiye ${money(snapshot.amount)} · ${shortBridgeDate(snapshot.asOfDate)}` : 'Bakiye ekle'} <Icon name="pencil" size={12}/></button>}</div>
       <button className="income-bridge" aria-label="Bakiye ve ödeme açığının ayrıntısı" onClick={()=>setOpen(true)}><span className="bridge-head"><strong className={!funding.fresh || !flow.firstGap ? 'bridge-empty' : ''}>{label}</strong><Icon name="arrow-right" size={17}/></span><span className="bridge-next">{copy}</span></button>
     </section>
     {summary.overdueCount>0 && <label className="flow-overdue-toggle"><span><b>{summary.overdueCount} geciken ödeme · {money(summary.overdueTotal)} bilinen</b><small>{includeOverdue?'Bugün ödenecek varsayıldı · Üst dönem özeti değişmez':'Bakiye akışına dahil et · Asıl vadeler korunur'}</small></span><input type="checkbox" aria-label="Geciken ödemeleri açığa kat" checked={includeOverdue} onChange={e=>setIncludeOverdue(e.target.checked)}/></label>}

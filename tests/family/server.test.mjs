@@ -133,8 +133,11 @@ test('production function contract: restricted DB login, genuine Auth, stable co
   const b=await (await second(request('/family-api/budgets/'+budget))).json();
   assert.equal(a._server.environmentVersion,b._server.environmentVersion);
   assert.equal((await handler(request('/.netlify/functions/family/budgets'))).status,200);
-  const history=await handler(request('/.netlify/functions/family/budgets/'+budget+'/history?period=2024-01'));assert.equal(history.status,200);assert.equal((await history.json()).rows.length,2);
+  const history=await handler(request('/.netlify/functions/family/budgets/'+budget+'/history?period=2024-01'));assert.equal(history.status,200);assert.equal((await history.json()).rows.length,3);
   assert.equal((await handler(request('/family-api/budgets/'+foreign+'/history'))).status,403);
+  const main=await handler(request('/family-api/budgets/'+budget+'/main-view'));assert.equal(main.status,200);assert.equal((await main.json()).readOnly,true);
+  assert.equal((await handler(request('/family-api/budgets/'+foreign+'/main-view'))).status,403);
+  assert.equal((await handler(request('/family-api/budgets/'+budget+'/main-view',null))).status,401);
   assert.deepEqual(await financeSnapshot(),financeBefore);
  }finally{await restricted.end();}
 });
