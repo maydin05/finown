@@ -23,7 +23,7 @@ test('main pages: genuine two-account authorization, scope refresh, opaque balan
   async function scope(keys){const s=(await api(owner,`/budgets/${id}`)).data;assert.equal((await api(owner,`/budgets/${id}/command`,{operationId:randomUUID(),command:{action:'scope',payload:{keys},version:s.version},environmentVersion:s._server.environmentVersion})).status,200);}
   let state=(await api(owner,`/budgets/${id}`)).data;
   await scope([...state._server.records.map(r=>r.key),'balance']);
-  const a=await api(member,path),b=await api(owner,path);assert.equal(a.status,200);assert.equal(a.data.readOnly,true);
+  const a=await api(member,path),b=await api(owner,path);assert.equal(a.status,200);assert.equal(a.data.readOnly,true);assert.equal(a.data.products.find(p=>p.id===10).firstStatementMonth,'2026-11-01');
   assert.deepEqual(a.data.payments,b.data.payments);assert.equal(a.data.payments.find(p=>p.id===990).dueDate,'2024-01-04');assert.equal(a.data.payments.find(p=>p.id===990).isPaid,true);
   assert.equal(a.data.incomeReceipts[0].actualAmount,23000);assert.equal(a.data.userId,member.id);assert.ok(!JSON.stringify(a.data).includes(owner.id));
   assert.equal(balanceFunding({amount:0},a.data.availableBalance,a.data.sharedFingerprint,'2026-11-01').fresh,true);

@@ -5,7 +5,7 @@ import { plusDays } from '../../src/family/environment.js';
 export async function seedLocalFinance(pool,userId,today) {
  if(!(await pool.query("select 1 from family_local.guard where name='finown-family-local'")).rowCount)throw new Error('Local guard required');
  const data={banks:[{id:1,name:'Yerel Örnek Banka'}],products:[
- {id:10,bankId:1,type:'card',name:'Yerel Kart A',cutoffDay:5,paymentDueDay:25},
+ {id:10,bankId:1,type:'card',firstStatementMonth:today.slice(0,7)+'-01',name:'Yerel Kart A',cutoffDay:5,paymentDueDay:25},
  {id:11,bankId:1,type:'card',name:'Yerel Kart B',cutoffDay:15,paymentDueDay:10},
  {id:12,bankId:1,type:'card',cardType:'virtual',parentCardId:11,name:'Yerel Sanal Kart'},
  ],payments:[{id:990,title:'Yerel eski taksit',type:'loan',amount:500,dueDate:'2024-01-04',isPaid:true},{id:200,title:'Yerel zorunlu ödeme',type:'loan',amount:8000,dueDate:plusDays(today,2),isPaid:false},{id:201,title:'Yerel kira',type:'loan',amount:15000,dueDate:plusDays(today,8),isPaid:false},{id:202,title:'Yerel geciken ödeme',type:'loan',amount:1000,dueDate:plusDays(today,-3),isPaid:false}],incomeSources:[{id:102,title:'Yerel geçmiş maaş',type:'recurring',amount:25000,startDate:'2024-01-01',endDate:'2024-01-31',dayOfMonth:5},{id:101,title:'Yerel örnek maaş',type:'recurring',amount:25000,date:plusDays(today,4)}],expenseSources:[],subscriptionSources:[{id:401,title:'Yerel paylaşılan abonelik',amount:99,startDate:'2024-01-01',dayOfMonth:15,billingCycle:'monthly',relatedCardId:10,paymentMethodType:'bank',paymentMethodValue:'1'}],subscriptionPayments:[],incomeReceipts:[{id:800,incomeId:102,periodYear:2024,periodMonth:1,dueDate:'2024-01-05',expectedAmount:25000,actualAmount:23000,isReceived:true,note:'Yerel geçmiş kesinti'}],statusTracker:{}};

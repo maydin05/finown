@@ -17,7 +17,12 @@ async function loadApi(client) {
     "utf8",
   );
   const module = new vm.SourceTextModule(source, { context });
-  await module.link(() => dependency);
+  const statements=new vm.SourceTextModule(await readFile(new URL('../src/domain/cardStatements.js',import.meta.url),'utf8'),{context});
+  await module.link(specifier=>{
+    if(specifier.includes('cardStatements'))return statements;
+    if(specifier.includes('supabase'))return dependency;
+    throw new Error('Unexpected API dependency: '+specifier);
+  });
   await module.evaluate();
   return module.namespace;
 }
@@ -173,4 +178,22 @@ test('monthly income receipt uses one owned RPC; failure never falls back to edi
   const result=await api.saveIncomeReceipt(receipt,'fixture-user');assert.equal(result.actualAmount,115000);assert.equal(calls.length,1);assert.equal(calls[0].name,'save_income_receipt');assert.equal(calls[0].args.p_expected_user_id,'fixture-user');assert.equal(calls[0].args.p_period_month,11);
   await assert.rejects(()=>api.saveIncomeReceipt(receipt,'another-owner'));assert.equal(calls.length,1);
   const failed=await loadApi({auth,rpc:async()=>({data:null,error:new Error('receipt save failed')})});await assert.rejects(()=>failed.saveIncomeReceipt(receipt,'fixture-user'),/receipt save failed/);
+});
+
+
+test('card start saves only product metadata; canonical month, invalid partial input and no payment writes',async()=>{
+ const calls=[];
+ const api=await loadApi({auth,from(table){
+   assert.equal(table,'products');
+   return {update(row){
+     calls.push(row);
+     const result={eq:()=>result,select:()=>result,single:async()=>({data:{id:18,...row},error:null})};
+     return result;
+   }};
+ }});
+ const saved=await api.updateProduct(18,{type:'card',cardType:'physical',name:'Fixture card',firstStatementMonth:'2026-11'});
+ assert.equal(saved.firstStatementMonth,'2026-11-01');assert.equal(calls.length,1);assert.equal(calls[0].first_statement_month,'2026-11-01');
+ await assert.rejects(api.updateProduct(18,{type:'card',firstStatementMonth:'2026-'}),/Invalid first statement/);assert.equal(calls.length,1);
+ await api.updateProduct(18,{name:'Renamed'});assert.equal(Object.hasOwn(calls[1],'first_statement_month'),false);
+ await api.updateProduct(18,{type:'card',firstStatementMonth:''});assert.equal(calls[2].first_statement_month,null);
 });

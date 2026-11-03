@@ -4,6 +4,10 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Kartın ilk ekstre ayı: üretim yayın kaydı](docs/2026-11-03_ilk-ekstre-ayi-yayin.md)
+
+- [Kartın ilk ekstre ayı: yerel uygulama ve koruma testleri](docs/2026-11-03_ilk-ekstre-ayi-yerel.md)
+
 - [Bu aya dön: üretim yayın kaydı](docs/2026-11-03_bu-aya-don-yayin.md)
 
 - [Bu aya dön düğmesi: koşullu görünüm ve başlık satırı (yerel)](docs/2026-11-03_bu-aya-don-dugmesi-yerel.md)

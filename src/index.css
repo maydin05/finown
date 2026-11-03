@@ -1814,3 +1814,13 @@ body {
 .cashflow .bank-logo img { width:25px; height:25px; }
 .payment-bank-name { font-weight:600; color:#596b66; }
 .record-detail-bank { font-size:13px; font-weight:600; color:#596b66; }
+
+.statement-start-field { border:1px solid var(--accent-line, #dce4ee); background:#f8fafc; border-radius:14px; padding:12px; min-width:0; }
+.statement-start-field h3 { font-size:13px; font-weight:650; padding:0 4px; }
+.statement-start-field h3 span { font-size:11px; color:var(--muted); font-weight:400; }
+.statement-start-field p { font-size:11px; line-height:1.5; color:var(--muted); margin-top:8px; }
+.statement-start-clear { min-height:36px; font-size:11px; color:var(--accent,var(--green)); text-decoration:underline; }
+
+.form-dialog .statement-start-field .statement-start-clear { display:block; width:auto; min-height:44px; padding:0 6px; margin-top:4px; background:transparent; }
+
+.statement-preview-header .secondary-button { width:auto; min-width:0; margin:0; font-size:12px; padding:8px 10px; }

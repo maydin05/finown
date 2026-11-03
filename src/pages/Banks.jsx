@@ -1,3 +1,4 @@
+import {statementMonthLabel} from "../domain/cardStatements";
 import { RecordRow } from "../components/items/RecordRow";
 import React, { useState } from "react";
 import { useData } from "../context/store";
@@ -180,6 +181,7 @@ export default function Banks({ onOpenModal }) {
                     <dt>Son ödeme günü</dt>
                     <dd>{card.paymentDueDay || "Belirtilmedi"}</dd>
                   </div>
+                  {card.cardType !== "virtual" && <div><dt>İlk ekstre ayı</dt><dd>{statementMonthLabel(card.firstStatementMonth)}</dd></div>}
                   {card.cardType === "virtual" && (
                     <div>
                       <dt>Ana kart</dt>

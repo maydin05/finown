@@ -1,3 +1,4 @@
+import {statementMonthLabel} from '../../src/domain/cardStatements.js';
 import {calendarDate,dateKey,sourceItems,sourceIssue,sourceStatus,legacyOwners} from '../../src/domain/finance.js';
 const groups=[['incomeSources','income'],['expenseSources','expense'],['subscriptionSources','subscription']];
 const safeMonth=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(value) && calendarDate(value+'-01');
@@ -60,7 +61,7 @@ export function sharedHistory(data,scope,today,period='') {
    });
   }
  }
- for(const p of products)sources.push({key:`products:${p.id}`,kind:'product',title:p.name || 'Banka ürünü',date:p.startDate || p.firstPaymentDate || null,amount:p.remaining ?? null,status:'plan',details:[d('Ürün türü',p.type==='loan'?'Kredi':p.type==='card'?'Kredi kartı':p.type),d('Kalan borç',p.remaining,'money'),d('Toplam tutar',p.total,'money'),d('Kayıtlı limit',p.limit,'money'),d('Aylık taksit',p.installmentAmount ?? p.installment,'money'),d('Taksit sayısı',p.totalInstallments),d('İlk taksit',p.firstPaymentDate,'date'),d('Kesim günü',p.cutoffDay),d('Son ödeme günü',p.paymentDueDay),d('Ana kart',productName(p.parentCardId)),d('Son dört hane',p.last4Digits)]});
+ for(const p of products)sources.push({key:`products:${p.id}`,kind:'product',title:p.name || 'Banka ürünü',date:p.startDate || p.firstPaymentDate || null,amount:p.remaining ?? null,status:'plan',details:[d('Ürün türü',p.type==='loan'?'Kredi':p.type==='card'?'Kredi kartı':p.type),d('Kalan borç',p.remaining,'money'),d('Toplam tutar',p.total,'money'),d('Kayıtlı limit',p.limit,'money'),d('Aylık taksit',p.installmentAmount ?? p.installment,'money'),d('Taksit sayısı',p.totalInstallments),d('İlk taksit',p.firstPaymentDate,'date'),...(p.type==='card' && p.cardType!=='virtual' ? [d('İlk ekstre ayı',statementMonthLabel(p.firstStatementMonth))] : []),d('Kesim günü',p.cutoffDay),d('Son ödeme günü',p.paymentDueDay),d('Ana kart',productName(p.parentCardId)),d('Son dört hane',p.last4Digits)]});
  rows.sort((a,b)=>(b.date || '').localeCompare(a.date || '') || a.key.localeCompare(b.key));
  return {period,today,rows,sources,years:[...years].sort((a,b)=>Number(b)-Number(a))};
 }

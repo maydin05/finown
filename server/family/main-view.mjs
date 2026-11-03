@@ -3,7 +3,7 @@ import {legacyOwners} from '../../src/domain/finance.js';
 // Whitelist the owner's explicitly selected records. Never send whole private rows.
 const columns={
  banks:['id','name','color'],
- products:['id','bankId','type','name','cardType','last4Digits','limit','cutoffDay','paymentDueDay','parentCardId','total','remaining','installment','totalInstallments','startDate','installmentAmount','firstPaymentDate'],
+ products:['id','bankId','type','name','cardType','last4Digits','limit','cutoffDay','paymentDueDay','parentCardId','total','remaining','installment','totalInstallments','startDate','installmentAmount','firstPaymentDate','firstStatementMonth'],
  payments:['id','productId','title','subtitle','amount','dueDate','type','isPaid','isManual'],
  incomeSources:['id','title','amount','type','category','date','startDate','dayOfMonth','endDate','note'],
  expenseSources:['id','title','amount','type','category','date','startDate','dayOfMonth','endDate','note','isDebt'],

@@ -23,6 +23,9 @@ export function balanceBasis(data) {
   const state = Object.fromEntries(Object.entries(fields).map(([name, keys]) => [name,
     (data[name] || []).map(row => keys.map(key => row[key] ?? null)).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
   ]));
+  // Keep pre-feature snapshots valid when every card's optional start is still unknown.
+  const statementStarts=(data.products || []).filter(p=>p.type==='card' && p.firstStatementMonth!=null && p.firstStatementMonth!=='').map(p=>[p.id,p.firstStatementMonth]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  if(statementStarts.length)state.firstStatementMonths=statementStarts;
   state.trackers = Object.entries(data.statusTracker || {}).sort(([a],[b]) => a.localeCompare(b));
   return JSON.stringify(state);
 }

@@ -1,3 +1,4 @@
+import {normalizeStatementMonth} from "../domain/cardStatements";
 import React from "react";
 import { newLoanPlan } from "../domain/plans";
 import { formatDateTR, formatMoneyTR } from "../utils";
@@ -12,6 +13,10 @@ export const ProductModal = ({
   onClose,
   onSave,
 }) => {
+  const [statementYear='',statementMonth='']=String(newProduct.firstStatementMonth || '').split('-');
+  const currentYear=new Date().getFullYear();
+  const years=[...new Set([...Array.from({length:41},(_,i)=>String(currentYear-20+i)),...(statementYear ? [statementYear] : [])])].sort();
+  const setStatementPart=(year,month)=>setNewProduct(p=>({...p,firstStatementMonth:year || month ? `${year}-${month}` : ''}));
   let preview = [];
   if (!editingItem && newProduct.type === "loan") {
     try {
@@ -23,7 +28,10 @@ export const ProductModal = ({
   return (
     <FormModal
       onClose={onClose}
-      onSave={onSave}
+      onSave={() => {
+        if(newProduct.type==='card' && newProduct.cardType!=='virtual')normalizeStatementMonth(newProduct.firstStatementMonth);
+        return onSave();
+      }}
       title={editingItem ? "Ürün Düzenle" : "Kart/Kredi Ekle"}
       subtitle="Banka ve ürün bilgileri"
       tone={newProduct.type === "loan" ? "payments" : "banks"}
@@ -177,6 +185,15 @@ export const ProductModal = ({
                     </p>
                   </div>
                 )}
+              {newProduct.cardType === "physical" && <div className="statement-start-field" role="group" aria-labelledby="statement-start-title">
+                <h3 id="statement-start-title">İlk ekstre ayı <span>(isteğe bağlı)</span></h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label htmlFor="statement-first-year">İlk ekstre yılı</label><select id="statement-first-year" value={statementYear} onChange={e=>setStatementPart(e.target.value,statementMonth)}><option value="">Yıl seç</option>{years.map(year=><option key={year} value={year}>{year}</option>)}</select></div>
+                  <div><label htmlFor="statement-first-month">İlk ekstre ayı</label><select id="statement-first-month" value={statementMonth} onChange={e=>setStatementPart(statementYear,e.target.value)}><option value="">Ay seç</option>{Array.from({length:12},(_,i)=><option key={i} value={String(i+1).padStart(2,'0')}>{new Date(2026,i,1).toLocaleDateString('tr-TR',{month:'long'})}</option>)}</select></div>
+                </div>
+                <p>Bu aydan önce boş ekstre satırı gösterilmez. Kayıtlı ödemeler, tutarlar ve tarihler korunur. Bilmiyorsan boş bırak.</p>
+                {(statementYear || statementMonth) && <button type="button" className="statement-start-clear" onClick={()=>setStatementPart('','')}>Başlangıç ayını kaldır</button>}
+              </div>}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label

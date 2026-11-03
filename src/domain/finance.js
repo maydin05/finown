@@ -1,3 +1,4 @@
+import {cardStatementIssue,statementMonthAllows} from './cardStatements.js';
 // Pure calendar/record rules shared by monthly lists and the upcoming cash-flow view.
 export function calendarDate(value) {
     if (value instanceof Date) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
@@ -134,6 +135,7 @@ export function paymentItemsForMonth(payments = [], products = [], viewDate) {
     }).map(payment => ({ ...payment, recordType: 'payment', dueDate: dateKey(payment.dueDate || payment.date), needsCardAmount: payment.type === 'card' && payment.amount == null }));
     for (const card of products) {
         if (!isStatementCard(card) || !Number.isInteger(Number(card.paymentDueDay)) || card.paymentDueDay < 1 || card.paymentDueDay > 31) continue;
+        if (!statementMonthAllows(card,year,month)) continue;
         if (items.some(payment => payment.type === 'card' && String(payment.productId) === String(card.id))) continue;
         items.push({
             id: `virtual_${card.id}`, productId: card.id, title: card.name,
@@ -178,7 +180,7 @@ export function cashFlow(data, today = new Date(), days = 7) {
         ...((data.expenseSources || []).filter(source => !isSourceExcluded(source, 'expense', tracker) && sourceIssue(source, 'expense'))),
         ...((data.incomeSources || []).filter(source => sourceIssue(source, 'income'))),
         ...((data.subscriptionSources || []).filter(source => !tracker[`sub_archived_${source.id}`] && sourceIssue(source, 'subscription'))),
-        ...((data.products || []).filter(product => isStatementCard(product) && (!Number.isInteger(Number(product.paymentDueDay)) || product.paymentDueDay < 1 || product.paymentDueDay > 31))),
+        ...((data.products || []).filter(product => isStatementCard(product) && (cardStatementIssue(product) || !Number.isInteger(Number(product.paymentDueDay)) || product.paymentDueDay < 1 || product.paymentDueDay > 31))),
         ...((data.payments || []).filter(payment => !payment.isPaid && (!calendarDate(payment.dueDate || payment.date) || payment.amount == null))),
     ];
     // Historical unpaid rows are shown separately; do not invent years of recurring arrears.

@@ -92,6 +92,7 @@ function AppContent({session,auth,router}) {
     installmentAmount: "",
     totalInstallments: "",
     firstPaymentDate: "",
+    firstStatementMonth: "",
   });
 
   // Source Forms
@@ -156,6 +157,7 @@ function AppContent({session,auth,router}) {
               installmentAmount: "",
               totalInstallments: "",
               firstPaymentDate: "",
+              firstStatementMonth: "",
               creationRequestId: crypto.randomUUID(),
             },
       ); // simplified reset

@@ -1,3 +1,4 @@
+import {cardProductInput} from '../domain/cardStatements';
 import { supabase } from "../lib/supabase";
 
 // Helper to get current user
@@ -62,6 +63,7 @@ const ALLOWED_COLUMNS = {
     "startDate",
     "installmentAmount",
     "firstPaymentDate",
+    "firstStatementMonth",
   ],
   payments: [
     "productId",
@@ -265,7 +267,7 @@ export const deleteBank = (id) => deleteItem("banks", id);
 export const createProduct = (item) => {
   if (item.type === "loan")
     throw new Error("Kredi, taksit planıyla birlikte oluşturulmalı.");
-  return insertItem("products", item);
+  return insertItem("products", cardProductInput(item));
 };
 export const createLoanWithPayments = async (item) => {
   await getUser();
@@ -281,7 +283,7 @@ export const createLoanWithPayments = async (item) => {
   return keysToCamel(data);
 };
 export const updateProduct = async (id, updates) => {
-  if (updates.type !== "loan") return updateItem("products", id, updates);
+  if (updates.type !== "loan") return updateItem("products", id, cardProductInput(updates));
   await getUser();
   const { data, error } = await supabase.rpc("update_loan_details", {
     p_id: id,
