@@ -1,3 +1,5 @@
+import {paymentBank} from "../domain/bankIdentity";
+import BankMark from "./ui/BankMark";
 import React, { useMemo, useState } from "react";
 import { useData } from "../context/store";
 import { useBalanceFingerprint } from "../hooks/useBalanceFingerprint";
@@ -179,7 +181,9 @@ export function CashFlowPanel({
         ))}
       </div>
       <ul className="movement-list">
-        {visible.map((item) => (
+        {visible.map((item) => {
+          const bank=paymentBank(item,data.products,data.banks);
+          return (
           <li
             key={`${item.recordType}:${item.id}:${item.dueDate}`}
             className="movement-row"
@@ -195,7 +199,7 @@ export function CashFlowPanel({
               }
               aria-label={`${item.title} ayrıntısı`}
             >
-              <span
+              {bank ? <BankMark bank={bank} fallback={item.type==="card" ? "credit-card" : "landmark"}/> : <span
                 className={`movement-icon ${item.direction === "in" ? "income" : ""}`}
               >
                 <Icon
@@ -210,11 +214,11 @@ export function CashFlowPanel({
                   }
                   size={19}
                 />
-              </span>
+              </span>}
               <span className="movement-copy">
                 <strong>{item.title}</strong>
                 <span>
-                  {formatDateTR(item.dueDate)} ·{" "}
+                  {bank && <b className="payment-bank-name">{bank.name} · </b>}{formatDateTR(item.dueDate)} ·{" "}
                   {item.direction === "in" ? "Gelir" : "Ödeme"}
                 </span>
               </span>
@@ -229,7 +233,7 @@ export function CashFlowPanel({
               </span>
             </button>
           </li>
-        ))}
+        );})}
       </ul>
       {filtered.length === 0 && (
         <p className="empty-state">

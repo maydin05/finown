@@ -1796,3 +1796,12 @@ body {
 /* Compact shared account context; the page layouts remain identical. */
 .shared-view-notice { margin:0 20px 10px; padding:8px 12px; border-radius:12px; background:#f0ecfc; color:#6541a1; font-size:12px; font-weight:700; }
 .shared-view-notice span { display:block; margin-top:2px; font-weight:400; font-size:11px; }
+
+/* Bank identity adds no new vertical row; the official mark keeps its own colors. */
+.movement-icon.bank-logo, .calm-page[class*="tone-"] .movement-icon.bank-logo {
+  background:#fff; border-color:#e4e8ed; overflow:hidden;
+}
+.bank-logo img { display:block; width:28px; height:28px; object-fit:contain; border-radius:5px; }
+.cashflow .bank-logo img { width:25px; height:25px; }
+.payment-bank-name { font-weight:600; color:#596b66; }
+.record-detail-bank { font-size:13px; font-weight:600; color:#596b66; }

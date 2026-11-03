@@ -1,0 +1,60 @@
+{
+  "retrieved": "2026-11-03",
+  "purpose": "Bank identity in finance records; marks belong to their respective banks.",
+  "assets": [
+    {
+      "file": "ziraat.ico",
+      "source": "https://www.ziraatbank.com.tr/SiteAssets/images/favicon.ico",
+      "bytes": 10806,
+      "sha256": "5ce3d318c9fe70d7168012f428488d53833adb649406b01318d80f9a5c0b62f8"
+    },
+    {
+      "file": "enpara.png",
+      "source": "https://www.enpara.com/favicon.ico",
+      "bytes": 4618,
+      "sha256": "65b34b787367e8c29c0b996e4d3e29235b57ed8da319d5d953f567a2ed78b34a"
+    },
+    {
+      "file": "kuveytturk.png",
+      "source": "https://www.kuveytturk.com.tr/_assets/img/icon/icon-180x180.png",
+      "bytes": 15299,
+      "sha256": "df72a28f472e724edf4adcd8bfc5e5952d497906edce6595a86f7555509cfd08"
+    },
+    {
+      "file": "isbank.jpg",
+      "source": "https://gorsel.isbank.com.tr/sttk/StaticFiles/Isbank/images/icons/isbank-apple-touch-icon-57x57.jpg",
+      "bytes": 1283,
+      "sha256": "0bde0d54e48e75f78ad318a31dad54fc362b0b3d853f43dbc5edae2a09900d22"
+    },
+    {
+      "file": "garanti.png",
+      "source": "https://www.garantibbva.com.tr/apple-touch-icon-180x180.png",
+      "bytes": 23380,
+      "sha256": "ee1ee720e6578c55f4d1f519cfdebf05ee491418625258e8476c0bae84c05803"
+    },
+    {
+      "file": "akbank.ico",
+      "source": "https://www.akbank.com/SiteAssets/img/favicon.ico",
+      "bytes": 2238,
+      "sha256": "eeb3183054a4a254a486a721c46478a2f01abbf2395d0cc1aabb94dcd9026c77"
+    },
+    {
+      "file": "ing.png",
+      "source": "https://www.ing.com.tr/documents/IngBank/assets/icons/favicon114.png",
+      "bytes": 4538,
+      "sha256": "01d3945e90db8df45af459893cc5a4303667a6e662e8511f69f17545278d7e04"
+    },
+    {
+      "file": "yapikredi.png",
+      "source": "https://www.yapikredi.com.tr/favicon.png",
+      "bytes": 6794,
+      "sha256": "b953103ead480c3609b7d236af0cb782c2d9538bafa702a3e336c8f18ec67785"
+    },
+    {
+      "file": "qnb.ico",
+      "source": "https://www.qnb.com.tr/_assets/img/finansbank.gif",
+      "bytes": 1150,
+      "sha256": "5c738243ab184b31879cc6b4c2694dbf5a9196f8acf2129483e66770184a4d59"
+    }
+  ]
+}

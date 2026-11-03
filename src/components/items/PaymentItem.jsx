@@ -1,3 +1,6 @@
+import {useData} from "../../context/store";
+import {paymentBank} from "../../domain/bankIdentity";
+import BankMark from "../ui/BankMark";
 import React from "react";
 import { RecordRow } from "./RecordRow";
 import { formatDateTR, getDaysDifference } from "../../utils";
@@ -9,6 +12,8 @@ export const PaymentItem = ({
   onDelete,
   onCardNeedAmount,
 }) => {
+  const {products=[],banks=[]}=useData() || {};
+  const bank=paymentBank(item,products,banks);
   const diff = getDaysDifference(item.dueDate, new Date());
   const status = item.isPaid
     ? "Ödendi"
@@ -25,6 +30,8 @@ export const PaymentItem = ({
     <RecordRow
       title={item.title}
       amount={item.amount}
+      bankName={bank?.name}
+      visual={bank ? <BankMark bank={bank} fallback={item.type==="card" ? "credit-card" : "landmark"}/> : undefined}
       meta={formatDateTR(item.dueDate)}
       icon={
         item.type === "card"

@@ -4,6 +4,10 @@ Kişisel finans uygulaması: React + Vite, Supabase ve Netlify.
 
 ## Başlangıç
 
+- [Banka logoları: üretim yayın kaydı](docs/2026-11-03_banka-logolari-yayin.md)
+
+- [Banka ödemelerinde logo ve banka etiketi (yerel)](docs/2026-11-03_banka-logolari-yerel.md)
+
 - [Ortak ana sayfalar: üretim yayın kaydı](docs/2026-11-03_ortak-ana-sayfalar-yayin.md)
 
 - [Ortak hesapta salt okunur ana sayfalar (yerel)](docs/2026-11-03_ortak-ana-sayfalar-yerel.md)

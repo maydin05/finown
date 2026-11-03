@@ -15,6 +15,8 @@ export function RecordRow({
   detail,
   actions = [],
   onEnterAmount,
+  visual,
+  bankName,
 }) {
   const readOnly=useData()?.readOnly;
   const [open, setOpen] = useState(false);
@@ -43,14 +45,15 @@ export function RecordRow({
       <button
         className="movement-main"
         aria-label={`${title} ayrıntısı`}
+        aria-description={bankName}
         onClick={() => setOpen(true)}
       >
-        <span className={`movement-icon ${income ? "income" : ""}`}>
+        {visual || <span className={`movement-icon ${income ? "income" : ""}`}>
           <Icon name={icon} size={19} />
-        </span>
+        </span>}
         <span className="movement-copy">
           <h3>{title}</h3>
-          <span>{meta}</span>
+          <span>{bankName && <b className="payment-bank-name">{bankName} · </b>}{meta}</span>
           {status && <span className="record-status">{status}</span>}
         </span>
         <span className={`movement-amount ${income ? "income" : ""}`}>
@@ -92,6 +95,7 @@ export function RecordRow({
               {meta}
               {status ? ` · ${status}` : ""}
             </p>
+            {bankName && <p className="record-detail-bank">{bankName}</p>}
             {detail}
             {error && <p role="alert">{error}</p>}
             {(readOnly ? [] : actions)
