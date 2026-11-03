@@ -12,10 +12,13 @@ export function MonthHeader({
   amount,
   secondary = [],
 }) {
+  const now = new Date();
+  const showReset = Boolean(onThisMonth) && (viewDate.getFullYear() !== now.getFullYear() || viewDate.getMonth() !== now.getMonth());
   return (
     <>
-      <div className="page-title compact-month-heading">
+      <div className={`page-title compact-month-heading${showReset ? " has-month-reset" : ""}`}>
         <h1>{title}</h1>
+        {showReset && <button className="this-month-button" onClick={onThisMonth}>Bu aya dön</button>}
         <div className="month-selector">
           <button
             className="icon-button"
@@ -37,11 +40,6 @@ export function MonthHeader({
           </button>
         </div>
       </div>
-      {onThisMonth && (
-        <button className="this-month-button" onClick={onThisMonth}>
-          Bu aya dön
-        </button>
-      )}
       <section className="monthly-summary compact-month-summary" aria-label={`${title} aylık özeti`}>
         <p>{label}</p>
         <strong>₺{formatMoneyTR(amount)}</strong>

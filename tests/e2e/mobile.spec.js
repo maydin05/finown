@@ -548,3 +548,21 @@ test('recorded overdue inclusion changes coverage and missing statements never b
   await expect(card).toContainText('Açık henüz netleşmedi');await card.click();await expect(page.getByRole('dialog')).toContainText('1 ödeme tutarı eksik');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+
+test('current month hides reset; other months show it on the title row across monthly pages', async ({page}) => {
+  await page.clock.setFixedTime(new Date('2026-11-03T12:00:00+03:00'));
+  await page.goto('/tests/ui-preview.html?app=1');
+  const nav=page.getByRole('navigation',{name:'Ana gezinme'});
+  for(const name of ['Ödemeler','Gelir','Abonelik']) {
+    await nav.getByRole('button',{name,exact:true}).click();
+    const reset=page.getByRole('button',{name:'Bu aya dön',exact:true});
+    await expect(reset).toHaveCount(0);
+    await page.getByRole('button',{name:'Sonraki ay',exact:true}).click();
+    await expect(reset).toBeVisible();
+    const title=await page.locator('.compact-month-heading h1').boundingBox(),button=await reset.boundingBox();
+    expect(Math.abs((title.y+title.height/2)-(button.y+button.height/2))).toBeLessThan(5);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await reset.click();await expect(page.getByRole('heading',{name:'Kasım',exact:true})).toBeVisible();await expect(reset).toHaveCount(0);
+  }
+});
