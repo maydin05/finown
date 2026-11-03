@@ -17,4 +17,11 @@
 
 ## Canlı kabul
 
-GitHub SHA, Netlify yayını, gerçek oturum mobil kontrolü ve son tam veri karşılaştırması bu bölüme eklenecek. Canlı görüntüler ve kişisel finans ayrıntıları kamuya açık depoya gönderilmez.
+- Özellik SHA’sı `b587a7e29042b046ea713ff3d1dd5dac568f1d5c`, GitHub `main` üzerinde readback ile doğrulandı. Netlify `6ae9a243c94fe6cb90b50136`, aynı SHA ile `ready`; yayın zamanı 3 Kasım 2026 11:59 TRT. Canlı health 200/ready. Üretim derlemesi ve Netlify Function paketlemesi başarılı.
+- Mevcut bütçe sahibinin gerçek oturumunda önceki ayın otomatik kart satırının kalktığı görüldü. Kayıtlı üç ayın ödeme satırları aynı tarih/tutarla listelendi; kayıt veya durum işlemi yapılmadı.
+- Banka kart ayrıntısında kayıtlı ilk ekstre ayı doğru göründü. Düzenleme formunda kayıtlı yıl/ay okundu; alanlara müdahale edilmeden Vazgeç ile kapatıldı.
+- Önceki ay ve başlangıç ayı Ödemeler listesi ile ürün formu 320/375/430 × 812 px ölçülerinde kontrol edildi. Dokuz görünüm/ölçüde yatay taşma yok; önceki ayda otomatik satır yok, başlangıç ayında gerçek kayıt var.
+- Yayın ve canlı kontrol sonrasında bütün satırlar, yalnız onaylı DB adımını içeren kopyayla birebir aynı. İlk kopyaya göre izinli tek değer farkı hedef kartın yeni başlangıç alanı; tüm ödeme kayıtları, tutarlar, tarihler, durumlar, diğer ürün alanları, diğer finans/aile/Auth kayıtları korunuyor.
+- Kolon DATE/nullable ve kontrol kısıtı doğrulanmış durumda. Yeni hesap, davet, e-posta, erişim genişletme veya ödeme işlemi yapılmadı.
+- Canlı form görüntüsü incelenip Git dışındaki özel alana alındı. Geçici viewport sıfırlandı; sayfa güncel ayda açık bırakıldı. Fiziksel cihaz kabulü yapılmadı.
+- Canlı görüntüler ve kişisel finans ayrıntıları kamuya açık depoya gönderilmedi.
