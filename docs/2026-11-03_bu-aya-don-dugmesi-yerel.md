@@ -13,4 +13,4 @@
 - Lint ve üretim build başarılı; önceki bundle/Browserslist uyarıları sürüyor.
 - Yerel tıklanabilir banka önizlemesinde Kasım’da düğme yok; Aralık’ta Ödemeler başlığının yanında göründüğü mobil ekran görüntüsüyle incelendi. Örnek görüntü Git dışında tutulur. Geçici viewport sıfırlandı.
 
-Çalışma yereldir; commit/push/deploy ve üretim verisi işlemi yapılmadı. Canlı ekran kabulü henüz yapılmadı.
+Bu yerel kontrol anında commit/push/deploy ve üretim verisi işlemi yapılmamıştı. Sonraki onaylı yayın, 90 testlik son tam paket ve gerçek oturum kabulü [üretim yayın kaydında](2026-11-03_bu-aya-don-yayin.md) doğrulandı.

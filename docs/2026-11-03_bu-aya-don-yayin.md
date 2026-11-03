@@ -16,4 +16,9 @@
 
 ## Yayın ve canlı kabul
 
-GitHub, Netlify, son test ve gerçek oturum kontrol sonuçları yayın sonrası eklenecek. Kişisel finans ayrıntıları ve canlı görüntüler açık depoya gönderilmez.
+- Özellik SHA’sı `e33e25623ed898c6c35d070214ebde7525cd9756`, GitHub `main` üzerinde readback ile doğrulandı. Netlify `6ae986b435c0e09a258156b1`, aynı SHA ile `ready`; yayın zamanı 3 Kasım 2026 10:01 TRT.
+- Mevcut gerçek bütçe sahibi oturumunda üç sayfa kontrol edildi. Kasım 2026’da düğme yok; Aralık’a geçildiğinde düğme başlıkla aynı satırda. Düğmeye basınca Kasım’a dönüyor ve gizleniyor.
+- Ödemeler, Gelir ve Abonelikler’de 320/375/430 × 812 px ölçülerinin dokuzunda da yatay taşma yok; başlık ve düğmenin dikey merkezleri aynı satırda.
+- Mevcut kayıtlar, tutarlar, tarihler ve ödeme durumlarının yanı sıra aile/paylaşım ve Auth hesap/şifre durumu yayın öncesi kopyayla birebir aynı. Veri veya şema değişikliği yapılmadı.
+- Canlı mobil başlık görüntüsü incelenerek özel yerel alana kaydedildi. Geçici viewport sıfırlandı; sayfa güncel ayda bırakıldı. Fiziksel cihaz kabulü yapılmadı.
+- Kişisel finans ayrıntıları ve canlı görüntüler açık depoya gönderilmedi.
